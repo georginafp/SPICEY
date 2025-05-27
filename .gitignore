@@ -2,7 +2,7 @@ Icon?
 # R project files
 *.Rproj
 .Rproj.user
-.Ruserdata 
+.Ruserdata
 # History files
 .Rhistory
 .Rapp.history
@@ -41,4 +41,6 @@ vignettes/*.R
 *.utf8.md
 *.knit.md
 # R Environment Variables
-.Renviron 
+.Renviron
+data/*
+*.rds

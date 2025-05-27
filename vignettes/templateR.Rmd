@@ -26,6 +26,12 @@ library(`r pkg`)
 
 ```{r}
 
+final_result <- run_spicey(
+   atac_path = "data/FINAL_ATAC.rds",
+   rna_path = "data/FINAL_RNA.rds",
+   links_path = "data/COACC_LINKS.rds"
+   )
+
 ```
 
 
