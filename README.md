@@ -24,7 +24,7 @@ You can install the latest release of `SPICEY` from Bioconductor:
 
 If you want to test the development version, you can install it from the github repository:
 
-    BiocManager::install("georginafp/SPICEY")
+    devtools::install_github("georginafp/SPICEY")
 
 Now you can load the package using `library(SPICEY)`.
 
