@@ -37,6 +37,7 @@ library(SPICEY)
 ```
 
 ``` r
+## Nearest gene mode
 result_nearest <- run_spicey(
   atac_path = system.file("extdata", "FINAL_ATAC.rds", package = "SPICEY"),
   rna_path = system.file("extdata", "FINAL_RNA.rds", package = "SPICEY"),
