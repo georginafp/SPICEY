@@ -37,85 +37,21 @@ library(SPICEY)
 ```
 
 ``` r
-## 0) Download example data -------------------------------
-path <- downloadUMI4CexampleData()
-
-## 1) Generate Digested genome ----------------------------
-# The selected RE in this case is DpnII (|GATC), so the cut_pos is 0, and the res_enz "GATC".
-hg19_dpnii <- digestGenome(
-    cut_pos = 0,
-    res_enz = "GATC",
-    name_RE = "DpnII",
-    ref_gen = BSgenome.Hsapiens.UCSC.hg19::BSgenome.Hsapiens.UCSC.hg19,
-    out_path = file.path(tempdir(), "digested_genome/")
+result_nearest <- run_spicey(
+  atac_path = system.file("extdata", "FINAL_ATAC.rds", package = "SPICEY"),
+  rna_path = system.file("extdata", "FINAL_RNA.rds", package = "SPICEY"),
+  linking_method = "nearest"
 )
 
-## 2) Process UMI-4C fastq files --------------------------
-raw_dir <- file.path(path, "CIITA", "fastq")
-
-contactsUMI4C(
-    fastq_dir = raw_dir,
-    wk_dir = file.path(path, "CIITA"),
-    bait_seq = "GGACAAGCTCCCTGCAACTCA",
-    bait_pad = "GGACTTGCA",
-    res_enz = "GATC",
-    cut_pos = 0,
-    digested_genome = hg19_dpnii,
-    bowtie_index = file.path(path, "ref_genome", "ucsc.hg19.chr16"),
-    ref_gen = BSgenome.Hsapiens.UCSC.hg19::BSgenome.Hsapiens.UCSC.hg19,
-    threads = 5
+## Co-accessibility mode
+result_coacc <- run_spicey(
+  atac_path = system.file("extdata", "FINAL_ATAC.rds", package = "SPICEY"),
+  rna_path = system.file("extdata", "FINAL_RNA.rds", package = "SPICEY"),
+  links_path = system.file("extdata", "COACC_LINKS.rds", package = "SPICEY"),
+  linking_method = "coaccessibility"
 )
 
-## 3) Get filtering and alignment stats -------------------
-statsUMI4C(wk_dir = file.path(path, "CIITA"))
 ```
-
-<img src="man/figures/README-analysis-plot-1.png" width="100%" />
-
-``` r
-## 4) Analyze UMI-4C results ------------------------------
-# Load sample processed file paths
-files <- list.files(file.path(path, "CIITA", "count"),
-    pattern = "*_counts.tsv",
-    full.names = TRUE
-)
-
-# Create colData including all relevant information
-colData <- data.frame(
-    sampleID = gsub("_counts.tsv.gz", "", basename(files)),
-    file = files,
-    stringsAsFactors = FALSE
-)
-
-library(tidyr)
-colData <- colData |>
-    separate(sampleID,
-        into = c("condition", "replicate", "viewpoint"),
-        remove = FALSE
-    )
-
-# Load UMI-4C data and generate UMI4C object
-umi <- makeUMI4C(
-    colData = colData,
-    viewpoint_name = "CIITA",
-    grouping = "condition"
-)
-
-## 5) Perform differential test ---------------------------
-umi <- fisherUMI4C(umi,
-    grouping = "condition",
-    filter_low = 20
-)
-
-## 6) Plot results ----------------------------------------
-plotUMI4C(umi,
-    grouping = "condition",
-    ylim = c(0, 15),
-    xlim = c(10.75e6, 11.25e6)
-)
-```
-
-<img src="man/figures/README-analysis-plot-2.png" width="100%" />
 
 ## Code of Conduct
 
