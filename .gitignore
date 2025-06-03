@@ -44,3 +44,5 @@ vignettes/*.R
 .Renviron
 data/*
 *.rds
+/doc/
+/Meta/
