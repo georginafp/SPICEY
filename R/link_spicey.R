@@ -51,7 +51,7 @@ get_ccan <- function(links, gr, name_column, split = c("ccan", "name")) {
   }
 }
 
-# 4. Main function to annotate RETSI peaks with coaccessible genes
+# 4.1. Main function to annotate RETSI peaks with coaccessible genes
 annotate_with_coaccessibility <- function(links, retsi, getsi,
                                           name_column_peaks = "region",
                                           name_column_genes = "symbol") {
@@ -80,3 +80,43 @@ annotate_with_coaccessibility <- function(links, retsi, getsi,
   mcols(gr_list)$genes_coacc <- unlist(retsi$genes_coacc[keep], use.names = FALSE)
   return(gr_list)
 }
+
+
+
+
+# 4.2. Main function to annotate RETSI peak to the nearest gene
+#' Annotate RETSI peaks with nearest gene GETSI scores
+#'
+#' @param retsi GRanges with RETSI scores and cell_type
+#' @param getsi GRanges with GETSI scores, symbol, cell_type, and optionally entropy
+#'
+#' @return GRanges with RETSI and corresponding GETSI scores from nearest genes
+#' @export
+annotate_with_nearest <- function(retsi, getsi) {
+  message("→ Annotating RETSI with nearest genes...")
+
+  retsi_df <- retsi %>%
+    as.data.frame() %>%
+    dplyr::select(seqnames, start, end, distanceToTSS, annotation, nearestGeneSymbol, cell_type, RETSI, norm_entropy, region) %>%
+    dplyr::rename(
+      genes_nearest = nearestGeneSymbol,
+      RETSI_entropy = norm_entropy
+    )
+
+  getsi_df <- getsi %>%
+    as.data.frame() %>%
+    dplyr::select(symbol, GETSI, cell_type, norm_entropy) %>%
+    dplyr::rename(
+      GETSI = GETSI,
+      GETSI_entropy = norm_entropy
+    )
+
+  annotated_df <- retsi_df %>%
+    dplyr::left_join(getsi_df, by = c("genes_nearest" = "symbol", "cell_type"))
+
+  annotated_gr <- regioneR::toGRanges(annotated_df)
+  return(annotated_gr)
+}
+
+
+

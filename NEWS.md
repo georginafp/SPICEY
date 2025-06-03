@@ -1,9 +1,5 @@
-# templateR 0.99.0
+CHANGES IN VERSION 0.99.0
+--------------------------
 
-## New features
- 
-* Added a `NEWS.md` file to track changes to the package.
-
-## Bug fixes
-
-* Removed Dockerfile and switched to using `rworkflows`.
+  o First public release of SPICEY.
+  o Added a `NEWS.md` file to track changes to the package.
