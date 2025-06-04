@@ -61,14 +61,14 @@ biocViews:
     CellType,
     TissueSpecificity,
     DifferentialExpression,
-    DataIntegration
-    CellTypeSpecificity
-    Specificity
-    atac
-    rna
-    scRNA
-    scATAC
-    scRNA-seq
+    DataIntegration,
+    CellTypeSpecificity,
+    Specificity,
+    atac,
+    rna,
+    scRNA,
+    scATAC,
+    scRNA-seq,
     scATAC-seq
 VignetteBuilder: knitr
 RoxygenNote: 7.3.2

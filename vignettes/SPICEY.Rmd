@@ -1,7 +1,6 @@
 ---
 title: "Measuring tissue specificity from single cell data with SPICEY"
 author: "Georgina Fuentes-Páez"
-package: SPICEY
 output: 
   BiocStyle::html_document:
     fig_width: 7
