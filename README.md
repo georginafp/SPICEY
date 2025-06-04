@@ -14,15 +14,7 @@ The goal of SPICEY is to provide a user-friendly pipeline for quantifying and vi
 
 ## Installation
 
-You can install the latest release of `SPICEY` from Bioconductor:
-
-    if (!requireNamespace("BiocManager", quietly = TRUE))
-        install.packages("BiocManager")
-    
-    BiocManager::install("SPICEY")
-
-
-If you want to test the development version, you can install it from the github repository:
+You can install the latest release of `SPICEY` the github repository:
 
     devtools::install_github("georginafp/SPICEY")
 
