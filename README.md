@@ -22,7 +22,7 @@ Now you can load the package using `library(SPICEY)`.
 
 ## Basic usage
 
-For detailed instructions on how to use SPICEY, please see the [vignette](/doc/SPICEY.html).
+For detailed instructions on how to use SPICEY, please see the [vignette](https://georginafp.github.io/SPICEY/articles/SPICEY.html).
 
 ``` r
 library(SPICEY)
