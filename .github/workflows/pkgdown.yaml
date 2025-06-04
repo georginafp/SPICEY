@@ -1,4 +1,3 @@
-# .github/workflows/pkgdown.yaml
 name: pkgdown
 
 on:
