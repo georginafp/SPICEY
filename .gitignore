@@ -43,4 +43,5 @@ data/*
 /Meta/
 .Rdata
 .quarto
-/doc/
+doc/
+docs/
