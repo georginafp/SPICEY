@@ -43,7 +43,7 @@ biomart_genes <- function() {
 
   ## Convert to GRanges
   genes_gr <- regioneR::toGRanges(genes)
-  methods::strand(genes_gr) <- genes_gr$strand
+  strand(genes_gr) <- genes_gr$strand
   mcols(genes_gr) <- mcols(genes_gr)[, setdiff(colnames(mcols(genes_gr)), "strand"), drop=FALSE]
 
   ## Keep only standard chromosomes except MT (mitochondrial)

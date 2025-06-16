@@ -14,7 +14,7 @@ parse_peak <- function(peak_str) {
 }
 
 # 2. Build GInteractions object from links_df
-make_links <- function(links_df, coaccess_threshold = 0.3) {
+make_links <- function(links_df, coaccess_threshold) {
   links_df <- links_df %>%
     filter(coaccess > coaccess_threshold,
            !is.na(Peak1), !is.na(Peak2))
@@ -120,3 +120,62 @@ annotate_with_nearest <- function(retsi, getsi) {
 
 
 
+#' Link RETSI and GETSI using nearest-gene annotation
+#'
+#' @param retsi GRanges from compute_retsi_only
+#' @param getsi GRanges from compute_getsi_only
+#'
+#' @return GRanges with RETSI, GETSI, entropy, and nearest gene links
+#' @export
+join_spicey_nearest <- function(retsi, getsi) {
+  message("→ Linking using nearest-gene method...")
+
+  result <- annotate_with_nearest(retsi, getsi) |>
+    as.data.frame() |>
+    dplyr::rename(nearestGeneSymbol = genes_nearest) |>
+    dplyr::select(seqnames, start, end, cell_type, annotation, distanceToTSS,
+                  nearestGeneSymbol, region, RETSI, norm_entropy, GETSI, GETSI_entropy) |>
+    dplyr::rename(RETSI_entropy = norm_entropy)
+
+  return(GenomicRanges::GRanges(result))
+}
+
+
+
+#' Link RETSI and GETSI using co-accessibility
+#'
+#' @param retsi GRanges from compute_retsi_only
+#' @param getsi GRanges from compute_getsi_only
+#' @param links Path or data.frame with coaccessibility links
+#' @param coaccess_threshold Threshold to filter links
+#'
+#' @return GRanges with RETSI, GETSI, entropy, and coaccessibility-based links
+#' @export
+join_spicey_coaccessibility <- function(retsi, getsi, links, coaccess_threshold) {
+  if (is.character(links)) links <- readRDS(links)
+
+  message("→ Filtering and annotating coaccessibility links...")
+  filtered_links <- make_links(links, coaccess_threshold)
+
+  result <- annotate_with_coaccessibility(
+    links = filtered_links,
+    retsi = retsi,
+    getsi = getsi,
+    name_column_peaks = "region",
+    name_column_genes = "symbol"
+  )
+
+  getsi_df <- as.data.frame(getsi) |>
+    dplyr::select(symbol, GETSI, cell_type, norm_entropy) |>
+    dplyr::rename(GETSI_entropy = norm_entropy)
+
+  result <- result |>
+    as.data.frame() |>
+    dplyr::rename(RETSI_entropy = norm_entropy) |>
+    dplyr::left_join(getsi_df, by = c("genes_coacc" = "symbol", "cell_type")) |>
+    dplyr::select(seqnames, start, end, cell_type, annotation, distanceToTSS,
+                  nearestGeneSymbol, genes_coacc, region, RETSI, RETSI_entropy,
+                  GETSI, GETSI_entropy)
+
+  return(GenomicRanges::GRanges(result))
+}

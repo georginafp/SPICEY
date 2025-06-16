@@ -39,7 +39,7 @@
 #'
 #' @export
 
-run_spicey <- function(atac_path, rna_path, links_path = NULL, linking_method = c("coaccessibility", "nearest")) {
+run_spicey <- function(atac_path, rna_path, coaccess_threshold, links_path = NULL, linking_method = c("coaccessibility", "nearest")) {
   linking_method <- match.arg(linking_method)
 
   message("→ Step 1: Reading input data...")
@@ -57,22 +57,22 @@ run_spicey <- function(atac_path, rna_path, links_path = NULL, linking_method = 
   atac_scored <- compute_retsi(atac)
   atac_entropy <- compute_entropy_retsi(atac_scored)
   mcols(atac_scored)$region <- paste0(seqnames(atac_scored), ":", start(atac_scored), "-", end(atac_scored))
-  atac_scored_df <- as.data.frame(atac_scored) %>%
-    left_join(atac_entropy, by = "region") %>%
-    select(-c("width", "strand")) %>%
+  atac_scored_df <- as.data.frame(atac_scored) |>
+    left_join(atac_entropy, by = "region") |>
+    select(-c("width", "strand")) |>
     toGRanges()
 
   message("→ Step 3: Computing GETSI and GETSI entropy...")
   rna_scored <- compute_getsi(rna)
   rna_entropy <- compute_entropy_getsi(rna_scored)
-  rna_scored_df <- as.data.frame(rna_scored) %>%
-    left_join(rna_entropy, by = "symbol") %>%
-    select(-c("width", "strand")) %>%
+  rna_scored_df <- as.data.frame(rna_scored) |>
+    left_join(rna_entropy, by = "symbol") |>
+    select(-c("width", "strand")) |>
     toGRanges()
 
   if (linking_method == "coaccessibility") {
     message("→ Step 4: Linking REs and genes via co-accessibility...")
-    links <- make_links(links_df, coaccess_threshold = 0.3)
+    links <- make_links(links_df, coaccess_threshold)
 
     gr_links <- annotate_with_coaccessibility(
       links = links,
@@ -82,14 +82,14 @@ run_spicey <- function(atac_path, rna_path, links_path = NULL, linking_method = 
       name_column_genes = "symbol"
     )
 
-    getsi_df <- as.data.frame(rna_scored_df) %>%
-      select(symbol, GETSI, cell_type, norm_entropy) %>%
+    getsi_df <- as.data.frame(rna_scored_df) |>
+      select(symbol, GETSI, cell_type, norm_entropy) |>
       rename(GETSI_entropy = norm_entropy)
 
-    gr_links <- gr_links %>%
-      data.frame() %>%
-      rename(RETSI_entropy = norm_entropy) %>%
-      left_join(getsi_df, by = c("genes_coacc" = "symbol", "cell_type")) %>%
+    gr_links <- gr_links |>
+      data.frame() |>
+      rename(RETSI_entropy = norm_entropy) |>
+      left_join(getsi_df, by = c("genes_coacc" = "symbol", "cell_type")) |>
       select(c(seqnames, start, end, cell_type, annotation, distanceToTSS,
                nearestGeneSymbol, genes_coacc, region, RETSI, RETSI_entropy, GETSI,
                GETSI_entropy))
@@ -99,16 +99,16 @@ run_spicey <- function(atac_path, rna_path, links_path = NULL, linking_method = 
     gr_links <- annotate_with_nearest(
       retsi = atac_scored_df,
       getsi = rna_scored_df
-    ) %>% data.frame() %>%
-      rename(nearestGeneSymbol  = genes_nearest) %>%
+    ) |> data.frame() |>
+      rename(nearestGeneSymbol  = genes_nearest) |>
       select(c(seqnames, start, end, cell_type, annotation, distanceToTSS,
                nearestGeneSymbol, region, RETSI, RETSI_entropy, GETSI,
                GETSI_entropy))
   }
 
-  final_df <- gr_links %>%
-    data.frame() %>%
-    dplyr::select(-dplyr::any_of(c("width", "strand"))) %>%
+  final_df <- gr_links |>
+    data.frame() |>
+    dplyr::select(-dplyr::any_of(c("width", "strand"))) |>
     regioneR::toGRanges()
 
   message("🌶️️SPICEY pipeline completed successfully.")
