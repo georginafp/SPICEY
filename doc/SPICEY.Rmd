@@ -100,7 +100,7 @@ where:
 
 Install the development version from GitHub:
 
-```{r install, eval=FALSE,  echo=TRUE}
+```{r install, eval=FALSE, echo=TRUE}
 
 install.packages("devtools")
 devtools::install_github("georginafp/SPICEY")
@@ -135,7 +135,7 @@ SPICEY requires carefully prepared input files representing processed single-cel
 
 The **ATAC peaks input** must include **multiple rows per peak** representing differential statistics for each cell type. For example, the same peak may appear with different `avg_log2FC`, `p_val`, and `cell_type` values reflecting its differential accessibility in each cell type.
 
-```{r show-da-atac, message=FALSE, warning=FALSE}
+```{r show-da-atac, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
 data("atac")
 ```
 
@@ -159,7 +159,7 @@ data("atac")
 
 The RNA input must represent differential expression results, i.e., statistics computed for each gene across cell types.
 
-```{r show-da-rna, message=FALSE, warning=FALSE}
+```{r show-da-rna, message=FALSE, warning=FALSE,eval=FALSE, echo=TRUE}
 data("rna")
 ```
 
@@ -185,8 +185,9 @@ data("rna")
 
 The peaks referenced here **must match** exactly those in the ATAC peaks input (same coordinates or peak IDs).
 
-```{r show-links, message=FALSE, warning=FALSE}
+```{r links, message=FALSE, warning=FALSE,eval=FALSE, echo=TRUE}
 data("cicero_links")
+head(cicero_links)
 ```
 
 # Example: Run SPICEY
@@ -195,15 +196,24 @@ We demonstrate how to use SPICEY with the prepared input files (explained in pre
 
 ## RETSI
 
-```{r retsi, message=FALSE, warning=FALSE}
+```{r retsi, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
 retsi <- spicey_retsi(atac)
+head(retsi)
+```
+
+```{r show-retsi, message=FALSE, warning=FALSE, echo = FALSE}
+data("retsi")
 head(retsi)
 ```
 
 ## GETSI
 
-```{r getsi, message=FALSE, warning=FALSE}
+```{r getsi, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
 getsi <- spicey_getsi(rna)
+```
+
+```{r show-getsi, message=FALSE, warning=FALSE, echo = FALSE}
+data("getsi")
 head(getsi)
 ```
 
@@ -211,8 +221,12 @@ head(getsi)
 
 ### Nearest gene mode
 
-```{r re-gene-nearest, message=FALSE, warning=FALSE}
+```{r re-gene-nearest, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
 retsi_gene_nearest <- annotate_with_nearest(retsi)
+```
+
+```{r show-re-gene-nearest, message=FALSE, warning=FALSE, echo=FALSE}
+data("retsi_gene_nearest")
 head(retsi_gene_nearest)
 ```
 
@@ -220,11 +234,13 @@ This mode links each peak to the nearest gene TSS.
 
 ### Co-accessibility mode
 
-```{r re-gene-coaccessibility, message=FALSE, warning=FALSE}
+```{r re-gene-coaccessibility, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
 
+# Filter links for high coaccessibility score
 coacc_links <- cicero_links |> 
   dplyr::filter(coaccess > 0.5)
 
+# Annotate links with CCANs and filter for Promoter-Distal interactions
 links <- annotate_links_with_ccans(
   links = coacc_links,
   coaccess_cutoff_override = 0.25,
@@ -237,6 +253,10 @@ retsi_gene_coacc <- annotate_with_coaccessibility(
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene,
   name_links = "HPAP")
 
+```
+
+```{r show-re-gene-coacc, message=FALSE, warning=FALSE, echo=FALSE}
+data("retsi_gene_coacc")
 head(retsi_gene_coacc)
 ```
 

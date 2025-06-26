@@ -19,50 +19,66 @@ library(SPICEY)
 ## ----logo, echo=FALSE, eval=TRUE, out.width='10%'-----------------------------
 knitr::include_graphics("../man/figures/logo_spicey.png", dpi = 800)
 
-## ----install, eval=FALSE,  echo=TRUE------------------------------------------
+## ----install, eval=FALSE, echo=TRUE-------------------------------------------
 # 
 # install.packages("devtools")
 # devtools::install_github("georginafp/SPICEY")
 # 
 
-## ----show-da-atac, message=FALSE, warning=FALSE-------------------------------
-data("atac")
+## ----show-da-atac, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE--------
+# data("atac")
 
-## ----show-da-rna, message=FALSE, warning=FALSE--------------------------------
-data("rna")
+## ----show-da-rna, message=FALSE, warning=FALSE,eval=FALSE, echo=TRUE----------
+# data("rna")
 
-## ----show-links, message=FALSE, warning=FALSE---------------------------------
-data("cicero_links")
+## ----links, message=FALSE, warning=FALSE,eval=FALSE, echo=TRUE----------------
+# data("cicero_links")
+# head(cicero_links)
 
-## ----retsi, message=FALSE, warning=FALSE--------------------------------------
-retsi <- spicey_retsi(atac)
+## ----retsi, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE---------------
+# retsi <- spicey_retsi(atac)
+# head(retsi)
+
+## ----show-retsi, message=FALSE, warning=FALSE, echo = FALSE-------------------
+data("retsi")
 head(retsi)
 
-## ----getsi, message=FALSE, warning=FALSE--------------------------------------
-getsi <- spicey_getsi(rna)
+## ----getsi, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE---------------
+# getsi <- spicey_getsi(rna)
+
+## ----show-getsi, message=FALSE, warning=FALSE, echo = FALSE-------------------
+data("getsi")
 head(getsi)
 
-## ----re-gene-nearest, message=FALSE, warning=FALSE----------------------------
-retsi_gene_nearest <- annotate_with_nearest(retsi)
+## ----re-gene-nearest, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE-----
+# retsi_gene_nearest <- annotate_with_nearest(retsi)
+
+## ----show-re-gene-nearest, message=FALSE, warning=FALSE, echo=FALSE-----------
+data("retsi_gene_nearest")
 head(retsi_gene_nearest)
 
-## ----re-gene-coaccessibility, message=FALSE, warning=FALSE--------------------
+## ----re-gene-coaccessibility, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE----
+# 
+# # Filter links for high coaccessibility score
+# coacc_links <- cicero_links |>
+#   dplyr::filter(coaccess > 0.5)
+# 
+# # Annotate links with CCANs and filter for Promoter-Distal interactions
+# links <- annotate_links_with_ccans(
+#   links = coacc_links,
+#   coaccess_cutoff_override = 0.25,
+#   filter_promoter_distal = TRUE,
+#   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene)
+# 
+# retsi_gene_coacc <- annotate_with_coaccessibility(
+#   re = retsi,
+#   links = links,
+#   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene,
+#   name_links = "HPAP")
+# 
 
-coacc_links <- cicero_links |> 
-  dplyr::filter(coaccess > 0.5)
-
-links <- annotate_links_with_ccans(
-  links = coacc_links,
-  coaccess_cutoff_override = 0.25,
-  filter_promoter_distal = TRUE,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene)
-
-retsi_gene_coacc <- annotate_with_coaccessibility(
-  re = retsi,
-  links = links,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene,
-  name_links = "HPAP")
-
+## ----show-re-gene-coacc, message=FALSE, warning=FALSE, echo=FALSE-------------
+data("retsi_gene_coacc")
 head(retsi_gene_coacc)
 
 ## ----spicey-nearest, message=FALSE, warning=FALSE-----------------------------

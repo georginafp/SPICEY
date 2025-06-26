@@ -873,7 +873,8 @@ devtools::install_github(&quot;georginafp/SPICEY&quot;)
 </ul></li>
 </ul>
 <p>The peaks referenced here <strong>must match</strong> exactly those in the ATAC peaks input (same coordinates or peak IDs).</p>
-<pre class="r"><code>data(&quot;cicero_links&quot;)</code></pre>
+<pre class="r"><code>data(&quot;cicero_links&quot;)
+head(cicero_links)</code></pre>
 </div>
 </div>
 <div id="example-run-spicey" class="section level1" number="4">
@@ -882,8 +883,8 @@ devtools::install_github(&quot;georginafp/SPICEY&quot;)
 <div id="retsi" class="section level2" number="4.1">
 <h2><span class="header-section-number">4.1</span> RETSI</h2>
 <pre class="r"><code>retsi &lt;- spicey_retsi(atac)
-head(retsi)
-#&gt; GRanges object with 6 ranges and 7 metadata columns:
+head(retsi)</code></pre>
+<pre><code>#&gt; GRanges object with 6 ranges and 7 metadata columns:
 #&gt;     seqnames              ranges strand | cell_type    p_val_adj     p_val
 #&gt;        &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; |  &lt;factor&gt;    &lt;numeric&gt; &lt;numeric&gt;
 #&gt;   1     chr7 142748901-142749963      * |    Acinar 1.15832e-300         0
@@ -905,9 +906,8 @@ head(retsi)
 </div>
 <div id="getsi" class="section level2" number="4.2">
 <h2><span class="header-section-number">4.2</span> GETSI</h2>
-<pre class="r"><code>getsi &lt;- spicey_getsi(rna)
-head(getsi)
-#&gt; GRanges object with 6 ranges and 12 metadata columns:
+<pre class="r"><code>getsi &lt;- spicey_getsi(rna)</code></pre>
+<pre><code>#&gt; GRanges object with 6 ranges and 12 metadata columns:
 #&gt;     seqnames          ranges strand |       p_val  avg_log2FC     pct.1
 #&gt;        &lt;Rle&gt;       &lt;IRanges&gt;  &lt;Rle&gt; |   &lt;numeric&gt;   &lt;numeric&gt; &lt;numeric&gt;
 #&gt;   1     chr1   923923-944575      * | 2.51565e-19 -1.05306510     0.317
@@ -939,9 +939,8 @@ head(getsi)
 <h2><span class="header-section-number">4.3</span> Linking regulatory regions to target genes</h2>
 <div id="nearest-gene-mode" class="section level3" number="4.3.1">
 <h3><span class="header-section-number">4.3.1</span> Nearest gene mode</h3>
-<pre class="r"><code>retsi_gene_nearest &lt;- annotate_with_nearest(retsi)
-head(retsi_gene_nearest)
-#&gt; GRanges object with 6 ranges and 10 metadata columns:
+<pre class="r"><code>retsi_gene_nearest &lt;- annotate_with_nearest(retsi)</code></pre>
+<pre><code>#&gt; GRanges object with 6 ranges and 10 metadata columns:
 #&gt;       seqnames              ranges strand | cell_type    p_val_adj     p_val
 #&gt;          &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; |  &lt;factor&gt;    &lt;numeric&gt; &lt;numeric&gt;
 #&gt;   [1]     chr7 142748901-142749963      * |    Acinar 1.15832e-300         0
@@ -973,24 +972,24 @@ head(retsi_gene_nearest)
 <div id="co-accessibility-mode" class="section level3" number="4.3.2">
 <h3><span class="header-section-number">4.3.2</span> Co-accessibility mode</h3>
 <pre class="r"><code>
+# Filter links for high coaccessibility score
 coacc_links &lt;- cicero_links |&gt; 
   dplyr::filter(coaccess &gt; 0.5)
 
+# Annotate links with CCANs and filter for Promoter-Distal interactions
 links &lt;- annotate_links_with_ccans(
   links = coacc_links,
   coaccess_cutoff_override = 0.25,
   filter_promoter_distal = TRUE,
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene)
-#&gt; [1] &quot;Coaccessibility cutoff used: 0.25&quot;
 
 retsi_gene_coacc &lt;- annotate_with_coaccessibility(
   re = retsi,
   links = links,
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene,
   name_links = &quot;HPAP&quot;)
-
-head(retsi_gene_coacc)
-#&gt; GRanges object with 6 ranges and 10 metadata columns:
+</code></pre>
+<pre><code>#&gt; GRanges object with 6 ranges and 10 metadata columns:
 #&gt;     seqnames              ranges strand |     width   strand cell_type
 #&gt;        &lt;Rle&gt;           &lt;IRanges&gt;  &lt;Rle&gt; | &lt;integer&gt; &lt;factor&gt;  &lt;factor&gt;
 #&gt;   1     chr7 142748901-142749963      * |      1063        *    Acinar

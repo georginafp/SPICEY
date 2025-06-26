@@ -52,7 +52,10 @@ Imports:
     AnnotationDbi,
     BiocParallel,
     ChIPseeker,
-    org.Hs.eg.db
+    org.Hs.eg.db,
+    devtools, 
+    pkgdown,
+    roxygen2
 Suggests: 
     knitr,
     rmarkdown,
