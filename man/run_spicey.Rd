@@ -2,57 +2,59 @@
 % Please edit documentation in R/run_spicey.R
 \name{run_spicey}
 \alias{run_spicey}
-\title{Run the SPICEY pipeline}
+\title{Run full SPICEY pipeline: compute RETSI and GETSI, annotate regulatory elements, and link measures}
 \usage{
 run_spicey(
-  atac_path,
-  rna_path,
-  links_path = NULL,
-  linking_method = c("coaccessibility", "nearest")
+  atac_data,
+  rna_data,
+  re_gr,
+  gene_gr,
+  link_method = c("nearest", "coaccessible"),
+  coaccess_links = NULL
 )
 }
 \arguments{
-\item{atac_path}{Path to the RDS file containing ATAC-seq data as a \code{GRanges} or \code{data.frame} convertible to \code{GRanges}.}
+\item{atac_data}{A data.frame or tibble containing differential accessibility results used to compute RETSI.}
 
-\item{rna_path}{Path to the RDS file containing RNA-seq data as a \code{GRanges} or \code{data.frame} convertible to \code{GRanges}.}
+\item{rna_data}{A data.frame or tibble containing differential expression results used to compute GETSI.}
 
-\item{links_path}{Optional path to the RDS file containing co-accessibility links as a \code{data.frame}. Required if \code{linking_method = "coaccessibility"}.}
+\item{re_gr}{A GRanges object representing regulatory elements to be annotated and linked.}
 
-\item{linking_method}{Linking method to use; either \code{"coaccessibility"} or \code{"nearest"}.}
+\item{gene_gr}{A GRanges object representing genes used for nearest or co-accessibility annotation.}
+
+\item{link_method}{Character string specifying linking method. One of \code{"nearest"} (default) or \code{"coaccessible"}.}
+
+\item{coaccess_links}{Optional. A data.frame or GRangesList representing co-accessibility links. Required if \code{link_method = "coaccessible"}.}
 }
 \value{
-A \code{data.frame} containing annotated REs with RETSI/GETSI scores, entropy, and linked gene information.
-The returned table will include RETSI scores and entropy for each region, and GETSI scores and entropy for the
-linked genes according to the chosen linking strategy.
+A list containing:
+\describe{
+\item{retsi}{Data frame with computed RETSI scores.}
+\item{getsi}{Data frame with computed GETSI scores.}
+\item{re_gr_annotated}{GRanges object with regulatory elements annotated with nearest and/or co-accessible genes.}
+\item{linked}{Data frame linking RETSI and GETSI scores according to chosen linking method.}
+}
 }
 \description{
-This function runs the SPICEY pipeline for scoring and linking regulatory elements (REs) and genes
-based on single-cell ATAC-seq and RNA-seq data. It supports two linking strategies: co-accessibility-based
-and nearest-gene annotation.
-}
-\details{
-\itemize{
-\item RETSI: Regulatory Element Tissue Specificity Index.
-\item GETSI: Gene Expression Tissue Specificity Index.
-\item When using \code{"coaccessibility"} mode, the function reads a precomputed link file and performs RETSI/GETSI scoring, linking, and merging.
-\item When using \code{"nearest"} mode, the function links each RE to its nearest gene and merges GETSI scores accordingly.
+This function performs the complete SPICEY pipeline workflow:
+\enumerate{
+\item Computes Regulatory Element Tissue Specificity Index (RETSI) from scATAC-seq DE results.
+\item Computes Gene Expression Tissue Specificity Index (GETSI) from scRNA-seq DE results.
+\item Annotates regulatory elements (RE) with nearest genes.
+\item Optionally annotates RE with co-accessible target genes if \code{link_method = "coaccessible"}.
+\item Links RETSI and GETSI scores either by nearest gene or co-accessibility links.
 }
 }
 \examples{
 \dontrun{
-# Co-accessibility-based linking
-run_spicey(
-  atac_path = "data/FINAL_ATAC.rds",
-  rna_path = "data/FINAL_RNA.rds",
-  links_path = "data/COACC_LINKS.rds",
-  linking_method = "coaccessibility"
-)
+# Run with nearest gene linking (default)
+results <- run_spicey_full_pipeline(atac_data, rna_data, re_gr, gene_gr)
 
-# Nearest-gene-based linking
-run_spicey(
-  atac_path = "data/FINAL_ATAC.rds",
-  rna_path = "data/FINAL_RNA.rds",
-  linking_method = "nearest"
+# Run with co-accessibility linking
+results <- run_spicey_full_pipeline(
+  atac_data, rna_data, re_gr, gene_gr,
+  link_method = "coaccessible",
+  coaccess_links = coaccessibility_links
 )
 }
 

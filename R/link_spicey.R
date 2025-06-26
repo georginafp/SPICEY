@@ -1,181 +1,95 @@
-library(dplyr)
-library(tidyr)
-library(GenomicRanges)
-library(InteractionSet)
-library(regioneR)
-library(stringr)
 
-# 1. Parse peak string ("chr-start-end") to GRanges
-parse_peak <- function(peak_str) {
-  parts <- str_split(peak_str, "-", simplify = TRUE)
-  GRanges(seqnames = parts[, 1],
-          ranges = IRanges(as.numeric(parts[, 2]),
-                           as.numeric(parts[, 3])))
-}
-
-# 2. Build GInteractions object from links_df
-make_links <- function(links_df, coaccess_threshold) {
-  links_df <- links_df %>%
-    filter(coaccess > coaccess_threshold,
-           !is.na(Peak1), !is.na(Peak2))
-
-  anchor1 <- parse_peak(links_df$Peak1)
-  anchor2 <- parse_peak(links_df$Peak2)
-
-  links <- GInteractions(anchor1, anchor2)
-  mcols(links)$coaccess <- links_df$coaccess
-  mcols(links)$CCAN1 <- links_df$CCAN1
-  mcols(links)$CCAN2 <- links_df$CCAN2
-  links
-}
-
-# 3. Get CCAN membership for elements (REs or genes)
-get_ccan <- function(links, gr, name_column, split = c("ccan", "name")) {
-  split <- match.arg(split)
-  hits1 <- findOverlaps(anchors(links, "first"), gr)
-  hits2 <- findOverlaps(anchors(links, "second"), gr)
-
-  ccan_df <- rbind(
-    data.frame(ccan = mcols(links)$CCAN1[queryHits(hits1)],
-               name = mcols(gr)[[name_column]][subjectHits(hits1)]),
-    data.frame(ccan = mcols(links)$CCAN2[queryHits(hits2)],
-               name = mcols(gr)[[name_column]][subjectHits(hits2)])
-  ) |>
-    unique() |>
-    filter(!is.na(ccan), !is.na(name))
-
-  if (split == "ccan") {
-    split(ccan_df$name, ccan_df$ccan)
-  } else {
-    split(ccan_df$ccan, ccan_df$name)
-  }
-}
-
-# 4.1. Main function to annotate RETSI peaks with coaccessible genes
-annotate_with_coaccessibility <- function(links, retsi, getsi,
-                                          name_column_peaks = "region",
-                                          name_column_genes = "symbol") {
-  # Step 1: Link REs to CCANs
-  re_names <- mcols(retsi)[[name_column_peaks]]
-  re_ccan <- get_ccan(links, retsi,
-                      name_column = name_column_peaks, split = "name")
-  re_ccan_vec <- re_ccan[re_names]
-  re_ccan_vec[is.na(re_ccan_vec)] <- NA
-  retsi$CCAN <- re_ccan_vec
-
-  # Step 2: Link genes to CCANs
-  gene_ccan <- get_ccan(links, getsi, name_column = name_column_genes, split = "ccan")
-  used_ccans <- unique(unlist(re_ccan_vec, use.names = FALSE))
-  gene_ccan <- gene_ccan[names(gene_ccan) %in% used_ccans]
-
-  # Step 3: Add coaccessible genes to retsi
-  retsi$genes_coacc <- lapply(retsi$CCAN, function(ccans) {
-    if (length(ccans) == 0 || all(is.na(ccans))) return(NA_character_)
-    unique(unlist(gene_ccan[as.character(ccans)], use.names = FALSE))
-  })
-
-  # Step 4: Expand each gene-coaccessible pair into separate GRanges
-  keep <- lengths(retsi$genes_coacc) > 0
-  gr_list <- rep(retsi[keep], lengths(retsi$genes_coacc[keep]))
-  mcols(gr_list)$genes_coacc <- unlist(retsi$genes_coacc[keep], use.names = FALSE)
-  return(gr_list)
-}
-
-
-
-
-# 4.2. Main function to annotate RETSI peak to the nearest gene
-#' Annotate RETSI peaks with nearest gene GETSI scores
+#' Link RETSI peaks with GETSI values from coaccessibility
 #'
-#' @param retsi GRanges with RETSI scores and cell_type
-#' @param getsi GRanges with GETSI scores, symbol, cell_type, and optionally entropy
+#' This function combines GETSI (Gene Expression Tissue Specificity Index)
+#' data with RETSI (Regulatory Element Tissue Specificity Index) results,
+#' matching on gene symbols and cell types. It renames entropy columns,
+#' performs joins to merge relevant annotations, and resolves coordinate conflicts.
 #'
-#' @return GRanges with RETSI and corresponding GETSI scores from nearest genes
+#' @param re A data.frame or tibble containing RETSI results with at least the columns:
+#'   - `genes_HPAP`: gene symbols
+#'   - `cell_type`
+#'   - `norm_entropy`
+#'   - `seqnames`, `start`, `end`, `annotation`, `distanceToTSS`, `region`, `RETSI`
+#'
+#' @param getsi A data.frame or tibble containing GETSI results with at least the columns:
+#'   - `symbol`: gene symbol
+#'   - `cell_type`
+#'   - `GETSI`
+#'   - `norm_entropy`
+#'   - `seqnames`, `start`, `end`
+#'
+#' @return A data.frame with combined RETSI and GETSI information including entropy values,
+#' gene annotations, and harmonized genomic coordinates.
+#'
+#' @import dplyr
+#' @importFrom dplyr coalesce
+#'
+#' @examples
+#' \dontrun{
+#' combined_df <- link_spicey_coaccessible(re, getsi)
+#' }
+#'
 #' @export
-annotate_with_nearest <- function(retsi, getsi) {
-  message("→ Annotating RETSI with nearest genes...")
+link_spicey_coaccessible <- function(re, getsi) {
+  message("→ Link SPICEY measures from coaccessibility...")
 
-  retsi_df <- retsi %>%
-    as.data.frame() %>%
-    dplyr::select(seqnames, start, end, distanceToTSS, annotation, nearestGeneSymbol, cell_type, RETSI, norm_entropy, region) %>%
+  getsi2add <- as.data.frame(getsi) |>
+    dplyr::select(symbol, GETSI, cell_type, norm_entropy) |>
+    dplyr::rename(GETSI_entropy = norm_entropy)
+
+  result <- re |>
+    data.frame() |>
+    dplyr::rename(RETSI_entropy = norm_entropy) |>
+    dplyr::right_join(getsi2add, by = c("genes_HPAP" = "symbol", "cell_type")) |>
+    dplyr::select(seqnames, start, end, everything()) |>
+    dplyr::left_join(
+      getsi |>
+        data.frame() |>
+        dplyr::select(symbol, seqnames, start, end) |>
+        dplyr::distinct(),
+      by = c("genes_HPAP" = "symbol")
+    ) |>
+    dplyr::mutate(
+      seqnames = dplyr::coalesce(seqnames.x, seqnames.y),
+      start = dplyr::coalesce(start.x, start.y),
+      end = dplyr::coalesce(end.x, end.y)
+    ) |>
+    dplyr::select(-seqnames.x, -seqnames.y, -start.x, -start.y, -end.x, -end.y) |>
+    dplyr::select(seqnames, start, end, dplyr::everything()) |>
+    regioneR::toGRanges()
+
+  return(result)
+}
+
+
+
+#' Link RETSI peaks with GETSI values from nearest genes
+#'
+#' @param retsi GRanges with RETSI scores and nearest genes.
+#' @param getsi GRanges with GETSI scores by gene and cell type.
+#'
+#' @return Annotated GRanges with RETSI and matched GETSI scores.
+#' @export
+link_spicey_nearest <- function(retsi, getsi) {
+  message("→ Link SPICEY measures from nearest gene...")
+
+  retsi_df <- as.data.frame(retsi) |>
+    dplyr::select(seqnames, start, end, everything()) |>
     dplyr::rename(
       genes_nearest = nearestGeneSymbol,
       RETSI_entropy = norm_entropy
     )
 
-  getsi_df <- getsi %>%
-    as.data.frame() %>%
-    dplyr::select(symbol, GETSI, cell_type, norm_entropy) %>%
+  getsi_df <- as.data.frame(getsi) |>
+    dplyr::select(symbol, GETSI, cell_type, norm_entropy) |>
     dplyr::rename(
-      GETSI = GETSI,
+      genes_nearest = symbol,
       GETSI_entropy = norm_entropy
     )
 
-  annotated_df <- retsi_df %>%
-    dplyr::left_join(getsi_df, by = c("genes_nearest" = "symbol", "cell_type"))
-
-  annotated_gr <- regioneR::toGRanges(annotated_df)
-  return(annotated_gr)
-}
-
-
-
-#' Link RETSI and GETSI using nearest-gene annotation
-#'
-#' @param retsi GRanges from compute_retsi_only
-#' @param getsi GRanges from compute_getsi_only
-#'
-#' @return GRanges with RETSI, GETSI, entropy, and nearest gene links
-#' @export
-join_spicey_nearest <- function(retsi, getsi) {
-  message("→ Linking using nearest-gene method...")
-
-  result <- annotate_with_nearest(retsi, getsi) |>
-    as.data.frame() |>
-    dplyr::rename(nearestGeneSymbol = genes_nearest) |>
-    dplyr::select(seqnames, start, end, cell_type, annotation, distanceToTSS,
-                  nearestGeneSymbol, region, RETSI, norm_entropy, GETSI, GETSI_entropy) |>
-    dplyr::rename(RETSI_entropy = norm_entropy)
-
-  return(GenomicRanges::GRanges(result))
-}
-
-
-
-#' Link RETSI and GETSI using co-accessibility
-#'
-#' @param retsi GRanges from compute_retsi_only
-#' @param getsi GRanges from compute_getsi_only
-#' @param links Path or data.frame with coaccessibility links
-#' @param coaccess_threshold Threshold to filter links
-#'
-#' @return GRanges with RETSI, GETSI, entropy, and coaccessibility-based links
-#' @export
-join_spicey_coaccessibility <- function(retsi, getsi, links, coaccess_threshold) {
-  if (is.character(links)) links <- readRDS(links)
-
-  message("→ Filtering and annotating coaccessibility links...")
-  filtered_links <- make_links(links, coaccess_threshold)
-
-  result <- annotate_with_coaccessibility(
-    links = filtered_links,
-    retsi = retsi,
-    getsi = getsi,
-    name_column_peaks = "region",
-    name_column_genes = "symbol"
-  )
-
-  getsi_df <- as.data.frame(getsi) |>
-    dplyr::select(symbol, GETSI, cell_type, norm_entropy) |>
-    dplyr::rename(GETSI_entropy = norm_entropy)
-
-  result <- result |>
-    as.data.frame() |>
-    dplyr::rename(RETSI_entropy = norm_entropy) |>
-    dplyr::left_join(getsi_df, by = c("genes_coacc" = "symbol", "cell_type")) |>
-    dplyr::select(seqnames, start, end, cell_type, annotation, distanceToTSS,
-                  nearestGeneSymbol, genes_coacc, region, RETSI, RETSI_entropy,
-                  GETSI, GETSI_entropy)
-
-  return(GenomicRanges::GRanges(result))
+  annotated_df <- dplyr::left_join(retsi_df, getsi_df,
+                                   by = c("genes_nearest", "cell_type")) |>
+    regioneR::toGRanges()
+  return(annotated_df)
 }

@@ -62,30 +62,46 @@ biomart_genes <- function() {
 }
 
 
-#' Read input data from a file path
+
+
+#' Extract promoter regions of protein-coding genes
 #'
-#' Reads data from the specified file path. Supports RDS, CSV, TSV, and TXT formats.
-#' Returns a data.frame or a GRanges object if RDS contains GRanges.
+#' This function extracts ±2kb promoter regions around transcription start sites
+#' from a `TxDb` object, restricts to standard chromosomes, and annotates each
+#' region with `GENEID` and gene `symbol`. Only protein-coding genes are retained.
 #'
-#' @param path Character string of the file path to read.
+#' @param txdb A `TxDb` object (e.g., `TxDb.Hsapiens.UCSC.hg38.knownGene`)
 #'
-#' @return The contents of the file, either a \code{data.frame}, \code{GRanges}, or other R object saved in the RDS.
-#'
-#' @importFrom tools file_ext
-#' @importFrom data.table fread
+#' @return A `GRanges` object with promoter regions annotated with `GENEID` and `symbol`
 #' @export
-read_input_file <- function(path) {
-  ext <- tolower(file_ext(path))
-  if (ext == "rds") {
-    message("Reading RDS: ", path)
-    readRDS(path)
-  } else if (ext %in% c("csv")) {
-    message("Reading CSV: ", path)
-    fread(path, data.table = FALSE)
-  } else if (ext %in% c("tsv", "txt")) {
-    message("Reading TSV: ", path)
-    fread(path, sep = "\t", data.table = FALSE)
-  } else {
-    stop("Unsupported file type: ", ext)
-  }
+get_promoters_protein_coding <- function(txdb) {
+  # Extract transcripts and define ±2kb promoters
+  proms <- GenomicFeatures::transcripts(txdb, columns = c("GENEID")) |>
+    GenomicRanges::promoters(upstream = 2000, downstream = 2000) |>
+    GenomeInfoDb::keepSeqlevels(paste0("chr", c(1:22, "X", "Y")),
+                                pruning.mode = "coarse")
+
+  # Replace empty GENEID with NA
+  proms$GENEID <- sapply(proms$GENEID, function(x) ifelse(length(x) == 0, NA, x))
+
+  # Add gene symbols from org.Hs.eg.db
+  proms$symbol <- AnnotationDbi::select(org.Hs.eg.db::org.Hs.eg.db,
+                                        keys = proms$GENEID,
+                                        columns = "SYMBOL",
+                                        keytype = "ENTREZID",
+                                        multiVals = "first")$SYMBOL
+
+  # Identify protein-coding genes
+  pc <- AnnotationDbi::select(org.Hs.eg.db::org.Hs.eg.db,
+                              keys = proms$GENEID,
+                              columns = "GENETYPE",
+                              keytype = "ENTREZID",
+                              multiVals = "first") |>
+    dplyr::filter(!is.na(ENTREZID), !is.na(GENETYPE), GENETYPE == "protein-coding") |>
+    dplyr::pull(ENTREZID)
+
+  # Filter for protein-coding gene promoters
+  proms <- proms[which(proms$GENEID %in% pc)]
+
+  return(proms)
 }

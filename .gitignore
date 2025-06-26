@@ -45,3 +45,4 @@ data/*
 .quarto
 doc/
 docs/
+/doc/

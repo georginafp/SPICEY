@@ -75,3 +75,4 @@ RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 URL: https://georginafp.github.io/SPICEY
 BugReports: https://github.com/georginafp/SPICEY/issues
+LazyData: true

@@ -1,6 +1,8 @@
 ## ----setup, include = FALSE---------------------------------------------------
 
 library(dplyr)
+library(GenomicRanges)
+library(cicero)
 
 knitr::opts_chunk$set(
     collapse = TRUE,
@@ -12,137 +14,67 @@ knitr::opts_chunk$set(
     out.width = "80%"
 )
 
+library(SPICEY)
+
 ## ----logo, echo=FALSE, eval=TRUE, out.width='10%'-----------------------------
 knitr::include_graphics("../man/figures/logo_spicey.png", dpi = 800)
 
 ## ----install, eval=FALSE,  echo=TRUE------------------------------------------
-# # install.packages("devtools")
+# 
+# install.packages("devtools")
 # devtools::install_github("georginafp/SPICEY")
 # 
 
-## ----scatac, eval=FALSE,  echo=TRUE-------------------------------------------
-# 
-# merged_df <- readRDS("../data/ATAC_DAR.rds") |> unlist()
-# retsi_gr <- regioneR::toGRanges(as.data.frame(merged_df))
-# 
-# # Annotate with TSS distance
-# anno <- ChIPseeker::annotatePeak(retsi_gr,
-#   TxDb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene,
-#   verbose = FALSE
-# )
-# 
-# retsi_gr$distanceToTSS <- data.frame(anno)$distanceToTSS
-# retsi_gr$annotation <- "Distal"
-# retsi_gr$annotation[abs(retsi_gr$distanceToTSS) <= 2000] <- "Promoter"
-# 
-# # Add nearest gene name
-# genes <- biomart_genes()$gr
-# retsi_gr$nearestGeneSymbol <- genes$external_gene_name[nearest(retsi_gr, promoters(genes, 1, 0))]
-# 
-# saveRDS(retsi_gr, "data/FINAL_ATAC.rds")
-# 
+## ----show-da-atac, message=FALSE, warning=FALSE-------------------------------
+data("atac")
+head(atac)
 
-## ----output-atac, echo=FALSE--------------------------------------------------
+## ----show-da-rna, message=FALSE, warning=FALSE--------------------------------
+data("rna")
+head(rna)
 
-head(readRDS("../data/FINAL_ATAC.rds"))
+## ----show-links, message=FALSE, warning=FALSE---------------------------------
+data("cicero_links")
+head(cicero_links)
 
+## ----retsi, message=FALSE, warning=FALSE--------------------------------------
+retsi <- spicey_retsi(atac)
+head(retsi)
 
-## ----scrna, eval=FALSE, echo=TRUE---------------------------------------------
-# 
-# gr_list <- readRDS("../data/RNA_DEG.rds")
-# 
-# gr_df_list <- lapply(gr_list, as.data.frame)
-# gr_list <- lapply(names(gr_df_list), function(name) {
-#   df <- gr_df_list[[name]]
-#   df$symbol <- rownames(df)
-#   df$ensembl_id <- AnnotationDbi::mapIds(org.Hs.eg.db::org.Hs.eg.db,
-#     keys = df$symbol,
-#     column = "ENSEMBL",
-#     keytype = "SYMBOL",
-#     multiVals = "first"
-#   )
-# 
-#   df_annot <- dplyr::left_join(
-#     df,
-#     biomart_genes()$df %>% dplyr::select(chromosome_name, start_position, end_position, strand, ensembl_gene_id, gene_biotype),
-#     by = c("ensembl_id" = "ensembl_gene_id")
-#   )
-# 
-#   if (nrow(df_annot) == 0) return(NULL)
-# 
-#   df_annot %>%
-#     dplyr::filter(!is.na(chromosome_name),
-#                   !is.na(start_position),
-#                   !is.na(end_position),
-#                   gene_biotype == "protein_coding",
-#                   chromosome_name %in% c(as.character(1:22), "X", "Y")) %>%
-#     dplyr::mutate(chromosome_name = paste0("chr", chromosome_name)) %>%
-#     makeGRangesFromDataFrame(
-#       seqnames.field = "chromosome_name",
-#       start.field = "start_position",
-#       end.field = "end_position",
-#       strand.field = "strand",
-#       keep.extra.columns = TRUE
-#     ) %>%
-#     sort()
-# })
-# 
-# gr_list <- Filter(Negate(is.null), gr_list)
-# names(gr_list) <- names(gr_df_list)
-# 
-# # Merge into a single GRanges
-# retsi_rna <- purrr::imap(gr_list, ~ {
-#   mcols(.x)$cell_type <- .y
-#   .x
-# }) %>%
-#   purrr::reduce(c)
-# 
-# saveRDS(retsi_rna, "data/FINAL_RNA.rds")
-# 
+## ----getsi, message=FALSE, warning=FALSE--------------------------------------
+getsi <- spicey_getsi(rna)
+head(getsi)
 
-## ----output-rna, echo=FALSE---------------------------------------------------
+## ----re-gene-nearest, message=FALSE, warning=FALSE----------------------------
+retsi_gene_nearest <- annotate_with_nearest(retsi)
+head(retsi_gene_nearest)
 
-head(readRDS("../data/FINAL_RNA.rds"))
+## ----re-gene-coaccessibility, message=FALSE, warning=FALSE--------------------
 
+coacc_links <- cicero_links |> 
+  dplyr::filter(coaccess > 0.5)
 
-## ----spicey-nearest, eval=FALSE,  echo=TRUE-----------------------------------
-# 
-# result_nearest <- run_spicey(
-#   atac_path = system.file("extdata", "FINAL_ATAC.rds", package = "SPICEY"),
-#   rna_path = system.file("extdata", "FINAL_RNA.rds", package = "SPICEY"),
-#   linking_method = "nearest"
-# )
-# 
+links <- annotate_links_with_ccans(
+  links = coacc_links,
+  coaccess_cutoff_override = 0.25,
+  filter_promoter_distal = TRUE,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene)
 
-## ----spicey-coaccessibility, eval=FALSE,  echo=TRUE---------------------------
-# 
-# result_coacc <- run_spicey(
-#   atac_path = system.file("extdata", "FINAL_ATAC.rds", package = "SPICEY"),
-#   rna_path = system.file("extdata", "FINAL_RNA.rds", package = "SPICEY"),
-#   links_path = system.file("extdata", "COACC_LINKS.rds", package = "SPICEY"),
-#   linking_method = "coaccessibility"
-# )
-# 
+retsi_gene_coacc <- annotate_with_coaccessibility(
+  re = retsi,
+  links = links,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene,
+  name_links = "HPAP")
 
-## ----spicey-outputs-----------------------------------------------------------
+head(retsi_gene_coacc)
 
-## ---------------------------------------------------------------------------##
-# SPICEY using nearest ---------------------------------------------------------
-## ---------------------------------------------------------------------------##
-readRDS("../data/SPICEY_nearest.rds") %>% 
-  as.data.frame() %>%
-  head() %>%
-  print()
+## ----spicey-nearest, message=FALSE, warning=FALSE-----------------------------
+spicey_nearest <- link_spicey_nearest(retsi_gene_nearest, getsi)
+head(spicey_nearest)
 
-
-## ---------------------------------------------------------------------------##
-# SPICEY using co-accessibility ------------------------------------------------
-## ---------------------------------------------------------------------------##
-readRDS("../data/SPICEY_coaccessible.rds") %>% 
-  as.data.frame() %>%
-  head() %>%
-  print()
-
+## ----spicey-coaccessibility, message=FALSE, warning=FALSE---------------------
+spicey_coacc <- link_spicey_coaccessible(retsi_gene_coacc, getsi)
+head(spicey_coacc)
 
 ## ----plot---------------------------------------------------------------------
 
