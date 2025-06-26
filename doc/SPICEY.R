@@ -27,15 +27,12 @@ knitr::include_graphics("../man/figures/logo_spicey.png", dpi = 800)
 
 ## ----show-da-atac, message=FALSE, warning=FALSE-------------------------------
 data("atac")
-head(atac)
 
 ## ----show-da-rna, message=FALSE, warning=FALSE--------------------------------
 data("rna")
-head(rna)
 
 ## ----show-links, message=FALSE, warning=FALSE---------------------------------
 data("cicero_links")
-head(cicero_links)
 
 ## ----retsi, message=FALSE, warning=FALSE--------------------------------------
 retsi <- spicey_retsi(atac)

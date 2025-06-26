@@ -48,12 +48,16 @@ Imports:
     tools,
     GenomeInfoDb,
     biomaRt,
-    plyranges
+    plyranges,
+    AnnotationDbi,
+    BiocParallel,
+    ChIPseeker,
+    org.Hs.eg.db
 Suggests: 
     knitr,
     rmarkdown,
     BiocStyle,
-    testthat
+    testthat (>= 3.0.0)
 biocViews:
     Transcriptomics,
     Epigenetics,
@@ -76,3 +80,4 @@ Roxygen: list(markdown = TRUE)
 URL: https://georginafp.github.io/SPICEY
 BugReports: https://github.com/georginafp/SPICEY/issues
 LazyData: true
+Config/testthat/edition: 3

@@ -1,29 +1,4 @@
-# URL where the site will be hosted
-url: https://georginafp.github.io/SPICEY/
-
-# Output directory for the built site
-destination: docs
-
-# Site appearance and theme
+url: ~
 template:
   bootstrap: 5
-  bootswatch: flatly
 
-# Navbar structure and links
-navbar:
-  structure:
-    left:
-      - home       # link to index.html
-      - reference  # link to reference/index.html
-      - articles   # link to articles/index.html
-    right:
-      - github     # github icon link
-
-  # Define GitHub icon and link
-  components:
-    github:
-      icon: fa-github
-      href: https://github.com/georginafp/SPICEY
-
-# Optionally, you can add a logo here (uncomment and edit path)
-# logo: path/to/logo.png

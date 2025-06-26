@@ -137,7 +137,6 @@ The **ATAC peaks input** must include **multiple rows per peak** representing di
 
 ```{r show-da-atac, message=FALSE, warning=FALSE}
 data("atac")
-head(atac)
 ```
 
 ## 2. Single cell RNA-seq data
@@ -162,7 +161,6 @@ The RNA input must represent differential expression results, i.e., statistics c
 
 ```{r show-da-rna, message=FALSE, warning=FALSE}
 data("rna")
-head(rna)
 ```
 
 ## 3. Co-accessibility Links (optional, for region to gene linking mode)
@@ -189,7 +187,6 @@ The peaks referenced here **must match** exactly those in the ATAC peaks input (
 
 ```{r show-links, message=FALSE, warning=FALSE}
 data("cicero_links")
-head(cicero_links)
 ```
 
 # Example: Run SPICEY
