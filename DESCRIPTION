@@ -56,11 +56,13 @@ Imports:
     devtools, 
     pkgdown,
     roxygen2
-Suggests: 
+Suggests:
+    BiocStyle,
     knitr,
     rmarkdown,
-    BiocStyle,
+    cicero,
     testthat (>= 3.0.0)
+VignetteBuilder: BiocStyle
 biocViews:
     Transcriptomics,
     Epigenetics,
@@ -77,7 +79,6 @@ biocViews:
     scATAC,
     scRNA-seq,
     scATAC-seq
-VignetteBuilder: knitr
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 URL: https://georginafp.github.io/SPICEY
