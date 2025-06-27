@@ -89,6 +89,31 @@ head(spicey_nearest)
 spicey_coacc <- link_spicey_coaccessible(retsi_gene_coacc, getsi)
 head(spicey_coacc)
 
+## ----spicey-all, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE----------
+# 
+# # Compute GETSI
+# results <- run_spicey(rna = rna)
+# 
+# # Compute RETSI
+# results <- run_spicey(atac=atac)
+# 
+# # Compute GETSI + RETSI
+# results <- run_spicey(atac=atac, rna=rna)
+# 
+# # Compute GETSI + RETSI and link RE to target genes through nearest gene method
+# results <- run_spicey(rna = rna, atac=atac, link_method = "nearest")
+# 
+# # Compute GETSI + RETSI and link RE to target genes through coaccessibility method
+# results <- run_spicey(
+#   atac = atac_data,
+#   rna = rna_data,
+#   link_method = "coaccessibility",
+#   links = coaccessibility_links,
+#   coaccess_cutoff_override = 0.25,
+#   filter_promoter_distal = TRUE
+# )
+# 
+
 ## ----plot---------------------------------------------------------------------
 
 

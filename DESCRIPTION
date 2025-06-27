@@ -27,22 +27,12 @@ Depends:
 Imports: 
     GenomicRanges,
     dplyr,
-    ggplot2,
     tidyr,
     regioneR,
     purrr,
     Signac,
-    ggside,
-    viridis,
     tibble,
-    ggsignif,
-    RColorBrewer,
-    ggplotify,
-    pheatmap,
-    patchwork,
-    scales,
     data.table,
-    here,
     InteractionSet,
     stringr,
     tools,
@@ -55,14 +45,14 @@ Imports:
     org.Hs.eg.db,
     devtools, 
     pkgdown,
-    roxygen2
+    roxygen2,
+    cicero
 Suggests:
     BiocStyle,
     knitr,
     rmarkdown,
-    cicero,
     testthat (>= 3.0.0)
-VignetteBuilder: BiocStyle
+VignetteBuilder: knitr
 biocViews:
     Transcriptomics,
     Epigenetics,

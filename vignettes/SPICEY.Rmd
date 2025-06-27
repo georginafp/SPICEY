@@ -7,7 +7,7 @@ output:
     fig_height: 5
 vignette: >
   %\VignetteIndexEntry{Measuring tissue specificity from single cell data with SPICEY}
-  %\VignetteEngine{BiocStyle::html_document}
+  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -264,14 +264,14 @@ head(retsi_gene_coacc)
 
 By associating both SPICEY measures:
 
-## Using nearest gene annotation method
+### Using nearest gene annotation method
 
 ```{r spicey-nearest, message=FALSE, warning=FALSE}
 spicey_nearest <- link_spicey_nearest(retsi_gene_nearest, getsi)
 head(spicey_nearest)
 ```
 
-## Using co-accessibility annotation method
+### Using co-accessibility annotation method
 
 ```{r spicey-coaccessibility, message=FALSE, warning=FALSE}
 spicey_coacc <- link_spicey_coaccessible(retsi_gene_coacc, getsi)
@@ -306,11 +306,19 @@ For users who prefer detailed control and tracking of each step, running the com
 
 -   **`rna`**: A `GRanges` object or data frame convertible to `GRanges` containing differential expression results from scRNA-seq data. Required columns are similar to those for `atac` but relevant for gene expression.
 
-    -   **`link_method`**: Character string specifying the linking method between regulatory elements (REs) and target genes. Options are:
+    -   `seqnames`, `start`, `end`: Genomic coordinates of peaks
 
-        -   `"nearest"` (default): Links REs to their nearest gene
+    -   `avg_log2FC`: Average log2 fold-change of accessibility for each peak
 
-        -   `"coaccessibility"`: Uses co-accessibility links to assign target genes
+    -   `p_val`: Raw or adjusted p-value from differential accessibility tests
+
+    -   `cell_type`: Cell type or cluster label
+
+-   **`link_method`**: Character string specifying the linking method between regulatory elements (REs) and target genes. Options are:
+
+    -   `"nearest"` (default): Links REs to their nearest gene
+
+    -   `"coaccessibility"`: Uses co-accessibility links to assign target genes
 
     -   **`links`**: Required if `link_method = "coaccessibility"`. A data frame or `GRangesList` containing co-accessibility links with scores and peak pairs.
 
@@ -318,7 +326,7 @@ For users who prefer detailed control and tracking of each step, running the com
 
     -   **`filter_promoter_distal`** (default: `TRUE`): Logical indicating whether to keep only promoter-distal interactions when filtering co-accessibility links.
 
-```{r spicey-all, message=FALSE, warning=FALSE}
+```{r spicey-all, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
 
 # Compute GETSI 
 results <- run_spicey(rna = rna)
