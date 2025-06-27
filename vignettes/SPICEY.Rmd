@@ -359,7 +359,7 @@ The following output is a `GRanges` object containing **genomic regions** (range
 ### Metadata Columns Description
 
 | Column | Description |
-|-------------------|-----------------------------------------------------|
+|----|----|
 | `seqnames` | Chromosome name (e.g., `chr7`, `chr17`) where the region is located. |
 | `ranges` | Genomic coordinates (start–end) of the regulatory region. |
 | `strand` | Strand information (`*` means unstranded, typical for regulatory elements). |

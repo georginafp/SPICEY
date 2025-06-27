@@ -44,6 +44,3 @@ data/*
 .Rdata
 .quarto
 doc/
-docs/
-/doc/
-docs
