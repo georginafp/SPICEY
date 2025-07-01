@@ -38,7 +38,6 @@ Icon?
 *.knit.md
 # R Environment Variables
 .Renviron
-data/*
 *.rds
 /Meta/
 .Rdata
