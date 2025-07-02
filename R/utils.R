@@ -1,107 +1,101 @@
-#' Retrieve gene annotations from Ensembl via biomaRt
+#' Get main chromosomes from a GRanges or TxDb, filtering alt/hap/random/etc.
 #'
-#' Downloads gene annotation data from Ensembl using biomaRt, processes it,
-#' and returns a list with both a data.frame and a filtered GRanges object
-#' containing protein-coding genes. This is useful for RNA-seq and epigenomic
-#' pipelines.
+#' @param x A TxDb, GRanges, or similar object.
+#' @param keep_mito Logical, whether to keep mitochondrial/plastid contigs.
+#' @param include_only Optional character vector of seqlevels to force-include (manual override).
+#' @param verbose Logical, print what is kept/removed.
 #'
-#' @return A list with two elements:
-#' \describe{
-#'   \item{df}{A \code{data.frame} with gene annotation information for RNA-seq analysis.}
-#'   \item{gr}{A \code{GRanges} object with protein-coding genes for epigenomic analyses.}
-#' }
-#'
-#' @import biomaRt
-#' @import regioneR
-#' @import GenomeInfoDb
-#' @importFrom plyranges filter
-#' @export
-biomart_genes <- function() {
-  mart <- biomaRt::useMart(
-    biomart = "ENSEMBL_MART_ENSEMBL",
-    host = "https://www.ensembl.org",
-    path = "/biomart/martservice",
-    dataset = "hsapiens_gene_ensembl"
-  )
+#' @return Character vector of filtered seqlevels.
+get_main_seqlevels <- function(txdb,
+                               keep_mito = FALSE,
+                               include_only = NULL,
+                               verbose = FALSE) {
+  seqs <- GenomeInfoDb::seqlevels(txdb)
 
-  genes <- biomaRt::getBM(
-    attributes = c(
-      "chromosome_name",
-      "start_position", "end_position", "strand",
-      "ensembl_gene_id", "external_gene_name", "gene_biotype",
-      "percentage_gene_gc_content"
-    ),
-    useCache = TRUE,
-    mart = mart
-  )
+  if (!is.null(include_only)) {
+    return(seqs[seqs %in% include_only])
+  }
 
-  message("Got it!")
+  exclude_patterns <- c("random", "alt", "fix", "hap", "Un", "decoy", "PATCH", "GL", "KI", "JH", "HSCHR")
+  mito_patterns <- c("chrM", "^MT$", "^Mt$", "^Pt$")
 
-  ## Convert strand from numeric to factor with "+" and "-"
-  genes$strand <- ifelse(genes$strand == 1, "+",
-                         ifelse(genes$strand == -1, "-", "*"))
+  exclude_regex <- paste(exclude_patterns, collapse = "|")
+  mito_regex <- paste(mito_patterns, collapse = "|")
 
-  ## Convert to GRanges
-  genes_gr <- regioneR::toGRanges(genes)
-  strand(genes_gr) <- genes_gr$strand
-  mcols(genes_gr) <- mcols(genes_gr)[, setdiff(colnames(mcols(genes_gr)), "strand"), drop=FALSE]
+  seqs_to_keep <- seqs[!grepl(exclude_regex, seqs, ignore.case = TRUE)]
 
-  ## Keep only standard chromosomes except MT (mitochondrial)
-  genes_gr <- GenomeInfoDb::keepStandardChromosomes(genes_gr, pruning.mode = "coarse")
-  genes_gr <- GenomeInfoDb::dropSeqlevels(genes_gr, "MT", pruning.mode = "coarse")
-  GenomeInfoDb::seqlevelsStyle(genes_gr) <- "UCSC"
+  if (!keep_mito) {
+    seqs_to_keep <- seqs_to_keep[!grepl(mito_regex, seqs_to_keep, ignore.case = TRUE)]
+  }
 
-  ## Filter protein coding genes
-  genes_gr <- plyranges::filter(genes_gr, gene_biotype == "protein_coding")
+  if (verbose) {
+    message("→ Kept: ", paste(seqs_to_keep, collapse = ", "))
+    removed <- setdiff(seqs, seqs_to_keep)
+    if (length(removed) > 0) message("→ Removed: ", paste(removed, collapse = ", "))
+  }
 
-  ## Select columns for output GRanges
-  genes_gr <- genes_gr[, c("ensembl_gene_id", "external_gene_name")]
-
-  ## Return list
-  list(df = genes, gr = genes_gr)
+  return(seqs_to_keep)
 }
 
 
-
-
-#' Extract promoter regions of protein-coding genes
-#'
-#' This function extracts ±2kb promoter regions around transcription start sites
-#' from a `TxDb` object, restricts to standard chromosomes, and annotates each
-#' region with `GENEID` and gene `symbol`. Only protein-coding genes are retained.
-#'
-#' @param txdb A `TxDb` object (e.g., `TxDb.Hsapiens.UCSC.hg38.knownGene`)
-#'
-#' @return A `GRanges` object with promoter regions annotated with `GENEID` and `symbol`
+#' Get Promoter Regions with Optional Filtering for Protein-Coding Genes
+#' Extracts promoter regions (±2kb default) from a TxDb object, optionally restricting to protein-coding genes
+#' and retaining only primary chromosomes (using a robust internal filter). Gene symbols and types are added using an AnnotationDbi object.
+#' @param txdb A TxDb object (e.g., from `GenomicFeatures::makeTxDbFromGFF()` or a prebuilt TxDb package).
+#' @param annot_dbi An AnnotationDbi object (e.g., `org.Hs.eg.db`, `org.Mm.eg.db`) for mapping gene IDs to symbols and types.
+#' @param keep_mito Logical; whether to keep mitochondrial chromosome (default = FALSE).
+#' @param protein_coding_only Logical; whether to restrict to protein-coding genes (default = TRUE).
+#' @param verbose Logical; print informative messages (default = TRUE).
+#' @return A `GRanges` object of promoter regions, annotated with gene symbols, optionally filtered to protein-coding genes.
+#' @import GenomicRanges
+#' @import GenomicFeatures
+#' @import GenomeInfoDb
+#' @importFrom AnnotationDbi select
+#' @importFrom dplyr filter pull
 #' @export
-get_promoters_protein_coding <- function(txdb) {
-  # Extract transcripts and define ±2kb promoters
-  proms <- GenomicFeatures::transcripts(txdb, columns = c("GENEID")) |>
-    GenomicRanges::promoters(upstream = 2000, downstream = 2000) |>
-    GenomeInfoDb::keepSeqlevels(paste0("chr", c(1:22, "X", "Y")),
-                                pruning.mode = "coarse")
+get_promoters <- function(txdb,
+                          annot_dbi,
+                          keep_mito = FALSE,
+                          protein_coding_only = TRUE,
+                          verbose = TRUE) {
+  # Get main chromosomes using helper (no unused args here)
+  main_chrs <- get_main_seqlevels(txdb,
+                                  keep_mito = keep_mito,
+                                  verbose = verbose)
+
+  # Fetch promoters
+  if (length(main_chrs) < 3) {
+    if (verbose) message("Few chromosomes after filtering (", length(main_chrs), ") — skipping keepSeqlevels()")
+    proms <- GenomicFeatures::promoters(GenomicFeatures::transcripts(txdb, columns = "GENEID"),
+                                        upstream = 2000, downstream = 2000)
+  } else {
+    proms <- GenomicFeatures::transcripts(txdb, columns = "GENEID") |>
+      GenomicRanges::promoters(upstream = 2000, downstream = 2000) |>
+      GenomeInfoDb::keepSeqlevels(main_chrs, pruning.mode = "coarse")
+  }
 
   # Replace empty GENEID with NA
   proms$GENEID <- sapply(proms$GENEID, function(x) ifelse(length(x) == 0, NA, x))
 
-  # Add gene symbols from org.Hs.eg.db
-  proms$symbol <- AnnotationDbi::select(org.Hs.eg.db::org.Hs.eg.db,
-                                        keys = proms$GENEID,
-                                        columns = "SYMBOL",
-                                        keytype = "ENTREZID",
-                                        multiVals = "first")$SYMBOL
+  # Add gene symbols
+  proms$gene_id <- AnnotationDbi::select(annot_dbi,
+                                         keys = proms$GENEID,
+                                         columns = "SYMBOL",
+                                         keytype = "ENTREZID",
+                                         multiVals = "first")$SYMBOL
 
-  # Identify protein-coding genes
-  pc <- AnnotationDbi::select(org.Hs.eg.db::org.Hs.eg.db,
-                              keys = proms$GENEID,
-                              columns = "GENETYPE",
-                              keytype = "ENTREZID",
-                              multiVals = "first") |>
-    dplyr::filter(!is.na(ENTREZID), !is.na(GENETYPE), GENETYPE == "protein-coding") |>
-    dplyr::pull(ENTREZID)
+  # Optionally filter to protein-coding genes
+  if (protein_coding_only) {
+    pc <- AnnotationDbi::select(annot_dbi,
+                                keys = proms$GENEID,
+                                columns = "GENETYPE",
+                                keytype = "ENTREZID",
+                                multiVals = "first") |>
+      dplyr::filter(!is.na(ENTREZID), !is.na(GENETYPE), GENETYPE == "protein-coding") |>
+      dplyr::pull(ENTREZID)
 
-  # Filter for protein-coding gene promoters
-  proms <- proms[which(proms$GENEID %in% pc)]
+    proms <- proms[which(proms$GENEID %in% pc)]
+  }
 
   return(proms)
 }

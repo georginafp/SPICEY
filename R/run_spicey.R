@@ -1,132 +1,122 @@
-#' Run full SPICEY pipeline: compute RETSI and GETSI, annotate regulatory elements, and link measures
-#'
-#' This function performs the complete SPICEY pipeline workflow:
-#' 1. Computes Regulatory Element Tissue Specificity Index (RETSI) from scATAC-seq differential accessibility results.
-#' 2. Computes Gene Expression Tissue Specificity Index (GETSI) from scRNA-seq differential expression results.
-#' 3. Annotates regulatory elements (RE) with nearest genes.
-#' 4. Optionally annotates RE with co-accessible target genes if `link_method = "coaccessibility"`.
-#' 5. Links RETSI and GETSI scores either by nearest gene or co-accessibility links.
-#'
-#' @param atac A \code{GRanges} or \code{data.frame} convertible to \code{GRanges} containing differential accessibility results. Must include \code{seqnames}, \code{start}, \code{end}, \code{avg_log2FC}, \code{p_val}, and \code{cell_type} columns.
-#' @param rna A \code{GRanges} or \code{data.frame} convertible to \code{GRanges} containing differential expression results. Must include \code{seqnames}, \code{start}, \code{end}, \code{avg_log2FC}, \code{p_val}, and \code{cell_type} columns.
-#' @param link_method Character string specifying the linking method. One of \code{"nearest"} or \code{"coaccessibility"}. If \code{NULL} (default), linking is not performed.
-#' @param links Optional. A \code{data.frame} or \code{GRangesList} of co-accessibility links. Required if \code{link_method = "coaccessibility"}.
-#' @param coaccess_cutoff_override Numeric scalar. Co-accessibility score cutoff used to filter links. Default is \code{0.25}.
-#' @param filter_promoter_distal Logical. Whether to filter links to keep only promoter-distal interactions when using co-accessibility. Default is \code{TRUE}.
-#'
-#' @return A list containing:
-#' \describe{
-#'   \item{retsi}{Data frame with computed RETSI scores if \code{atac} provided.}
-#'   \item{getsi}{Data frame with computed GETSI scores if \code{rna} provided.}
-#'   \item{linking}{Data frame linking RETSI and GETSI scores if \code{link_method} specified.}
-#' }
-#'
-#' @examples
-#' \dontrun{
-#' # Compute GETSI only
-#' results <- run_spicey_pipeline(rna = rna_data)
-#'
-#' # Compute RETSI only
-#' results <- run_spicey_pipeline(atac = atac_data)
-#'
-#' # Compute both GETSI and RETSI without linking
-#' results <- run_spicey_pipeline(atac = atac_data, rna = rna_data)
-#'
-#' # Compute both and link with nearest gene method
-#' results <- run_spicey_pipeline(atac = atac_data, rna = rna_data, link_method = "nearest")
-#'
-#' # Compute both and link with co-accessibility method
-#' results <- run_spicey_pipeline(
-#'   atac = atac_data,
-#'   rna = rna_data,
-#'   link_method = "coaccessibility",
-#'   links = coaccessibility_links,
-#'   coaccess_cutoff_override = 0.3,
-#'   filter_promoter_distal = TRUE
-#' )
-#' }
-#'
-#' @export
 run_spicey <- function(atac = NULL,
-                                rna = NULL,
-                                link_method = NULL,
-                                links = NULL,
-                                coaccess_cutoff_override = 0.25,
-                                filter_promoter_distal = TRUE) {
-  # Load TxDb for annotation (adjust as needed)
-  txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene
+                       rna = NULL,
+                       annot_method = NULL,
+                       links = NULL,
+                       link_spicey_measures = FALSE,
+                       coaccess_cutoff_override = 0.25,
+                       filter_promoter_distal = TRUE,
+                       filter_protein_coding = TRUE,
+                       txdb = NULL,
+                       keep_mito = FALSE,
+                       annot_dbi = NULL,
+                       add_tss_annotation = FALSE,
+                       verbose = TRUE) {
 
-  # Check inputs
   if (is.null(atac) && is.null(rna)) {
     stop("At least one of 'atac' or 'rna' data must be provided.")
   }
 
-  # Initialize output list
-  results <- list()
-
-  # Compute RETSI if atac provided
+  # Compute RETSI
   if (!is.null(atac)) {
-    message("Computing RETSI...")
     retsi <- spicey_retsi(atac)
-    results$retsi <- retsi
   }
 
-  # Compute GETSI if rna provided
+  # Compute GETSI
   if (!is.null(rna)) {
-    message("Computing GETSI...")
     getsi <- spicey_getsi(rna)
-    results$getsi <- getsi
   }
 
-  # If both atac and rna provided, and no link_method, just return both indices
-  if (!is.null(atac) && !is.null(rna) && is.null(link_method)) {
-    return(results)
+  # If no annotation method, return based on inputs
+  if (is.null(annot_method)) {
+    if (!is.null(atac) && is.null(rna)) {
+      message("🌶 SPICEY pipeline successfully completed")
+      return(retsi)
+    }
+    if (is.null(atac) && !is.null(rna)) {
+      message("🌶 SPICEY pipeline successfully completed")
+      return(getsi)
+    }
+    if (!is.null(atac) && !is.null(rna)) {
+      message("🌶 SPICEY pipeline successfully completed")
+      return(list(retsi = retsi, getsi = getsi))
+    }
   }
 
-  # If linking requested, check required inputs and perform linking
-  if (!is.null(link_method)) {
-    if (is.null(atac) || is.null(rna)) {
-      stop("Both 'atac' and 'rna' data must be provided for linking.")
+  # Annotation requires ATAC data
+  if (is.null(atac)) {
+    stop("ATAC data must be provided for region-to-gene annotation.")
+  }
+
+  if (!(annot_method %in% c("nearest", "coaccessibility"))) {
+    stop("annot_method must be either 'nearest' or 'coaccessibility'.")
+  }
+
+  if (annot_method == "nearest") {
+    retsi_annotated <- annotate_with_nearest(
+      retsi = retsi,
+      txdb = txdb,
+      keep_mito = keep_mito,
+      annot_dbi = annot_dbi,
+      protein_coding_only = filter_protein_coding,
+      verbose = verbose,
+      add_tss_annotation = add_tss_annotation
+    )
+  }
+
+  if (annot_method == "coaccessibility") {
+    if (is.null(links)) {
+      stop("Links must be provided when using coaccessibility annotation method.")
     }
-    if (!(link_method %in% c("nearest", "coaccessibility"))) {
-      stop("link_method must be either 'nearest' or 'coaccessibility'")
+    retsi_annotated <- annotate_with_coaccessibility(
+      links = links,
+      retsi = retsi,
+      txdb = txdb,
+      keep_mito = keep_mito,
+      annot_dbi = annot_dbi,
+      protein_coding_only = filter_protein_coding,
+      verbose = verbose,
+      coaccess_cutoff_override = coaccess_cutoff_override,
+      filter_promoter_distal = filter_promoter_distal,
+      add_tss_annotation = add_tss_annotation
+    )
+  }
+
+  # Now handle linking or returning annotated + getsi
+
+  if (link_spicey_measures) {
+    if (is.null(rna)) {
+      stop("RNA data must be provided for linking RETSI to gene expression (GETSI).")
+    }
+    if (verbose) message("→ Computing GETSI (if not already computed)...")
+    if (!exists("getsi")) {
+      getsi <- spicey_getsi(rna)
     }
 
-    if (link_method == "nearest") {
-      message("Linking regulatory elements to genes using nearest gene method...")
-      # Annotate RE with nearest genes
-      retsi_gene_nearest <- annotate_with_nearest(results$retsi)
-      # Link spicey using nearest method
-      spicey_nearest <- link_spicey_nearest(retsi_gene_nearest, results$getsi)
-      results$linking <- spicey_nearest
-    }
+    if (verbose) message("→ Linking RETSI and GETSI via ", annot_method, "...")
 
-    if (link_method == "coaccessibility") {
-      if (is.null(links)) {
-        stop("Argument 'links' must be provided when link_method = 'coaccessibility'")
-      }
-      message("Filtering and annotating coaccessibility links...")
-
-      # Annotate links with CCANs and filter promoter-distal if requested
-      annotated_links <- annotate_links_with_ccans(
-        links = links,
-        coaccess_cutoff_override = coaccess_cutoff_override,
-        filter_promoter_distal = filter_promoter_distal,
-        txdb = txdb
+    combined <- NULL
+    if (annot_method == "nearest") {
+      combined <- link_spicey_nearest(
+        retsi_annotated_nearest = retsi_annotated,
+        getsi = getsi
       )
-
-      message("Linking regulatory elements to genes using coaccessibility method...")
-      spicey_coacc <- link_spicey_coaccessible(
-        re = results$retsi,
-        getsi = results$getsi,
-        links = annotated_links,
-        txdb = txdb,
-        name_links = "coacc"
+    } else {
+      combined <- link_spicey_coaccessible(
+        retsi_annotated_coacc = retsi_annotated,
+        getsi = getsi
       )
-      results$linking <- spicey_coacc
+    }
+    # Return the combined linked data.frame/tibble, NOT a list
+    message("🌶 SPICEY pipeline successfully completed")
+    return(combined)
+  } else {
+    # Linking is FALSE: return a list with retsi_annotated and getsi if both available
+    if (!is.null(rna)) {
+      message("🌶 SPICEY pipeline successfully completed")
+      return(list(retsi_annotated = retsi_annotated, getsi = getsi))
+    } else {
+      message("🌶 SPICEY pipeline successfully completed")
+      return(retsi_annotated)
     }
   }
-
-  return(results)
 }
-

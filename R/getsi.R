@@ -1,161 +1,86 @@
-#' Annotate and Filter Gene Expression Differential Data, Return GRanges
+#' Combine Differential Expression Results Across Cell Types
 #'
-#' This function takes a named list of gene expression differential analysis results
-#' (typically one data frame per cell type). It maps gene symbols to Ensembl IDs,
-#' joins with genomic coordinates from Biomart, filters to protein-coding genes
-#' on canonical chromosomes, converts to a GRanges object, and adds a `cell_type`
-#' metadata column based on the list name.
-#'
-#' @param rna_da A named list of data frames, where each element corresponds to a cell type
-#'        and contains differential gene expression results. Row names should be gene symbols.
-#' @return A single GRanges object combining all annotated genes, with metadata columns
-#'         including differential statistics and a `cell_type` column.
-#'
-#' @importFrom AnnotationDbi mapIds
-#' @importFrom org.Hs.eg.db org.Hs.eg.db
-#' @importFrom dplyr left_join filter select mutate everything
-#' @importFrom GenomicRanges makeGRangesFromDataFrame sort mcols
-#' @importFrom purrr imap reduce
-#'
+#' This function takes a list of differential expression data frames (from scRNA-seq)
+#' for multiple cell types and combines them into a single annotated data frame.
+#' Each data frame should contain gene-level statistics (e.g., log2FC, p-value).
+#' @param rna_da A named list of data frames. Each element corresponds to a cell type
+#'   and contains differential expression results with genes as row names.
+#' @return A single data frame combining all input differential expression results,
+#'   with added columns for gene ids and cell types.
 #' @examples
-#' \dontrun{
-#' combined_gr <- combine_gex_da(rna_da)
-#' }
-#'
+#' # Assuming rna_da is a named list of DESeq2 or Seurat DE results per cell type:
+#' combined_df <- combine_gex_da(rna_da)
 #' @export
 combine_gex_da <- function(rna_da) {
-  # Annotate each element of the list
   gr_list_annot <- lapply(names(rna_da), function(cell_type) {
     df <- rna_da[[cell_type]]
+    df$gene_id <- rownames(df)
 
-    # Ensure gene symbols are a column
-    df$symbol <- rownames(df)
-
-    # Add cell_type column if missing
     if (!"cell_type" %in% colnames(df)) {
       df$cell_type <- cell_type
     }
-
-    # Map SYMBOL -> ENSEMBL using org.Hs.eg.db
-    df$ensembl_id <- AnnotationDbi::mapIds(
-      org.Hs.eg.db::org.Hs.eg.db,
-      keys = df$symbol,
-      column = "ENSEMBL",
-      keytype = "SYMBOL",
-      multiVals = "first"
-    )
-
-    # Join with Biomart gene info
-    df_annot <- dplyr::left_join(
-      df,
-      biomart_genes()$df |> dplyr::select(
-        chromosome_name,
-        start_position,
-        end_position,
-        strand,
-        ensembl_gene_id,
-        gene_biotype
-      ),
-      by = c("ensembl_id" = "ensembl_gene_id")
-    )
-
-    if (nrow(df_annot) == 0) {
-      message("No annotation found for cell type: ", cell_type)
-      return(NULL)
-    }
-
-    # Filter and convert to GRanges
-    df_annot |>
-      dplyr::filter(
-        !is.na(chromosome_name),
-        !is.na(start_position),
-        !is.na(end_position),
-        gene_biotype == "protein_coding",
-        chromosome_name %in% c(as.character(1:22), "X", "Y")
-      ) |>
-      dplyr::mutate(chromosome_name = paste0("chr", chromosome_name)) |>
-      GenomicRanges::makeGRangesFromDataFrame(
-        seqnames.field = "chromosome_name",
-        start.field = "start_position",
-        end.field = "end_position",
-        strand.field = "strand",
-        keep.extra.columns = TRUE
-      ) |>
-      GenomicRanges::sort()
+    df  # last evaluated expression returned
   })
 
-  # Name each GRanges with cell type
   names(gr_list_annot) <- names(rna_da)
-
-  # Drop NULLs (missing annotations)
   gr_list_annot <- Filter(Negate(is.null), gr_list_annot)
 
-  # Add `cell_type` metadata and merge into one GRanges object
-  combined_gr <- purrr::imap(gr_list_annot, ~ {
-    GenomicRanges::mcols(.x)$cell_type <- .y
-    .x
-  }) |>
-    purrr::reduce(c)
-
-  return(combined_gr)
+  combined_df <- do.call(rbind, gr_list_annot)
+  rownames(combined_df) <- NULL
+  return(combined_df)
 }
-
-
 
 
 
 #' Compute GETSI scores on RNA data
 #'
-#' @param gr GRanges object with RNA differential expression data (avg_log2FC, p_val, cell_type, symbol)
-#' @return GRanges with computed GETSI scores (GETSI column)
-#' @importFrom regioneR toGRanges
+#' @param rna_da Dataframe object with RNA differential expression data (avg_log2FC, p_val, cell_type, gene_id (gene_id, hgnc, ensembl_id...))
+#' @return Dataframe with computed GETSI scores (GETSI column)
 #' @import dplyr
 #' @export
 getsi <- function(rna_da) {
   rna_da_gr <- combine_gex_da(rna_da)
-  getsi_gr <- data.frame(rna_da_gr) |>
+
+  getsi_df <- data.frame(rna_da_gr) |>
     mutate(
-      region = paste0(seqnames, ":", start, "-", end),
       avg_FC = 2^(avg_log2FC),
       p_val_adj = p.adjust(p_val, method = "fdr")
     ) |>
-    group_by(symbol) |>
+    group_by(gene_id) |>
     mutate(
-      max_log2FC = max(avg_FC, na.rm = TRUE)
-      # max_log2FC = ifelse(max_log2FC == 0, 1e-6, max_log2FC)
+      max_FC = max(avg_FC, na.rm = TRUE)
     ) |>
-    ungroup() |>
+    dplyr::ungroup() |>
     group_by(cell_type) |>
     mutate(
       p_val_adj = ifelse(p_val_adj == 0, min(p_val_adj[p_val_adj > 0], na.rm=TRUE), p_val_adj),
       weight = scales::rescale(-log10(p_val_adj), to=c(0, 1))
     ) |>
-    group_by(cell_type, symbol) |>
+    group_by(cell_type, gene_id) |>
     mutate(
-      norm_log2FC = avg_FC / max_log2FC,
-      GETSI = (norm_log2FC * weight)
+      norm_FC = avg_FC / max_FC,
+      GETSI = (norm_FC * weight)
     ) |>
-    ungroup() |>
-    dplyr::select(-c(width, strand)) |>
-    data.frame() |>
-    regioneR::toGRanges()
-  return(getsi_gr)
+    dplyr::ungroup() |>
+    dplyr::select(gene_id, everything()) |>
+    data.frame()
+  return(getsi_df)
 }
 
 
 
 #' Compute normalized entropy of GETSI scores
 #'
-#' @param gr GRanges with GETSI scores and symbol column
-#' @return Data frame with symbol and norm_entropy columns
+#' @param getsi_df Dataframe with GETSI scores and gene_id column
+#' @return Data frame with gene_id gene_id and norm_entropy columns
 #' @import dplyr
 #' @export
-entropy_getsi <- function(getsi_gr) {
-  df <- data.frame(getsi_gr)
+entropy_getsi <- function(getsi_df) {
+  df <- data.frame(getsi_df)
   n_celltypes <- length(unique(df$cell_type))
 
   df <- df |>
-    group_by(symbol) |>
+    group_by(gene_id) |>
     mutate(
       GETSI_prob = GETSI / sum(GETSI, na.rm = TRUE),
       entropy_component = -GETSI_prob * log2(GETSI_prob)
@@ -174,32 +99,29 @@ entropy_getsi <- function(getsi_gr) {
 #'
 #' Computes gene expression tissue specificity (GETSI) scores and
 #' entropy from RNA-seq data. The input should be a named list of
-#' GRanges objects, each containing differential expression data for
+#' Dataframe objects, each containing differential expression data for
 #' one cell type.
 #'
-#' @param rna_da A named list of GRanges objects, typically one per cell type,
+#' @param rna_da A named list of Dataframe objects, typically one per cell type,
 #'   containing RNA differential expression data with columns such as
-#'   avg_log2FC, p_val, symbol, etc.
+#'   avg_log2FC, p_val, gene_id, etc.
 #'
-#' @return A GRanges object with GETSI scores and entropy values in the
+#' @return A Dataframe object with GETSI scores and entropy values in the
 #'   metadata columns.
 #'
 #' @export
 spicey_getsi <- function(rna_da) {
-  message("→ Combining, annotating, and computing GETSI scores...")
-  getsi_gr <- getsi(rna_da)
+  message("→ Computing GETSI scores...")
+  getsi_df <- getsi(rna_da)
 
   message("→ Computing entropy on GETSI scores...")
-  entropy_df <- entropy_getsi(getsi_gr)
+  entropy_df <- entropy_getsi(getsi_df)
 
   # Join entropy info with getsi results
-  getsi_final <- as.data.frame(getsi_gr) |>
-    dplyr::left_join(entropy_df, by = "symbol") |>
-    dplyr::select(-c(width, strand, avg_FC,
-                     max_log2FC, norm_log2FC,
-                     weight, entropy)) |>
-    regioneR::toGRanges()
-
-  # Return combined GRanges with GETSI and entropy columns
+  getsi_final <- as.data.frame(getsi_df) |>
+    dplyr::left_join(entropy_df, by = "gene_id") |>
+    dplyr::select(-c(avg_FC,
+                     max_FC, norm_FC,
+                     weight, entropy))
   return(getsi_final)
 }

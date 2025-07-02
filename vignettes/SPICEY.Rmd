@@ -196,24 +196,15 @@ We demonstrate how to use SPICEY with the prepared input files (explained in pre
 
 ## RETSI
 
-```{r retsi, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
+```{r retsi, message=FALSE, warning=FALSE}
 retsi <- spicey_retsi(atac)
-head(retsi)
-```
-
-```{r show-retsi, message=FALSE, warning=FALSE, echo = FALSE}
-data("retsi")
 head(retsi)
 ```
 
 ## GETSI
 
-```{r getsi, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
+```{r getsi, message=FALSE, warning=FALSE}
 getsi <- spicey_getsi(rna)
-```
-
-```{r show-getsi, message=FALSE, warning=FALSE, echo = FALSE}
-data("getsi")
 head(getsi)
 ```
 
@@ -221,12 +212,8 @@ head(getsi)
 
 ### Nearest gene mode
 
-```{r re-gene-nearest, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
+```{r re-gene-nearest, message=FALSE, warning=FALSE}
 retsi_gene_nearest <- annotate_with_nearest(retsi)
-```
-
-```{r show-re-gene-nearest, message=FALSE, warning=FALSE, echo=FALSE}
-data("retsi_gene_nearest")
 head(retsi_gene_nearest)
 ```
 
@@ -234,7 +221,7 @@ This mode links each peak to the nearest gene TSS.
 
 ### Co-accessibility mode
 
-```{r re-gene-coaccessibility, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
+```{r re-gene-coaccessibility, message=FALSE, warning=FALSE}
 
 # Filter links for high coaccessibility score
 coacc_links <- cicero_links |> 
@@ -253,10 +240,6 @@ retsi_gene_coacc <- annotate_with_coaccessibility(
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene,
   name_links = "HPAP")
 
-```
-
-```{r show-re-gene-coacc, message=FALSE, warning=FALSE, echo=FALSE}
-data("retsi_gene_coacc")
 head(retsi_gene_coacc)
 ```
 
@@ -326,7 +309,7 @@ For users who prefer detailed control and tracking of each step, running the com
 
     -   **`filter_promoter_distal`** (default: `TRUE`): Logical indicating whether to keep only promoter-distal interactions when filtering co-accessibility links.
 
-```{r spicey-all, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
+```{r spicey-all, message=FALSE, warning=FALSE}
 
 # Compute GETSI 
 results <- run_spicey(rna = rna)
