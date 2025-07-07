@@ -4,10 +4,10 @@
 \alias{link_spicey_nearest}
 \title{Link RETSI peaks with GETSI values from nearest genes}
 \usage{
-link_spicey_nearest(retsi, getsi)
+link_spicey_nearest(retsi_annotated_nearest, getsi)
 }
 \arguments{
-\item{retsi}{GRanges with RETSI scores and nearest genes.}
+\item{retsi_annotated_nearest}{GRanges with RETSI scores and nearest genes.}
 
 \item{getsi}{GRanges with GETSI scores by gene and cell type.}
 }

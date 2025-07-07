@@ -4,13 +4,13 @@
 \alias{entropy_getsi}
 \title{Compute normalized entropy of GETSI scores}
 \usage{
-entropy_getsi(getsi_gr)
+entropy_getsi(getsi_df)
 }
 \arguments{
-\item{gr}{GRanges with GETSI scores and symbol column}
+\item{getsi_df}{Dataframe with GETSI scores and gene_id column}
 }
 \value{
-Data frame with symbol and norm_entropy columns
+Data frame with gene_id gene_id and norm_entropy columns
 }
 \description{
 Compute normalized entropy of GETSI scores

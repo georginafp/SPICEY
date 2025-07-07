@@ -42,17 +42,35 @@ results <- run_spicey(atac=atac)
 results <- run_spicey(atac=atac, rna=rna)
 
 # Compute GETSI + RETSI and link RE to target genes through nearest gene method
-results <- run_spicey(rna = rna, atac=atac, link_method = "nearest")
+result <- run_spicey(
+  atac = atac, 
+  rna = rna, 
+  annot_method = "nearest", 
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+  annot_dbi = org.Hs.eg.db,
+  link_spicey_measures = TRUE
+)
 
 # Compute GETSI + RETSI and link RE to target genes through coaccessibility method
-results <- run_spicey(
-  atac = atac_data,
-  rna = rna_data,
-  link_method = "coaccessibility",
-  links = coaccessibility_links,
-  coaccess_cutoff_override = 0.25,  # default
-  filter_promoter_distal = TRUE     # default
+result <- run_spicey(
+  atac = atac, 
+  rna = rna, 
+  annot_method = "coaccessibility",
+  links = coaccess_links,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene
 )
+
+# Compute GETSI + RETSI and link RE to target genes through coaccessibility method
+# and link both SPICEY measures
+result <- run_spicey(
+  atac = atac, 
+  rna = rna, 
+  link_spicey_measures = TRUE,
+  annot_method = "coaccessibility",
+  links = coaccess_links,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+)
+
 ```
 
 ## Code of Conduct

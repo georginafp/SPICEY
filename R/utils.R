@@ -4,8 +4,8 @@
 #' @param keep_mito Logical, whether to keep mitochondrial/plastid contigs.
 #' @param include_only Optional character vector of seqlevels to force-include (manual override).
 #' @param verbose Logical, print what is kept/removed.
-#'
 #' @return Character vector of filtered seqlevels.
+#' @export
 get_main_seqlevels <- function(txdb,
                                keep_mito = FALSE,
                                include_only = NULL,

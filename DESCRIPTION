@@ -26,6 +26,7 @@ Depends:
     grDevices
 Imports: 
     GenomicRanges,
+    GenomicFeatures,
     dplyr,
     tidyr,
     regioneR,
@@ -43,6 +44,7 @@ Imports:
     BiocParallel,
     ChIPseeker,
     org.Hs.eg.db,
+    TxDb.Hsapiens.UCSC.hg38.knownGene, 
     devtools, 
     pkgdown,
     roxygen2,

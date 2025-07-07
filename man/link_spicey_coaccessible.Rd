@@ -4,24 +4,24 @@
 \alias{link_spicey_coaccessible}
 \title{Link RETSI peaks with GETSI values from coaccessibility}
 \usage{
-link_spicey_coaccessible(re, getsi)
+link_spicey_coaccessible(retsi_annotated_coacc, getsi)
 }
 \arguments{
-\item{re}{A data.frame or tibble containing RETSI results with at least the columns:
-\itemize{
-\item \code{genes_HPAP}: gene symbols
-\item \code{cell_type}
-\item \code{norm_entropy}
-\item \code{seqnames}, \code{start}, \code{end}, \code{annotation}, \code{distanceToTSS}, \code{region}, \code{RETSI}
-}}
-
 \item{getsi}{A data.frame or tibble containing GETSI results with at least the columns:
 \itemize{
-\item \code{symbol}: gene symbol
+\item \code{gene_id}: gene gene_id
 \item \code{cell_type}
 \item \code{GETSI}
 \item \code{norm_entropy}
 \item \code{seqnames}, \code{start}, \code{end}
+}}
+
+\item{re}{A data.frame or tibble containing RETSI results with at least the columns:
+\itemize{
+\item \code{gene_coacc}: gene symbols of the coaccessible gene to that region
+\item \code{cell_type}
+\item \code{norm_entropy}
+\item \code{seqnames}, \code{start}, \code{end}, \code{annotation}, \code{distanceToTSS}, \code{region}, \code{RETSI}
 }}
 }
 \value{
@@ -33,10 +33,4 @@ This function combines GETSI (Gene Expression Tissue Specificity Index)
 data with RETSI (Regulatory Element Tissue Specificity Index) results,
 matching on gene symbols and cell types. It renames entropy columns,
 performs joins to merge relevant annotations, and resolves coordinate conflicts.
-}
-\examples{
-\dontrun{
-combined_df <- link_spicey_coaccessible(re, getsi)
-}
-
 }

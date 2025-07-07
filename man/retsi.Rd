@@ -2,16 +2,22 @@
 % Please edit documentation in R/retsi.R
 \name{retsi}
 \alias{retsi}
-\title{Compute RETSI scores on ATAC peaks}
+\title{Compute RETSI scores for differential chromatin accessibility data}
 \usage{
 retsi(atac_da)
 }
 \arguments{
-\item{atac_da}{GRanges object with differential accessibility info (avg_log2FC, p_val, cell_type columns)}
+\item{atac_da}{A named list where each element corresponds to a cell type and contains either:
+\itemize{
+\item A \code{GRanges} object with differential peaks and metadata columns: \code{avg_log2FC}, \code{p_val}
+\item A \code{data.frame} with the same structure, including a \code{cell_type} column
+}}
 }
 \value{
-GRanges with computed RETSI scores (RETSI column)
+A data.frame with RETSI scores per region and cell type. Includes columns:
+\code{region}, \code{RETSI}, and supporting metadata.
 }
 \description{
-Compute RETSI scores on ATAC peaks
+This function calculates the Regulatory Element Tissue Specificity Index (RETSI)
+from a list of differential accessibility results (either as GRanges or data.frames).
 }

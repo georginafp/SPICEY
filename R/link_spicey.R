@@ -24,12 +24,6 @@
 #'
 #' @import dplyr
 #' @importFrom dplyr coalesce
-#'
-#' @examples
-#' \dontrun{
-#' combined_df <- link_spicey_coaccessible(retsi_annotated_coacc, getsi)
-#' }
-#'
 #' @export
 link_spicey_coaccessible <- function(retsi_annotated_coacc, getsi) {
   message("→ Link SPICEY measures from coaccessibility...")

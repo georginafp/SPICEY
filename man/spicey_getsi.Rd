@@ -7,17 +7,17 @@
 spicey_getsi(rna_da)
 }
 \arguments{
-\item{rna_da}{A named list of GRanges objects, typically one per cell type,
+\item{rna_da}{A named list of Dataframe objects, typically one per cell type,
 containing RNA differential expression data with columns such as
-avg_log2FC, p_val, symbol, etc.}
+avg_log2FC, p_val, gene_id, etc.}
 }
 \value{
-A GRanges object with GETSI scores and entropy values in the
+A Dataframe object with GETSI scores and entropy values in the
 metadata columns.
 }
 \description{
 Computes gene expression tissue specificity (GETSI) scores and
 entropy from RNA-seq data. The input should be a named list of
-GRanges objects, each containing differential expression data for
+Dataframe objects, each containing differential expression data for
 one cell type.
 }

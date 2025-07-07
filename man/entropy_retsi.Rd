@@ -2,16 +2,18 @@
 % Please edit documentation in R/retsi.R
 \name{entropy_retsi}
 \alias{entropy_retsi}
-\title{Compute normalized entropy of RETSI scores}
+\title{Compute entropy of RETSI scores per regulatory region}
 \usage{
 entropy_retsi(retsi)
 }
 \arguments{
-\item{gr}{GRanges with RETSI scores and region column}
+\item{retsi}{A data.frame output from \code{retsi()} containing \code{region},
+\code{cell_type}, and \code{RETSI} columns.}
 }
 \value{
-Data frame with region and norm_entropy columns
+A data.frame with columns: \code{region} and \code{norm_entropy}.
 }
 \description{
-Compute normalized entropy of RETSI scores
+Calculates normalized entropy based on RETSI scores across cell types,
+providing a measure of cell-type specificity per region.
 }

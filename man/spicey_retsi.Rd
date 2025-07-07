@@ -2,27 +2,20 @@
 % Please edit documentation in R/retsi.R
 \name{spicey_retsi}
 \alias{spicey_retsi}
-\title{Compute RETSI scores from a List of GRanges representing scATAC-seq peaks per cell type}
+\title{Compute RETSI scores and entropy for scATAC-seq regulatory elements}
 \usage{
 spicey_retsi(atac_da)
 }
 \arguments{
-\item{atac_list}{List of GRanges objects, each containing peaks (regulatory elements) per cell type}
+\item{atac_da}{A named list of GRanges or data.frames (one per cell type),
+each with differential accessibility metrics including \code{avg_log2FC} and \code{p_val}.}
 }
 \value{
-A GRanges object with RETSI scores and entropy annotations
+A data.frame with RETSI scores and normalized entropy for each region,
+including \code{region}, \code{cell_type}, \code{RETSI}, and \code{norm_entropy}.
 }
 \description{
-Compute RETSI scores from a List of GRanges representing scATAC-seq peaks per cell type
-}
-\details{
-The function expects a list of GRanges (e.g. one GRanges per cell type or condition).
-It combines the list into a single GRanges, computes RETSI scores and entropy,
-then returns a GRanges with added metadata columns.
-}
-\examples{
-\dontrun{
-atac_list <- list(celltype1 = gr1, celltype2 = gr2)
-retsi_gr <- spicey_retsi(atac_list)
-}
+This is a wrapper function that takes a list of per-cell-type differential accessibility results
+(as GRanges or data.frames), computes RETSI scores, and adds a normalized entropy score
+to quantify cell-type specificity of each regulatory region.
 }

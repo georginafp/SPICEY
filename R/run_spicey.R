@@ -1,3 +1,27 @@
+#' Run the full SPICEY pipeline
+#'
+#' This function runs the SPICEY pipeline to compute tissue specificity scores
+#' from single-cell ATAC-seq (RETSI) and/or RNA-seq (GETSI) data. It optionally
+#' links regulatory elements to genes using either nearest-gene or co-accessibility
+#' based annotation, and can combine RETSI and GETSI values for downstream integration.
+#'
+#' @param atac A Seurat or SummarizedExperiment object containing scATAC-seq data.
+#' @param rna A Seurat or SummarizedExperiment object containing scRNA-seq data.
+#' @param annot_method Method for region-to-gene annotation: "nearest" or "coaccessibility".
+#' @param links Co-accessibility links (e.g., from Cicero or ArchR) for co-accessibility annotation.
+#' @param link_spicey_measures Logical; whether to link RETSI and GETSI via annotated genes.
+#' @param coaccess_cutoff_override Minimum co-accessibility score to retain links (default: 0.25).
+#' @param filter_promoter_distal Logical; whether to exclude promoter-proximal links (default: TRUE).
+#' @param filter_protein_coding Logical; whether to filter to protein-coding genes only (default: TRUE).
+#' @param txdb A TxDb object for genomic annotations.
+#' @param keep_mito Logical; whether to keep mitochondrial regions (default: FALSE).
+#' @param annot_dbi Optional AnnotationDbi object for additional gene info (e.g., gene symbols).
+#' @param add_tss_annotation Logical; whether to include TSS annotation columns in the output (default: FALSE).
+#' @param verbose Logical; whether to print messages during execution (default: TRUE).
+#'
+#' @return A tibble or list containing RETSI, GETSI, and/or linked results depending on input and parameters.
+#'
+#' @export
 run_spicey <- function(atac = NULL,
                        rna = NULL,
                        annot_method = NULL,

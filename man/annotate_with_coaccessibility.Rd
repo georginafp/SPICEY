@@ -2,22 +2,55 @@
 % Please edit documentation in R/annotate_re_genes.R
 \name{annotate_with_coaccessibility}
 \alias{annotate_with_coaccessibility}
-\title{Annotate regulatory elements with gene targets using co-accessibility links}
+\title{Annotate Regulatory Elements with Gene Targets Using Co-Accessibility Links}
 \usage{
-annotate_with_coaccessibility(links, re, txdb, name_links = "HPAP")
+annotate_with_coaccessibility(
+  links,
+  retsi,
+  txdb,
+  annot_dbi,
+  protein_coding_only = TRUE,
+  keep_mito = FALSE,
+  verbose = TRUE,
+  coaccess_cutoff_override = 0.25,
+  filter_promoter_distal = TRUE,
+  add_tss_annotation = TRUE
+)
 }
 \arguments{
-\item{links}{GInteractions with CCAN metadata}
+\item{links}{A \code{GInteractions} object representing co-accessibility links with CCAN metadata.}
 
-\item{re}{GRanges of regulatory elements with 'region' column}
+\item{retsi}{A \code{GRanges} or \code{data.frame} object representing regulatory elements to annotate.
+If a data.frame, must contain columns sufficient to construct \code{GRanges} (e.g., seqnames, start, end).}
 
-\item{txdb}{TxDb object for promoter extraction}
+\item{txdb}{A \code{TxDb} object used to extract promoter regions and TSS annotations.}
 
-\item{name_links}{Character suffix for gene link metadata column (default "HPAP")}
+\item{annot_dbi}{An \code{AnnotationDbi} annotation database object (e.g., \code{org.Hs.eg.db}) for mapping gene IDs to gene symbols and types.}
+
+\item{protein_coding_only}{Logical indicating whether to restrict promoter regions to protein-coding genes only (default: \code{TRUE}).}
+
+\item{keep_mito}{Logical indicating whether to keep mitochondrial (chrM/MT) chromosomes in promoter extraction (default: \code{FALSE}).}
+
+\item{verbose}{Logical; if \code{TRUE}, informative messages are printed during processing (default: \code{TRUE}).}
+
+\item{coaccess_cutoff_override}{Numeric; co-accessibility score cutoff to override default filtering in \code{annotate_links_with_ccans} (default: \code{0.25}).}
+
+\item{filter_promoter_distal}{Logical; whether to filter links to retain only promoter-distal interactions (default: \code{TRUE}).}
+
+\item{add_tss_annotation}{Logical; whether to annotate regulatory elements overlapping TSS directly (default: \code{TRUE}).}
 }
 \value{
-GRanges of regulatory elements with un-nested gene annotations
+A \code{data.frame} with regulatory elements annotated with:
+\itemize{
+\item Distance to nearest TSS and promoter/distal classification
+\item Co-accessible gene targets
+\item Optional: TSS overlap and TSS gene symbol
+}
 }
 \description{
-Annotate regulatory elements with gene targets using co-accessibility links
+This function annotates regulatory elements (REs) with their putative gene targets by integrating
+co-accessibility links that include CCAN (co-accessibility networks) metadata. It extracts promoter
+regions from a TxDb object, optionally filters for protein-coding genes, and links REs to genes
+based on chromatin co-accessibility. Optionally, REs overlapping a transcription start site (TSS)
+can also be annotated directly.
 }

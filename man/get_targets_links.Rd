@@ -4,16 +4,14 @@
 \alias{get_targets_links}
 \title{Link regulatory elements to genes based on shared CCAN membership}
 \usage{
-get_targets_links(links, re, proms, name_links = "HPAP")
+get_targets_links(links, re, proms)
 }
 \arguments{
 \item{links}{GInteractions with CCAN metadata}
 
 \item{re}{GRanges of regulatory elements with 'region' column}
 
-\item{proms}{GRanges of promoters with 'symbol' column}
-
-\item{name_links}{Character suffix for metadata column name (default "HPAP")}
+\item{proms}{GRanges of promoters with 'gene_id' column}
 }
 \value{
 GRanges of regulatory elements annotated with linked genes

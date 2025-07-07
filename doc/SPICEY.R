@@ -3,6 +3,9 @@
 library(dplyr)
 library(GenomicRanges)
 library(cicero)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Hs.eg.db)
+
 
 knitr::opts_chunk$set(
     collapse = TRUE,
@@ -20,65 +23,50 @@ library(SPICEY)
 knitr::include_graphics("../man/figures/logo_spicey.png", dpi = 800)
 
 ## ----install, eval=FALSE, echo=TRUE-------------------------------------------
-# 
 # install.packages("devtools")
 # devtools::install_github("georginafp/SPICEY")
-# 
 
-## ----show-da-atac, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE--------
-# data("atac")
+## ----da-atac, message=FALSE, warning=FALSE------------------------------------
+data("atac")
 
-## ----show-da-rna, message=FALSE, warning=FALSE,eval=FALSE, echo=TRUE----------
-# data("rna")
+## ----da-rna, message=FALSE, warning=FALSE-------------------------------------
+data("rna")
 
-## ----links, message=FALSE, warning=FALSE,eval=FALSE, echo=TRUE----------------
-# data("cicero_links")
-# head(cicero_links)
+## ----links, message=FALSE, warning=FALSE--------------------------------------
+data("cicero_links")
+head(cicero_links)
 
-## ----retsi, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE---------------
-# retsi <- spicey_retsi(atac)
-# head(retsi)
-
-## ----show-retsi, message=FALSE, warning=FALSE, echo = FALSE-------------------
-data("retsi")
+## ----retsi, message=FALSE, warning=FALSE--------------------------------------
+retsi <- spicey_retsi(atac)
 head(retsi)
 
-## ----getsi, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE---------------
-# getsi <- spicey_getsi(rna)
-
-## ----show-getsi, message=FALSE, warning=FALSE, echo = FALSE-------------------
-data("getsi")
+## ----getsi, message=FALSE, warning=FALSE--------------------------------------
+getsi <- spicey_getsi(rna)
 head(getsi)
 
-## ----re-gene-nearest, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE-----
-# retsi_gene_nearest <- annotate_with_nearest(retsi)
+## ----re-gene-nearest, message=FALSE, warning=FALSE----------------------------
+retsi_gene_nearest <- annotate_with_nearest(
+  retsi = retsi,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  annot_dbi = org.Hs.eg.db::org.Hs.eg.db
+)
 
-## ----show-re-gene-nearest, message=FALSE, warning=FALSE, echo=FALSE-----------
-data("retsi_gene_nearest")
 head(retsi_gene_nearest)
 
-## ----re-gene-coaccessibility, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE----
-# 
-# # Filter links for high coaccessibility score
-# coacc_links <- cicero_links |>
-#   dplyr::filter(coaccess > 0.5)
-# 
-# # Annotate links with CCANs and filter for Promoter-Distal interactions
-# links <- annotate_links_with_ccans(
-#   links = coacc_links,
-#   coaccess_cutoff_override = 0.25,
-#   filter_promoter_distal = TRUE,
-#   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene)
-# 
-# retsi_gene_coacc <- annotate_with_coaccessibility(
-#   re = retsi,
-#   links = links,
-#   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene,
-#   name_links = "HPAP")
-# 
+## ----re-gene-coaccessibility, message=FALSE, warning=FALSE--------------------
 
-## ----show-re-gene-coacc, message=FALSE, warning=FALSE, echo=FALSE-------------
-data("retsi_gene_coacc")
+# Filter links for high coaccessibility score
+coacc_links <- cicero_links |> 
+  dplyr::filter(coaccess > 0.5)
+
+retsi_gene_coacc <- annotate_with_coaccessibility(
+  links = coacc_links,
+  retsi = retsi,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+  coaccess_cutoff_override = 0.25
+  )
+
 head(retsi_gene_coacc)
 
 ## ----spicey-nearest, message=FALSE, warning=FALSE-----------------------------
@@ -89,30 +77,29 @@ head(spicey_nearest)
 spicey_coacc <- link_spicey_coaccessible(retsi_gene_coacc, getsi)
 head(spicey_coacc)
 
-## ----spicey-all, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE----------
-# 
-# # Compute GETSI
-# results <- run_spicey(rna = rna)
-# 
-# # Compute RETSI
-# results <- run_spicey(atac=atac)
-# 
-# # Compute GETSI + RETSI
-# results <- run_spicey(atac=atac, rna=rna)
-# 
-# # Compute GETSI + RETSI and link RE to target genes through nearest gene method
-# results <- run_spicey(rna = rna, atac=atac, link_method = "nearest")
-# 
-# # Compute GETSI + RETSI and link RE to target genes through coaccessibility method
-# results <- run_spicey(
-#   atac = atac_data,
-#   rna = rna_data,
-#   link_method = "coaccessibility",
-#   links = coaccessibility_links,
-#   coaccess_cutoff_override = 0.25,
-#   filter_promoter_distal = TRUE
-# )
-# 
+## ----spicey-all, message=FALSE, warning=FALSE---------------------------------
+
+spicey_nearest <- run_spicey(
+  atac = atac, 
+  rna = rna, 
+  annot_method = "nearest", 
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+  link_spicey_measures = TRUE
+)
+head(spicey_nearest)
+
+spicey_coacc <- run_spicey(
+  atac = atac,
+  rna = rna,
+  annot_method = "coaccessibility",
+  links = coacc_links,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+  coaccess_cutoff_override = 0.25,
+  link_spicey_measures = TRUE
+)
+head(spicey_coacc)
 
 ## ----plot---------------------------------------------------------------------
 

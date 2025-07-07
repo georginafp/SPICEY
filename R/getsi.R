@@ -7,9 +7,6 @@
 #'   and contains differential expression results with genes as row names.
 #' @return A single data frame combining all input differential expression results,
 #'   with added columns for gene ids and cell types.
-#' @examples
-#' # Assuming rna_da is a named list of DESeq2 or Seurat DE results per cell type:
-#' combined_df <- combine_gex_da(rna_da)
 #' @export
 combine_gex_da <- function(rna_da) {
   gr_list_annot <- lapply(names(rna_da), function(cell_type) {

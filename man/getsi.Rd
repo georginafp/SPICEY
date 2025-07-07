@@ -7,10 +7,10 @@
 getsi(rna_da)
 }
 \arguments{
-\item{gr}{GRanges object with RNA differential expression data (avg_log2FC, p_val, cell_type, symbol)}
+\item{rna_da}{Dataframe object with RNA differential expression data (avg_log2FC, p_val, cell_type, gene_id (gene_id, hgnc, ensembl_id...))}
 }
 \value{
-GRanges with computed GETSI scores (GETSI column)
+Dataframe with computed GETSI scores (GETSI column)
 }
 \description{
 Compute GETSI scores on RNA data

@@ -2,28 +2,20 @@
 % Please edit documentation in R/getsi.R
 \name{combine_gex_da}
 \alias{combine_gex_da}
-\title{Annotate and Filter Gene Expression Differential Data, Return GRanges}
+\title{Combine Differential Expression Results Across Cell Types}
 \usage{
 combine_gex_da(rna_da)
 }
 \arguments{
-\item{rna_da}{A named list of data frames, where each element corresponds to a cell type
-and contains differential gene expression results. Row names should be gene symbols.}
+\item{rna_da}{A named list of data frames. Each element corresponds to a cell type
+and contains differential expression results with genes as row names.}
 }
 \value{
-A single GRanges object combining all annotated genes, with metadata columns
-including differential statistics and a \code{cell_type} column.
+A single data frame combining all input differential expression results,
+with added columns for gene ids and cell types.
 }
 \description{
-This function takes a named list of gene expression differential analysis results
-(typically one data frame per cell type). It maps gene symbols to Ensembl IDs,
-joins with genomic coordinates from Biomart, filters to protein-coding genes
-on canonical chromosomes, converts to a GRanges object, and adds a \code{cell_type}
-metadata column based on the list name.
-}
-\examples{
-\dontrun{
-combined_gr <- combine_gex_da(rna_da)
-}
-
+This function takes a list of differential expression data frames (from scRNA-seq)
+for multiple cell types and combines them into a single annotated data frame.
+Each data frame should contain gene-level statistics (e.g., log2FC, p-value).
 }

@@ -91,13 +91,6 @@ entropy_retsi <- function(retsi) {
 #'
 #' @return A data.frame with RETSI scores and normalized entropy for each region,
 #'   including \code{region}, \code{cell_type}, \code{RETSI}, and \code{norm_entropy}.
-#'
-#' @examples
-#' \dontrun{
-#' atac_list <- list(Beta = beta_gr, Alpha = alpha_gr)
-#' retsi_results <- spicey_retsi(atac_list)
-#' }
-#'
 #' @export
 spicey_retsi <- function(atac_da) {
   # Validate input

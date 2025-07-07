@@ -2,71 +2,57 @@
 % Please edit documentation in R/run_spicey.R
 \name{run_spicey}
 \alias{run_spicey}
-\title{Run full SPICEY pipeline: compute RETSI and GETSI, annotate regulatory elements, and link measures}
+\title{Run the full SPICEY pipeline}
 \usage{
 run_spicey(
   atac = NULL,
   rna = NULL,
-  link_method = NULL,
+  annot_method = NULL,
   links = NULL,
+  link_spicey_measures = FALSE,
   coaccess_cutoff_override = 0.25,
-  filter_promoter_distal = TRUE
+  filter_promoter_distal = TRUE,
+  filter_protein_coding = TRUE,
+  txdb = NULL,
+  keep_mito = FALSE,
+  annot_dbi = NULL,
+  add_tss_annotation = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
-\item{atac}{A \code{GRanges} or \code{data.frame} convertible to \code{GRanges} containing differential accessibility results. Must include \code{seqnames}, \code{start}, \code{end}, \code{avg_log2FC}, \code{p_val}, and \code{cell_type} columns.}
+\item{atac}{A Seurat or SummarizedExperiment object containing scATAC-seq data.}
 
-\item{rna}{A \code{GRanges} or \code{data.frame} convertible to \code{GRanges} containing differential expression results. Must include \code{seqnames}, \code{start}, \code{end}, \code{avg_log2FC}, \code{p_val}, and \code{cell_type} columns.}
+\item{rna}{A Seurat or SummarizedExperiment object containing scRNA-seq data.}
 
-\item{link_method}{Character string specifying the linking method. One of \code{"nearest"} or \code{"coaccessibility"}. If \code{NULL} (default), linking is not performed.}
+\item{annot_method}{Method for region-to-gene annotation: "nearest" or "coaccessibility".}
 
-\item{links}{Optional. A \code{data.frame} or \code{GRangesList} of co-accessibility links. Required if \code{link_method = "coaccessibility"}.}
+\item{links}{Co-accessibility links (e.g., from Cicero or ArchR) for co-accessibility annotation.}
 
-\item{coaccess_cutoff_override}{Numeric scalar. Co-accessibility score cutoff used to filter links. Default is \code{0.25}.}
+\item{link_spicey_measures}{Logical; whether to link RETSI and GETSI via annotated genes.}
 
-\item{filter_promoter_distal}{Logical. Whether to filter links to keep only promoter-distal interactions when using co-accessibility. Default is \code{TRUE}.}
+\item{coaccess_cutoff_override}{Minimum co-accessibility score to retain links (default: 0.25).}
+
+\item{filter_promoter_distal}{Logical; whether to exclude promoter-proximal links (default: TRUE).}
+
+\item{filter_protein_coding}{Logical; whether to filter to protein-coding genes only (default: TRUE).}
+
+\item{txdb}{A TxDb object for genomic annotations.}
+
+\item{keep_mito}{Logical; whether to keep mitochondrial regions (default: FALSE).}
+
+\item{annot_dbi}{Optional AnnotationDbi object for additional gene info (e.g., gene symbols).}
+
+\item{add_tss_annotation}{Logical; whether to include TSS annotation columns in the output (default: FALSE).}
+
+\item{verbose}{Logical; whether to print messages during execution (default: TRUE).}
 }
 \value{
-A list containing:
-\describe{
-\item{retsi}{Data frame with computed RETSI scores if \code{atac} provided.}
-\item{getsi}{Data frame with computed GETSI scores if \code{rna} provided.}
-\item{linking}{Data frame linking RETSI and GETSI scores if \code{link_method} specified.}
-}
+A tibble or list containing RETSI, GETSI, and/or linked results depending on input and parameters.
 }
 \description{
-This function performs the complete SPICEY pipeline workflow:
-\enumerate{
-\item Computes Regulatory Element Tissue Specificity Index (RETSI) from scATAC-seq differential accessibility results.
-\item Computes Gene Expression Tissue Specificity Index (GETSI) from scRNA-seq differential expression results.
-\item Annotates regulatory elements (RE) with nearest genes.
-\item Optionally annotates RE with co-accessible target genes if \code{link_method = "coaccessibility"}.
-\item Links RETSI and GETSI scores either by nearest gene or co-accessibility links.
-}
-}
-\examples{
-\dontrun{
-# Compute GETSI only
-results <- run_spicey_pipeline(rna = rna_data)
-
-# Compute RETSI only
-results <- run_spicey_pipeline(atac = atac_data)
-
-# Compute both GETSI and RETSI without linking
-results <- run_spicey_pipeline(atac = atac_data, rna = rna_data)
-
-# Compute both and link with nearest gene method
-results <- run_spicey_pipeline(atac = atac_data, rna = rna_data, link_method = "nearest")
-
-# Compute both and link with co-accessibility method
-results <- run_spicey_pipeline(
-  atac = atac_data,
-  rna = rna_data,
-  link_method = "coaccessibility",
-  links = coaccessibility_links,
-  coaccess_cutoff_override = 0.3,
-  filter_promoter_distal = TRUE
-)
-}
-
+This function runs the SPICEY pipeline to compute tissue specificity scores
+from single-cell ATAC-seq (RETSI) and/or RNA-seq (GETSI) data. It optionally
+links regulatory elements to genes using either nearest-gene or co-accessibility
+based annotation, and can combine RETSI and GETSI values for downstream integration.
 }

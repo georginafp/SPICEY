@@ -16,6 +16,9 @@ vignette: >
 library(dplyr)
 library(GenomicRanges)
 library(cicero)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Hs.eg.db)
+
 
 knitr::opts_chunk$set(
     collapse = TRUE,
@@ -101,10 +104,8 @@ where:
 Install the development version from GitHub:
 
 ```{r install, eval=FALSE, echo=TRUE}
-
 install.packages("devtools")
 devtools::install_github("georginafp/SPICEY")
-
 ```
 
 # Input Requirements
@@ -125,17 +126,9 @@ SPICEY requires carefully prepared input files representing processed single-cel
 
     -   `cell_type` — cell type or cluster label associated with each differential measurement.
 
--   **Optional columns:**
-
-    -   `annotation` — genomic annotation of the peak (e.g., promoter, enhancer)
-
-    -   `distanceToTSS` — distance from peak to nearest transcription start site.
-
-    -   `nearest_gene` — gene symbol/name of the closest gene to the peak. Required for linking regulatory elements based on the nearest gene.
-
 The **ATAC peaks input** must include **multiple rows per peak** representing differential statistics for each cell type. For example, the same peak may appear with different `avg_log2FC`, `p_val`, and `cell_type` values reflecting its differential accessibility in each cell type.
 
-```{r show-da-atac, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
+```{r da-atac, message=FALSE, warning=FALSE}
 data("atac")
 ```
 
@@ -145,7 +138,7 @@ data("atac")
 
 -   **Required columns:**
 
-    -   `seqnames`, `start`, `end` — genomic coordinates of the gene
+    -   `symbol` — identifier of the gene.
 
     -   `avg_log2FC` — average log2 fold-change of chromatin accessibility for the peak in a specific cell type (output from differential accessibility analysis).
 
@@ -153,17 +146,13 @@ data("atac")
 
     -   `cell_type` — cell type or cluster label associated with each differential measurement.
 
--   **Optional columns:**
-
-    -   `symbol` — identifier of the gene (official gene symbol). Required for linking regulatory elements based on the nearest gene.
-
 The RNA input must represent differential expression results, i.e., statistics computed for each gene across cell types.
 
-```{r show-da-rna, message=FALSE, warning=FALSE,eval=FALSE, echo=TRUE}
+```{r da-rna, message=FALSE, warning=FALSE}
 data("rna")
 ```
 
-## 3. Co-accessibility Links (optional, for region to gene linking mode)
+## 3. Co-accessibility Links (optional, for region-to-gene linking mode)
 
 -   **Purpose:** To link regulatory elements based on co-accessibility inferred from tools like Signac’s `LinkPeaks()`. This supports integrative analysis of regulatory elements and gene expression.
 
@@ -185,114 +174,18 @@ data("rna")
 
 The peaks referenced here **must match** exactly those in the ATAC peaks input (same coordinates or peak IDs).
 
-```{r links, message=FALSE, warning=FALSE,eval=FALSE, echo=TRUE}
+```{r links, message=FALSE, warning=FALSE}
 data("cicero_links")
 head(cicero_links)
 ```
 
 # Example: Run SPICEY step-by-step
 
-We demonstrate how to use SPICEY with the prepared input files (explained in previous sections).
+This section demonstrates how to run SPICEY using prepared input files, as described in earlier sections.
 
-## RETSI
+## Computing RETSI
 
-```{r retsi, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
-retsi <- spicey_retsi(atac)
-head(retsi)
-```
-
-```{r show-retsi, message=FALSE, warning=FALSE, echo = FALSE}
-data("retsi")
-head(retsi)
-```
-
-## GETSI
-
-```{r getsi, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
-getsi <- spicey_getsi(rna)
-```
-
-```{r show-getsi, message=FALSE, warning=FALSE, echo = FALSE}
-data("getsi")
-head(getsi)
-```
-
-## Linking regulatory regions to target genes
-
-### Nearest gene mode
-
-```{r re-gene-nearest, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
-retsi_gene_nearest <- annotate_with_nearest(retsi)
-```
-
-```{r show-re-gene-nearest, message=FALSE, warning=FALSE, echo=FALSE}
-data("retsi_gene_nearest")
-head(retsi_gene_nearest)
-```
-
-This mode links each peak to the nearest gene TSS.
-
-### Co-accessibility mode
-
-```{r re-gene-coaccessibility, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
-
-# Filter links for high coaccessibility score
-coacc_links <- cicero_links |> 
-  dplyr::filter(coaccess > 0.5)
-
-# Annotate links with CCANs and filter for Promoter-Distal interactions
-links <- annotate_links_with_ccans(
-  links = coacc_links,
-  coaccess_cutoff_override = 0.25,
-  filter_promoter_distal = TRUE,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene)
-
-retsi_gene_coacc <- annotate_with_coaccessibility(
-  re = retsi,
-  links = links,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene,
-  name_links = "HPAP")
-
-```
-
-```{r show-re-gene-coacc, message=FALSE, warning=FALSE, echo=FALSE}
-data("retsi_gene_coacc")
-head(retsi_gene_coacc)
-```
-
-## Tissue specific regulatory networks
-
-By associating both SPICEY measures:
-
-### Using nearest gene annotation method
-
-```{r spicey-nearest, message=FALSE, warning=FALSE}
-spicey_nearest <- link_spicey_nearest(retsi_gene_nearest, getsi)
-head(spicey_nearest)
-```
-
-### Using co-accessibility annotation method
-
-```{r spicey-coaccessibility, message=FALSE, warning=FALSE}
-spicey_coacc <- link_spicey_coaccessible(retsi_gene_coacc, getsi)
-head(spicey_coacc)
-```
-
-# Example: Run SPICEY whole pipeline
-
-While each step of the SPICEY workflow—such as computing RETSI, GETSI, or performing linking methods—can be run independently using their respective functions (as described in previous sections), we have also developed a convenient wrapper function `run_spicey()` that streamlines the entire analysis into a single call, automatically handling all necessary computations based on the input data provided.
-
-This approach is especially useful for users who want to execute the full pipeline in a straightforward and reproducible manner, without manually managing each intermediate step. It accepts ATAC and/or RNA differential analysis results data as input, and optionally a linking method ("nearest" or "coaccessibility") along with required additional inputs (e.g., links for coaccessibility). Depending on which data and parameters are supplied, the function dynamically performs:
-
--   **RETSI** calculation (when ATAC data is provided).
--   **GETSI** calculation (when RNA data is provided).
--   **Linking regulatory elements to target genes** (if both data types and a linking method are provided).
-
-By returning all intermediate and final results in a structured list, this wrapper allows users to easily access and inspect each step’s output if desired.
-
-For users who prefer detailed control and tracking of each step, running the component functions separately remains fully supported and encouraged.
-
-**Arguments**
+To calculate the **Regulatory Element Tissue Specificity Index (RETSI)**, the following input is required:
 
 -   **`atac`** : A `GRanges` object or data frame convertible to `GRanges` containing differential accessibility results from scATAC-seq data. Required columns:
 
@@ -304,9 +197,18 @@ For users who prefer detailed control and tracking of each step, running the com
 
     -   `cell_type`: Cell type or cluster label
 
+```{r retsi, message=FALSE, warning=FALSE}
+retsi <- spicey_retsi(atac)
+head(retsi)
+```
+
+## Computing GETSI
+
+To calculate the **Gene Expression Tissue Specificity Index (GETSI)**, the required input is:
+
 -   **`rna`**: A `GRanges` object or data frame convertible to `GRanges` containing differential expression results from scRNA-seq data. Required columns are similar to those for `atac` but relevant for gene expression.
 
-    -   `seqnames`, `start`, `end`: Genomic coordinates of peaks
+    -   `symbol` — identifier of the gene.
 
     -   `avg_log2FC`: Average log2 fold-change of accessibility for each peak
 
@@ -314,52 +216,245 @@ For users who prefer detailed control and tracking of each step, running the com
 
     -   `cell_type`: Cell type or cluster label
 
--   **`link_method`**: Character string specifying the linking method between regulatory elements (REs) and target genes. Options are:
+```{r getsi, message=FALSE, warning=FALSE}
+getsi <- spicey_getsi(rna)
+head(getsi)
+```
 
-    -   `"nearest"` (default): Links REs to their nearest gene
+## Annotating Regulatory Elements to Target Genes
 
-    -   `"coaccessibility"`: Uses co-accessibility links to assign target genes
+SPICEY allows you to annotate regulatory elements to their putative target genes using one of two methods:
 
-    -   **`links`**: Required if `link_method = "coaccessibility"`. A data frame or `GRangesList` containing co-accessibility links with scores and peak pairs.
+#### 1. Nearest Gene Annotation
 
-    -   **`coaccess_cutoff_override`** (default: `0.25`): Numeric value to filter co-accessibility links by minimum co-accessibility score. Links below this threshold are filtered out.
+This mode links each regulatory region to its nearest gene TSS.
 
-    -   **`filter_promoter_distal`** (default: `TRUE`): Logical indicating whether to keep only promoter-distal interactions when filtering co-accessibility links.
+**Required inputs:**
 
-```{r spicey-all, message=FALSE, warning=FALSE, eval=FALSE, echo=TRUE}
+-   `retsi`: Output from `spicey_retsi()`, containing RETSI values
 
-# Compute GETSI 
-results <- run_spicey(rna = rna)
+-   `annot_method`: Set to `"nearest"`
 
-# Compute RETSI
-results <- run_spicey(atac=atac)
+-   `txdb`: A `TxDb` object with gene models
 
-# Compute GETSI + RETSI
-results <- run_spicey(atac=atac, rna=rna)
+-   `annot_dbi`: AnnotationDbi object (e.g., `org.Hs.eg.db`) to add gene metadata
 
-# Compute GETSI + RETSI and link RE to target genes through nearest gene method
-results <- run_spicey(rna = rna, atac=atac, link_method = "nearest")
+**Optional parameters:**
 
-# Compute GETSI + RETSI and link RE to target genes through coaccessibility method
-results <- run_spicey(
-  atac = atac_data,
-  rna = rna_data,
-  link_method = "coaccessibility",
-  links = coaccessibility_links,
-  coaccess_cutoff_override = 0.25,  
-  filter_promoter_distal = TRUE    
+-   `filter_promoter_distal`: Exclude promoter-proximal regions (default: `TRUE`)
+
+-   `filter_protein_coding`: Limit to protein-coding genes (default: `TRUE`)
+
+-   `keep_mito`: Retain mitochondrial peaks (default: `FALSE`)
+
+-   `add_tss_annotation`: Include TSS distance and related columns (default: `FALSE`)
+
+-   `link_spicey_measures`: Join RETSI and GETSI scores by gene (default: `FALSE`)
+
+-   `verbose`: Display progress (default: `TRUE`)
+
+```{r re-gene-nearest, message=FALSE, warning=FALSE}
+retsi_gene_nearest <- annotate_with_nearest(
+  retsi = retsi,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  annot_dbi = org.Hs.eg.db::org.Hs.eg.db
 )
 
+head(retsi_gene_nearest)
+```
+
+#### 2. Co-accessibility-Based Annotation
+
+This mode links regulatory regions to genes via co-accessibility interactions, which must be computed externally (e.g., using **Cicero** or **Signac**).
+
+**Required inputs:**
+
+-   `retsi`: Output from `spicey_retsi()`, containing RETSI values
+
+-   `annot_method`: Set to `"coaccessibility"`
+
+-   `links`: A `data.frame`, `GRangesList`, or Cicero/ArchR-style object with co-accessibility links
+
+-   `coaccess_cutoff_override`: Minimum co-accessibility score (default: `0.25`)
+
+**Optional parameters:**
+
+-   `filter_promoter_distal`: Exclude promoter-proximal regions (default: `TRUE`)
+
+-   `filter_protein_coding`: Limit to protein-coding genes (default: `TRUE`)
+
+-   `keep_mito`: Retain mitochondrial peaks (default: `FALSE`)
+
+-   `add_tss_annotation`: Include TSS distance and related columns (default: `FALSE`)
+
+-   `link_spicey_measures`: Join RETSI and GETSI scores by gene (default: `FALSE`)
+
+-   `verbose`: Display progress (default: `TRUE`)
+
+```{r re-gene-coaccessibility, message=FALSE, warning=FALSE}
+
+# Filter links for high coaccessibility score
+coacc_links <- cicero_links |> 
+  dplyr::filter(coaccess > 0.5)
+
+retsi_gene_coacc <- annotate_with_coaccessibility(
+  links = coacc_links,
+  retsi = retsi,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+  coaccess_cutoff_override = 0.25
+  )
+
+head(retsi_gene_coacc)
+```
+
+## Linking RETSI and GETSI Scores to Build Tissue-Specific Regulatory Networks
+
+To construct an integrated regulatory network that links RETSI and GETSI scores, SPICEY allows you to associate both scores at the gene level using either annotation strategy:
+
+#### If using **nearest-gene** annotation:
+
+-   `retsi_gene_nearest`: Output from `annotate_with_nearest()`, linking peaks to nearest genes with RETSI scores
+
+-   `getsi`: Output from `spicey_getsi()`, providing GETSI scores for genes
+
+```{r spicey-nearest, message=FALSE, warning=FALSE}
+spicey_nearest <- link_spicey_nearest(retsi_gene_nearest, getsi)
+head(spicey_nearest)
+```
+
+### If using **co-accessibility** annotation:
+
+-   `retsi_gene_coacc`: Output from `annotate_with_coaccessibility()`, linking peaks to co-accessible genes with RETSI scores
+
+-   `getsi`: Output from `spicey_getsi()`, providing GETSI scores for genes
+
+By integrating RETSI and GETSI, SPICEY enables comprehensive analysis of tissue-specific regulatory logic at both the epigenetic and transcriptional levels.
+
+```{r spicey-coaccessibility, message=FALSE, warning=FALSE}
+spicey_coacc <- link_spicey_coaccessible(retsi_gene_coacc, getsi)
+head(spicey_coacc)
+```
+
+# Example: Run SPICEY whole pipeline
+
+While SPICEY provides modular functions—such as `spicey_retsi()`, `spicey_getsi()`, and `annotate_with_nearest()`—for users who prefer fine-grained control, it also includes a wrapper function, `run_spicey()`, that streamlines the full workflow into a single, reproducible step.
+
+This wrapper automatically determines which operations to perform based on the input data and parameters provided, making it ideal for users seeking a quick, end-to-end analysis without manually managing each intermediate step.
+
+When supplied with differential accessibility (ATAC) and/or gene expression (RNA) data, and a gene-linking strategy ("nearest" or "coaccessibility"), `run_spicey()` performs the following operations as needed:
+
+-   **RETSI computation** (if ATAC data is provided)
+
+-   **GETSI computation** (if RNA data is provided)
+
+-   **Annotation of regulatory regions to target genes**, via:
+
+    -   `"nearest"` gene TSS or
+
+    -   `"coaccessibility"` links (e.g., from Cicero or ArchR)
+
+**Linking RETSI and GETSI scores by gene** (if `link_spicey_measures = TRUE`)
+
+The function returns a structured list containing all intermediate and final outputs, making it easy to inspect and reuse individual components of the pipeline.
+
+For users who prefer to run each step independently—for example, to apply custom filters or transformations—each module remains fully accessible and can be run separately.
+
+### Overview: `run_spicey()`
+
+Depending on the inputs provided, `run_spicey()` performs:
+
+-   **RETSI calculation** – from differential accessibility data (ATAC-seq)
+
+<!-- -->
+
+-   **GETSI calculation** – from differential expression data (RNA-seq)
+
+-   **Annotation** of regulatory regions to genes (optional):
+
+    -   `"nearest"`: Assign to closest gene
+
+    -   `"coaccessibility"`: Use user-supplied co-accessibility links
+
+-   **Linking** RETSI and GETSI scores by gene (optional)
+
+### Arguments
+
+-   `atac`: A `GRanges` object or data frame convertible to `GRanges`, containing scATAC-seq differential accessibility results. Required columns:
+
+    -   `seqnames`, `start`, `end`: Genomic coordinates
+
+    -   `avg_log2FC`: Average log2 fold-change in accessibility
+
+    -   `p_val`: Raw or adjusted p-value from DA analysis
+
+    -   `cell_type`: Cell type or cluster label
+
+-   `rna`: A `GRanges` object or data frame convertible to `GRanges`, containing scRNA-seq differential expression results. Same structure as `atac`:
+
+    -   `symbol` — identifier of the gene.
+
+    -   `avg_log2FC`: Average log2 fold-change in accessibility
+
+    -   `p_val`: Raw or adjusted p-value from DA analysis
+
+    -   `cell_type`: Cell type or cluster label
+
+-   `annot_method`: One of `"nearest"` (default) or `"coaccessibility"`, indicating the method to link peaks to genes.
+
+-   `links`: Required if `annot_method = "coaccessibility"`. A `data.frame`, `GRangesList`, or Cicero/ArchR-style object with co-accessibility links (peak-pairs and scores).
+
+-   `coaccess_cutoff_override`: *(default = 0.25)* Minimum co-accessibility score to retain a link.
+
+-   `filter_promoter_distal`: *(default = TRUE)* Whether to exclude promoter-proximal interactions when using co-accessibility.
+
+-   `filter_protein_coding`: *(default = TRUE)* Whether to restrict gene annotations to protein-coding genes.
+
+-   `txdb`: A `TxDb` object with gene models used for annotation.
+
+    `annot_dbi`: An `AnnotationDbi` object (e.g., `org.Hs.eg.db`) for adding gene symbols or additional metadata.
+
+-   `keep_mito`: *(default = FALSE)* Whether to retain mitochondrial peaks.
+
+-   `add_tss_annotation`: *(default = FALSE)* Whether to include TSS-related metadata (e.g., distance to TSS) in the output.
+
+-   `link_spicey_measures`: *(default = FALSE)* Whether to merge RETSI and GETSI scores by gene after annotation.
+
+-   `verbose`: *(default = TRUE)* Whether to display progress messages during execution.
+
+```{r spicey-all, message=FALSE, warning=FALSE}
+
+spicey_nearest <- run_spicey(
+  atac = atac, 
+  rna = rna, 
+  annot_method = "nearest", 
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+  link_spicey_measures = TRUE
+)
+head(spicey_nearest)
+
+spicey_coacc <- run_spicey(
+  atac = atac,
+  rna = rna,
+  annot_method = "coaccessibility",
+  links = coacc_links,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+  coaccess_cutoff_override = 0.25,
+  link_spicey_measures = TRUE
+)
+head(spicey_coacc)
 ```
 
 # Output
 
-The following output is a `GRanges` object containing **genomic regions** (ranges), each representing a regulatory element (e.g., enhancer or promoter) annotated with multiple metadata columns. These columns provide statistical, biological, and functional information derived from chromatin accessibility and gene expression data.
+The following output is a `data frame` object containing **genomic regions**, each representing a regulatory element (e.g., enhancer or promoter) annotated with multiple metadata columns. These columns provide statistical, biological, and functional information derived from chromatin accessibility and gene expression data.
 
 ### Metadata Columns Description
 
 | Column | Description |
-|-------------------|-----------------------------------------------------|
+|------------------------------------|------------------------------------|
 | `seqnames` | Chromosome name (e.g., `chr7`, `chr17`) where the region is located. |
 | `ranges` | Genomic coordinates (start–end) of the regulatory region. |
 | `strand` | Strand information (`*` means unstranded, typical for regulatory elements). |
