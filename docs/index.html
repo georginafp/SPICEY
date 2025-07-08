@@ -105,16 +105,33 @@
 <span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_spicey.html">run_spicey</a></span><span class="op">(</span>atac<span class="op">=</span><span class="va">atac</span>, rna<span class="op">=</span><span class="va">rna</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Compute GETSI + RETSI and link RE to target genes through nearest gene method</span></span>
-<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_spicey.html">run_spicey</a></span><span class="op">(</span>rna <span class="op">=</span> <span class="va">rna</span>, atac<span class="op">=</span><span class="va">atac</span>, link_method <span class="op">=</span> <span class="st">"nearest"</span><span class="op">)</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_spicey.html">run_spicey</a></span><span class="op">(</span></span>
+<span>  atac <span class="op">=</span> <span class="va">atac</span>, </span>
+<span>  rna <span class="op">=</span> <span class="va">rna</span>, </span>
+<span>  annot_method <span class="op">=</span> <span class="st">"nearest"</span>, </span>
+<span>  txdb <span class="op">=</span> <span class="va">TxDb.Hsapiens.UCSC.hg38.knownGene</span>,</span>
+<span>  annot_dbi <span class="op">=</span> <span class="va">org.Hs.eg.db</span>,</span>
+<span>  link_spicey_measures <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Compute GETSI + RETSI and link RE to target genes through coaccessibility method</span></span>
-<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_spicey.html">run_spicey</a></span><span class="op">(</span></span>
-<span>  atac <span class="op">=</span> <span class="va">atac_data</span>,</span>
-<span>  rna <span class="op">=</span> <span class="va">rna_data</span>,</span>
-<span>  link_method <span class="op">=</span> <span class="st">"coaccessibility"</span>,</span>
-<span>  links <span class="op">=</span> <span class="va">coaccessibility_links</span>,</span>
-<span>  coaccess_cutoff_override <span class="op">=</span> <span class="fl">0.25</span>,  <span class="co"># default</span></span>
-<span>  filter_promoter_distal <span class="op">=</span> <span class="cn">TRUE</span>     <span class="co"># default</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_spicey.html">run_spicey</a></span><span class="op">(</span></span>
+<span>  atac <span class="op">=</span> <span class="va">atac</span>, </span>
+<span>  rna <span class="op">=</span> <span class="va">rna</span>, </span>
+<span>  annot_method <span class="op">=</span> <span class="st">"coaccessibility"</span>,</span>
+<span>  links <span class="op">=</span> <span class="va">coaccess_links</span>,</span>
+<span>  txdb <span class="op">=</span> <span class="va">TxDb.Hsapiens.UCSC.hg38.knownGene</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># Compute GETSI + RETSI and link RE to target genes through coaccessibility method</span></span>
+<span><span class="co"># and link both SPICEY measures</span></span>
+<span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/run_spicey.html">run_spicey</a></span><span class="op">(</span></span>
+<span>  atac <span class="op">=</span> <span class="va">atac</span>, </span>
+<span>  rna <span class="op">=</span> <span class="va">rna</span>, </span>
+<span>  link_spicey_measures <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  annot_method <span class="op">=</span> <span class="st">"coaccessibility"</span>,</span>
+<span>  links <span class="op">=</span> <span class="va">coaccess_links</span>,</span>
+<span>  txdb <span class="op">=</span> <span class="va">TxDb.Hsapiens.UCSC.hg38.knownGene</span>,</span>
 <span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">

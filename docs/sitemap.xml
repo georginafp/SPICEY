@@ -9,6 +9,7 @@
 <url><loc>/index.html</loc></url>
 <url><loc>/news/index.html</loc></url>
 <url><loc>/reference/annotate_links_with_ccans.html</loc></url>
+<url><loc>/reference/annotate_tss.html</loc></url>
 <url><loc>/reference/annotate_with_coaccessibility.html</loc></url>
 <url><loc>/reference/annotate_with_nearest.html</loc></url>
 <url><loc>/reference/biomart_genes.html</loc></url>
@@ -16,6 +17,8 @@
 <url><loc>/reference/entropy_getsi.html</loc></url>
 <url><loc>/reference/entropy_retsi.html</loc></url>
 <url><loc>/reference/get_ccan.html</loc></url>
+<url><loc>/reference/get_main_seqlevels.html</loc></url>
+<url><loc>/reference/get_promoters.html</loc></url>
 <url><loc>/reference/get_promoters_protein_coding.html</loc></url>
 <url><loc>/reference/get_targets_links.html</loc></url>
 <url><loc>/reference/getsi.html</loc></url>

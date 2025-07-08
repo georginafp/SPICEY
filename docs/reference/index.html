@@ -51,10 +51,16 @@
         <dd>Annotate co-accessible links with CCAN membership and return GInteractions</dd>
       </dl><dl><dt>
 
+          <code><a href="annotate_tss.html">annotate_tss()</a></code>
+
+        </dt>
+        <dd>Annotate regulatory elements overlapping transcription start sites (TSS)</dd>
+      </dl><dl><dt>
+
           <code><a href="annotate_with_coaccessibility.html">annotate_with_coaccessibility()</a></code>
 
         </dt>
-        <dd>Annotate regulatory elements with gene targets using co-accessibility links</dd>
+        <dd>Annotate Regulatory Elements with Gene Targets Using Co-Accessibility Links</dd>
       </dl><dl><dt>
 
           <code><a href="annotate_with_nearest.html">annotate_with_nearest()</a></code>
@@ -63,16 +69,10 @@
         <dd>Annotate regions with nearest gene and promoter information</dd>
       </dl><dl><dt>
 
-          <code><a href="biomart_genes.html">biomart_genes()</a></code>
-
-        </dt>
-        <dd>Retrieve gene annotations from Ensembl via biomaRt</dd>
-      </dl><dl><dt>
-
           <code><a href="combine_gex_da.html">combine_gex_da()</a></code>
 
         </dt>
-        <dd>Annotate and Filter Gene Expression Differential Data, Return GRanges</dd>
+        <dd>Combine Differential Expression Results Across Cell Types</dd>
       </dl><dl><dt>
 
           <code><a href="entropy_getsi.html">entropy_getsi()</a></code>
@@ -84,7 +84,7 @@
           <code><a href="entropy_retsi.html">entropy_retsi()</a></code>
 
         </dt>
-        <dd>Compute normalized entropy of RETSI scores</dd>
+        <dd>Compute entropy of RETSI scores per regulatory region</dd>
       </dl><dl><dt>
 
           <code><a href="get_ccan.html">get_ccan()</a></code>
@@ -93,10 +93,16 @@
         <dd>Extract CCAN membership from links for a given GRanges object</dd>
       </dl><dl><dt>
 
-          <code><a href="get_promoters_protein_coding.html">get_promoters_protein_coding()</a></code>
+          <code><a href="get_main_seqlevels.html">get_main_seqlevels()</a></code>
 
         </dt>
-        <dd>Extract promoter regions of protein-coding genes</dd>
+        <dd>Get main chromosomes from a GRanges or TxDb, filtering alt/hap/random/etc.</dd>
+      </dl><dl><dt>
+
+          <code><a href="get_promoters.html">get_promoters()</a></code>
+
+        </dt>
+        <dd>Get Promoter Regions with Optional Filtering for Protein-Coding Genes Extracts promoter regions (±2kb default) from a TxDb object, optionally restricting to protein-coding genes and retaining only primary chromosomes (using a robust internal filter). Gene symbols and types are added using an AnnotationDbi object.</dd>
       </dl><dl><dt>
 
           <code><a href="get_targets_links.html">get_targets_links()</a></code>
@@ -126,13 +132,13 @@
           <code><a href="retsi.html">retsi()</a></code>
 
         </dt>
-        <dd>Compute RETSI scores on ATAC peaks</dd>
+        <dd>Compute RETSI scores for differential chromatin accessibility data</dd>
       </dl><dl><dt>
 
           <code><a href="run_spicey.html">run_spicey()</a></code>
 
         </dt>
-        <dd>Run full SPICEY pipeline: compute RETSI and GETSI, annotate regulatory elements, and link measures</dd>
+        <dd>Run the full SPICEY pipeline</dd>
       </dl><dl><dt>
 
           <code><a href="spicey_getsi.html">spicey_getsi()</a></code>
@@ -144,7 +150,7 @@
           <code><a href="spicey_retsi.html">spicey_retsi()</a></code>
 
         </dt>
-        <dd>Compute RETSI scores from a List of GRanges representing scATAC-seq peaks per cell type</dd>
+        <dd>Compute RETSI scores and entropy for scATAC-seq regulatory elements</dd>
       </dl></div>
   </main></div>
 

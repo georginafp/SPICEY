@@ -49,27 +49,27 @@ performs joins to merge relevant annotations, and resolves coordinate conflicts.
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">link_spicey_coaccessible</span><span class="op">(</span><span class="va">re</span>, <span class="va">getsi</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">link_spicey_coaccessible</span><span class="op">(</span><span class="va">retsi_annotated_coacc</span>, <span class="va">getsi</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
     <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
 
-<dl><dt id="arg-re">re<a class="anchor" aria-label="anchor" href="#arg-re"></a></dt>
-<dd><p>A data.frame or tibble containing RETSI results with at least the columns:</p><ul><li><p><code>genes_HPAP</code>: gene symbols</p></li>
-<li><p><code>cell_type</code></p></li>
-<li><p><code>norm_entropy</code></p></li>
-<li><p><code>seqnames</code>, <code>start</code>, <code>end</code>, <code>annotation</code>, <code>distanceToTSS</code>, <code>region</code>, <code>RETSI</code></p></li>
-</ul></dd>
-
-
-<dt id="arg-getsi">getsi<a class="anchor" aria-label="anchor" href="#arg-getsi"></a></dt>
-<dd><p>A data.frame or tibble containing GETSI results with at least the columns:</p><ul><li><p><code>symbol</code>: gene symbol</p></li>
+<dl><dt id="arg-getsi">getsi<a class="anchor" aria-label="anchor" href="#arg-getsi"></a></dt>
+<dd><p>A data.frame or tibble containing GETSI results with at least the columns:</p><ul><li><p><code>gene_id</code>: gene gene_id</p></li>
 <li><p><code>cell_type</code></p></li>
 <li><p><code>GETSI</code></p></li>
 <li><p><code>norm_entropy</code></p></li>
 <li><p><code>seqnames</code>, <code>start</code>, <code>end</code></p></li>
+</ul></dd>
+
+
+<dt id="arg-re">re<a class="anchor" aria-label="anchor" href="#arg-re"></a></dt>
+<dd><p>A data.frame or tibble containing RETSI results with at least the columns:</p><ul><li><p><code>gene_coacc</code>: gene symbols of the coaccessible gene to that region</p></li>
+<li><p><code>cell_type</code></p></li>
+<li><p><code>norm_entropy</code></p></li>
+<li><p><code>seqnames</code>, <code>start</code>, <code>end</code>, <code>annotation</code>, <code>distanceToTSS</code>, <code>region</code>, <code>RETSI</code></p></li>
 </ul></dd>
 
 </dl></div>
@@ -79,14 +79,6 @@ performs joins to merge relevant annotations, and resolves coordinate conflicts.
 gene annotations, and harmonized genomic coordinates.</p>
     </div>
 
-    <div class="section level2">
-    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">combined_df</span> <span class="op">&lt;-</span> <span class="fu">link_spicey_coaccessible</span><span class="op">(</span><span class="va">re</span>, <span class="va">getsi</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
-<span class="r-in"><span></span></span>
-</code></pre></div>
-    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 
