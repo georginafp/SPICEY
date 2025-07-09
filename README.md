@@ -28,10 +28,9 @@ Now you can load the package using `library(SPICEY)`.
 For detailed instructions on how to use SPICEY, please see the vignette once the package is installed using: `vignette("SPICEY")`.
 
 ``` r
+# Load the package
 library(SPICEY)
-```
 
-``` r
 # Compute GETSI 
 results <- run_spicey(rna = rna)
 
