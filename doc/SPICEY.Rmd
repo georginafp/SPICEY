@@ -114,7 +114,7 @@ devtools::install_github("georginafp/SPICEY")
 
 SPICEY requires carefully prepared input files representing processed single-cell omics data, specifically from differential analyses of chromatin accessibility (ATAC-seq) and/or gene expression (RNA-seq). These inputs are **not provided** within the package and must be generated externally beforehand. Below is a detailed description of each required input and the necessary metadata.
 
-## 1. Single cell ATAC-seq data
+## Single cell ATAC-seq data
 
 -   **Format:** A list of `GRanges` objects or `data.frame`s (convertible to `GRanges`), where each element represents differential accessible sites for a specific cell type.
 
@@ -134,7 +134,7 @@ The ATAC peaks input must include multiple rows per peak representing differenti
 data("atac")
 ```
 
-## 2. Single cell RNA-seq data
+## Single cell RNA-seq data
 
 -   **Format:** A list of `GRanges` objects or `data.frame`s (convertible to `GRanges`), where each element represents differential gene expression results for a specific cell type.
 
@@ -154,7 +154,7 @@ The RNA input must include multiple rows per gene representing differential stat
 data("rna")
 ```
 
-## 3. Co-accessibility Links (optional, for region-to-gene linking mode)
+## Co-accessibility Links (optional, for region-to-gene linking mode)
 
 -   **Purpose:** To link regulatory elements based on co-accessibility inferred from tools like Signac’s `LinkPeaks()`. This supports integrative analysis of regulatory elements and gene expression. Only required if `annot_method = "coaccessibility"` is defined.
 
@@ -229,7 +229,7 @@ head(getsi)
 
 SPICEY allows annotating regulatory elements to their putative target genes using two different methodologies:
 
-### 1. Annotate to nearest gene
+### Annotate to nearest gene
 
 This mode links each regulatory region to its nearest gene TSS.
 
@@ -267,7 +267,7 @@ retsi_gene_nearest <- annotate_with_nearest(
 head(retsi_gene_nearest)
 ```
 
-### 2. Annotate to co-accessibile genes
+### Annotate to co-accessibile genes
 
 This mode links regulatory regions to genes via co-accessibility interactions, which must be computed externally (e.g., using **Cicero** or **Signac**).
 
@@ -316,7 +316,7 @@ head(retsi_gene_coacc)
 
 To construct an integrated regulatory network that links RETSI and GETSI scores, SPICEY allows you to associate both scores at the gene level using either annotation strategy:
 
-### 1. Using nearest gene annotation
+### Using nearest gene annotation
 
 -   `retsi_gene_nearest`: Output from `annotate_with_nearest()`, linking peaks to nearest genes with RETSI scores
 
@@ -327,7 +327,7 @@ spicey_nearest <- link_spicey_nearest(retsi_gene_nearest, getsi)
 head(spicey_nearest)
 ```
 
-### 2. Using co-accessible gene annotation
+### Using co-accessible gene annotation
 
 -   `retsi_gene_coacc`: Output from `annotate_with_coaccessibility()`, linking peaks to co-accessible genes with RETSI scores
 
@@ -445,9 +445,7 @@ head(spicey_coacc)
 
 ## Output
 
-The following output is a `data frame` object containing **genomic regions**, each representing a regulatory element (e.g., enhancer or promoter) annotated with multiple metadata columns. These columns provide statistical, biological, and functional information derived from chromatin accessibility and gene expression data.
-
-### Metadata Columns Description
+The following output is a `data frame` object containing **genomic regions**, each representing a regulatory element (e.g., enhancer or promoter) annotated with multiple metadata columns. These columns provide statistical, biological, and functional information derived from chromatin accessibility and gene expression data: 
 
 | Column | Description |
 |------------------------------------|------------------------------------|

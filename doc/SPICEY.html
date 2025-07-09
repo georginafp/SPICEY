@@ -719,9 +719,9 @@ function toggle_visibility(id1) {
 <li><a href="#installation" id="toc-installation"><span class="toc-section-number">2</span> Installation</a></li>
 <li><a href="#input-requirements" id="toc-input-requirements"><span class="toc-section-number">3</span> Input Requirements</a>
 <ul>
-<li><a href="#single-cell-atac-seq-data" id="toc-single-cell-atac-seq-data"><span class="toc-section-number">3.1</span> 1. Single cell ATAC-seq data</a></li>
-<li><a href="#single-cell-rna-seq-data" id="toc-single-cell-rna-seq-data"><span class="toc-section-number">3.2</span> 2. Single cell RNA-seq data</a></li>
-<li><a href="#co-accessibility-links-optional-for-region-to-gene-linking-mode" id="toc-co-accessibility-links-optional-for-region-to-gene-linking-mode"><span class="toc-section-number">3.3</span> 3. Co-accessibility Links (optional, for region-to-gene linking mode)</a></li>
+<li><a href="#single-cell-atac-seq-data" id="toc-single-cell-atac-seq-data"><span class="toc-section-number">3.1</span> Single cell ATAC-seq data</a></li>
+<li><a href="#single-cell-rna-seq-data" id="toc-single-cell-rna-seq-data"><span class="toc-section-number">3.2</span> Single cell RNA-seq data</a></li>
+<li><a href="#co-accessibility-links-optional-for-region-to-gene-linking-mode" id="toc-co-accessibility-links-optional-for-region-to-gene-linking-mode"><span class="toc-section-number">3.3</span> Co-accessibility Links (optional, for region-to-gene linking mode)</a></li>
 </ul></li>
 <li><a href="#example-run-spicey-step-by-step" id="toc-example-run-spicey-step-by-step"><span class="toc-section-number">4</span> Example: Run SPICEY step-by-step</a>
 <ul>
@@ -729,23 +729,20 @@ function toggle_visibility(id1) {
 <li><a href="#computing-getsi" id="toc-computing-getsi"><span class="toc-section-number">4.2</span> Computing GETSI</a></li>
 <li><a href="#annotating-regulatory-elements-to-target-genes-optional" id="toc-annotating-regulatory-elements-to-target-genes-optional"><span class="toc-section-number">4.3</span> Annotating Regulatory Elements to Target Genes (optional)</a>
 <ul>
-<li><a href="#annotate-to-nearest-gene" id="toc-annotate-to-nearest-gene"><span class="toc-section-number">4.3.1</span> 1. Annotate to nearest gene</a></li>
-<li><a href="#annotate-to-co-accessibile-genes" id="toc-annotate-to-co-accessibile-genes"><span class="toc-section-number">4.3.2</span> 2. Annotate to co-accessibile genes</a></li>
+<li><a href="#annotate-to-nearest-gene" id="toc-annotate-to-nearest-gene"><span class="toc-section-number">4.3.1</span> Annotate to nearest gene</a></li>
+<li><a href="#annotate-to-co-accessibile-genes" id="toc-annotate-to-co-accessibile-genes"><span class="toc-section-number">4.3.2</span> Annotate to co-accessibile genes</a></li>
 </ul></li>
 <li><a href="#linking-retsi-and-getsi-scores-to-build-tissue-specific-regulatory-networks-optional" id="toc-linking-retsi-and-getsi-scores-to-build-tissue-specific-regulatory-networks-optional"><span class="toc-section-number">4.4</span> Linking RETSI and GETSI Scores to Build Tissue-Specific Regulatory Networks (optional)</a>
 <ul>
-<li><a href="#using-nearest-gene-annotation" id="toc-using-nearest-gene-annotation"><span class="toc-section-number">4.4.1</span> 1. Using nearest gene annotation</a></li>
-<li><a href="#using-co-accessible-gene-annotation" id="toc-using-co-accessible-gene-annotation"><span class="toc-section-number">4.4.2</span> 2. Using co-accessible gene annotation</a></li>
+<li><a href="#using-nearest-gene-annotation" id="toc-using-nearest-gene-annotation"><span class="toc-section-number">4.4.1</span> Using nearest gene annotation</a></li>
+<li><a href="#using-co-accessible-gene-annotation" id="toc-using-co-accessible-gene-annotation"><span class="toc-section-number">4.4.2</span> Using co-accessible gene annotation</a></li>
 </ul></li>
 </ul></li>
 <li><a href="#example-run-spicey-whole-pipeline" id="toc-example-run-spicey-whole-pipeline"><span class="toc-section-number">5</span> Example: Run SPICEY whole pipeline</a>
 <ul>
 <li><a href="#overview" id="toc-overview"><span class="toc-section-number">5.1</span> Overview</a></li>
 <li><a href="#arguments" id="toc-arguments"><span class="toc-section-number">5.2</span> Arguments</a></li>
-<li><a href="#output" id="toc-output"><span class="toc-section-number">5.3</span> Output</a>
-<ul>
-<li><a href="#metadata-columns-description" id="toc-metadata-columns-description"><span class="toc-section-number">5.3.1</span> Metadata Columns Description</a></li>
-</ul></li>
+<li><a href="#output" id="toc-output"><span class="toc-section-number">5.3</span> Output</a></li>
 </ul></li>
 <li><a href="#visualization-example" id="toc-visualization-example"><span class="toc-section-number">6</span> Visualization example</a></li>
 <li><a href="#references" id="toc-references"><span class="toc-section-number">7</span> References</a></li>
@@ -821,7 +818,7 @@ devtools::install_github(&quot;georginafp/SPICEY&quot;)</code></pre>
 <h1><span class="header-section-number">3</span> Input Requirements</h1>
 <p>SPICEY requires carefully prepared input files representing processed single-cell omics data, specifically from differential analyses of chromatin accessibility (ATAC-seq) and/or gene expression (RNA-seq). These inputs are <strong>not provided</strong> within the package and must be generated externally beforehand. Below is a detailed description of each required input and the necessary metadata.</p>
 <div id="single-cell-atac-seq-data" class="section level2" number="3.1">
-<h2><span class="header-section-number">3.1</span> 1. Single cell ATAC-seq data</h2>
+<h2><span class="header-section-number">3.1</span> Single cell ATAC-seq data</h2>
 <ul>
 <li><p><strong>Format:</strong> A list of <code>GRanges</code> objects or <code>data.frame</code>s (convertible to <code>GRanges</code>), where each element represents differential accessible sites for a specific cell type.</p></li>
 <li><p><strong>Required columns (for each element of the list):</strong></p>
@@ -836,7 +833,7 @@ devtools::install_github(&quot;georginafp/SPICEY&quot;)</code></pre>
 <pre class="r"><code>data(&quot;atac&quot;)</code></pre>
 </div>
 <div id="single-cell-rna-seq-data" class="section level2" number="3.2">
-<h2><span class="header-section-number">3.2</span> 2. Single cell RNA-seq data</h2>
+<h2><span class="header-section-number">3.2</span> Single cell RNA-seq data</h2>
 <ul>
 <li><p><strong>Format:</strong> A list of <code>GRanges</code> objects or <code>data.frame</code>s (convertible to <code>GRanges</code>), where each element represents differential gene expression results for a specific cell type.</p></li>
 <li><p><strong>Required columns (for each element of the list):</strong></p>
@@ -851,7 +848,7 @@ devtools::install_github(&quot;georginafp/SPICEY&quot;)</code></pre>
 <pre class="r"><code>data(&quot;rna&quot;)</code></pre>
 </div>
 <div id="co-accessibility-links-optional-for-region-to-gene-linking-mode" class="section level2" number="3.3">
-<h2><span class="header-section-number">3.3</span> 3. Co-accessibility Links (optional, for region-to-gene linking mode)</h2>
+<h2><span class="header-section-number">3.3</span> Co-accessibility Links (optional, for region-to-gene linking mode)</h2>
 <ul>
 <li><p><strong>Purpose:</strong> To link regulatory elements based on co-accessibility inferred from tools like Signac’s <code>LinkPeaks()</code>. This supports integrative analysis of regulatory elements and gene expression. Only required if <code>annot_method = &quot;coaccessibility&quot;</code> is defined.</p></li>
 <li><p><strong>Format:</strong></p>
@@ -947,7 +944,7 @@ head(getsi)
 <h2><span class="header-section-number">4.3</span> Annotating Regulatory Elements to Target Genes (optional)</h2>
 <p>SPICEY allows annotating regulatory elements to their putative target genes using two different methodologies:</p>
 <div id="annotate-to-nearest-gene" class="section level3" number="4.3.1">
-<h3><span class="header-section-number">4.3.1</span> 1. Annotate to nearest gene</h3>
+<h3><span class="header-section-number">4.3.1</span> Annotate to nearest gene</h3>
 <p>This mode links each regulatory region to its nearest gene TSS.</p>
 <div id="required-inputs" class="section level4" number="4.3.1.1">
 <h4><span class="header-section-number">4.3.1.1</span> Required inputs:</h4>
@@ -999,7 +996,7 @@ head(retsi_gene_nearest)
 </div>
 </div>
 <div id="annotate-to-co-accessibile-genes" class="section level3" number="4.3.2">
-<h3><span class="header-section-number">4.3.2</span> 2. Annotate to co-accessibile genes</h3>
+<h3><span class="header-section-number">4.3.2</span> Annotate to co-accessibile genes</h3>
 <p>This mode links regulatory regions to genes via co-accessibility interactions, which must be computed externally (e.g., using <strong>Cicero</strong> or <strong>Signac</strong>).</p>
 <div id="required-inputs-1" class="section level4" number="4.3.2.1">
 <h4><span class="header-section-number">4.3.2.1</span> Required inputs:</h4>
@@ -1063,7 +1060,7 @@ head(retsi_gene_coacc)
 <h2><span class="header-section-number">4.4</span> Linking RETSI and GETSI Scores to Build Tissue-Specific Regulatory Networks (optional)</h2>
 <p>To construct an integrated regulatory network that links RETSI and GETSI scores, SPICEY allows you to associate both scores at the gene level using either annotation strategy:</p>
 <div id="using-nearest-gene-annotation" class="section level3" number="4.4.1">
-<h3><span class="header-section-number">4.4.1</span> 1. Using nearest gene annotation</h3>
+<h3><span class="header-section-number">4.4.1</span> Using nearest gene annotation</h3>
 <ul>
 <li><p><code>retsi_gene_nearest</code>: Output from <code>annotate_with_nearest()</code>, linking peaks to nearest genes with RETSI scores</p></li>
 <li><p><code>getsi</code>: Output from <code>spicey_getsi()</code>, providing GETSI scores for genes</p></li>
@@ -1093,7 +1090,7 @@ head(spicey_nearest)
 #&gt; 6        PNLIP     Distal 0.9528625893   0.013732911</code></pre>
 </div>
 <div id="using-co-accessible-gene-annotation" class="section level3" number="4.4.2">
-<h3><span class="header-section-number">4.4.2</span> 2. Using co-accessible gene annotation</h3>
+<h3><span class="header-section-number">4.4.2</span> Using co-accessible gene annotation</h3>
 <ul>
 <li><p><code>retsi_gene_coacc</code>: Output from <code>annotate_with_coaccessibility()</code>, linking peaks to co-accessible genes with RETSI scores</p></li>
 <li><p><code>getsi</code>: Output from <code>spicey_getsi()</code>, providing GETSI scores for genes</p></li>
@@ -1251,9 +1248,7 @@ head(spicey_coacc)
 </div>
 <div id="output" class="section level2" number="5.3">
 <h2><span class="header-section-number">5.3</span> Output</h2>
-<p>The following output is a <code>data frame</code> object containing <strong>genomic regions</strong>, each representing a regulatory element (e.g., enhancer or promoter) annotated with multiple metadata columns. These columns provide statistical, biological, and functional information derived from chromatin accessibility and gene expression data.</p>
-<div id="metadata-columns-description" class="section level3" number="5.3.1">
-<h3><span class="header-section-number">5.3.1</span> Metadata Columns Description</h3>
+<p>The following output is a <code>data frame</code> object containing <strong>genomic regions</strong>, each representing a regulatory element (e.g., enhancer or promoter) annotated with multiple metadata columns. These columns provide statistical, biological, and functional information derived from chromatin accessibility and gene expression data:</p>
 <div class='horizontal-scroll'><table>
 <colgroup>
 <col width="50%" />
@@ -1326,7 +1321,6 @@ head(spicey_coacc)
 </table></div>
 <hr />
 <p>This annotated <code>data frame</code> object thus serves as a comprehensive resource combining genomic location, cell type-specific accessibility, gene linkage, and expression specificity — facilitating downstream functional genomics analyses.</p>
-</div>
 </div>
 </div>
 <div id="visualization-example" class="section level1" number="6">
