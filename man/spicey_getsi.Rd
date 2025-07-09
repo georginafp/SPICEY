@@ -4,12 +4,14 @@
 \alias{spicey_getsi}
 \title{Compute GETSI scores and entropy from RNA-seq data}
 \usage{
-spicey_getsi(rna_da)
+spicey_getsi(rna_da, gene_id)
 }
 \arguments{
 \item{rna_da}{A named list of Dataframe objects, typically one per cell type,
 containing RNA differential expression data with columns such as
 avg_log2FC, p_val, gene_id, etc.}
+
+\item{gene_id}{A string indicating the name of the column in each data frame that contains gene identifiers (e.g., gene symbols).}
 }
 \value{
 A Dataframe object with GETSI scores and entropy values in the

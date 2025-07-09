@@ -7,6 +7,7 @@
 run_spicey(
   atac = NULL,
   rna = NULL,
+  gene_id = NULL,
   annot_method = NULL,
   links = NULL,
   link_spicey_measures = FALSE,
@@ -24,6 +25,9 @@ run_spicey(
 \item{atac}{A Seurat or SummarizedExperiment object containing scATAC-seq data.}
 
 \item{rna}{A Seurat or SummarizedExperiment object containing scRNA-seq data.}
+
+\item{gene_id}{A string indicating the name of the column in each data frame that contains gene identifiers
+(e.g., gene symbols). Required if \code{rna} is provided.}
 
 \item{annot_method}{Method for region-to-gene annotation: "nearest" or "coaccessibility".}
 

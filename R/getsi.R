@@ -5,18 +5,23 @@
 #' Each data frame should contain gene-level statistics (e.g., log2FC, p-value).
 #' @param rna_da A named list of data frames. Each element corresponds to a cell type
 #'   and contains differential expression results with genes as row names.
-#' @return A single data frame combining all input differential expression results,
+#' @param gene_id A string indicating the name of the column in each data frame that contains gene identifiers (e.g., gene symbols).
+#'   @return A single data frame combining all input differential expression results,
 #'   with added columns for gene ids and cell types.
 #' @export
-combine_gex_da <- function(rna_da) {
+combine_gex_da <- function(rna_da, gene_id) {
+  if (is.null(gene_id) || !is.character(gene_id)) {
+    stop("You must supply a valid 'gene_id' (character string) to indicate the gene identifier column.")
+  }
+
   gr_list_annot <- lapply(names(rna_da), function(cell_type) {
     df <- rna_da[[cell_type]]
-    df$gene_id <- rownames(df)
+    df$gene_id <- df[[gene_id]]
 
     if (!"cell_type" %in% colnames(df)) {
       df$cell_type <- cell_type
     }
-    df  # last evaluated expression returned
+    df
   })
 
   names(gr_list_annot) <- names(rna_da)
@@ -29,14 +34,21 @@ combine_gex_da <- function(rna_da) {
 
 
 
+
 #' Compute GETSI scores on RNA data
 #'
 #' @param rna_da Dataframe object with RNA differential expression data (avg_log2FC, p_val, cell_type, gene_id (gene_id, hgnc, ensembl_id...))
+#' @param gene_id A string indicating the name of the column in each data frame that contains gene identifiers (e.g., gene symbols).
 #' @return Dataframe with computed GETSI scores (GETSI column)
 #' @import dplyr
 #' @export
-getsi <- function(rna_da) {
-  rna_da_gr <- combine_gex_da(rna_da)
+getsi <- function(rna_da, gene_id) {
+  if (is.null(gene_id) || !is.character(gene_id)) {
+    stop("You must supply a valid 'gene_id' (character string) to indicate the gene identifier column.")
+  }
+
+  rna_da_gr <- combine_gex_da(rna_da = rna_da,
+                              gene_id = gene_id)
 
   getsi_df <- data.frame(rna_da_gr) |>
     mutate(
@@ -63,6 +75,7 @@ getsi <- function(rna_da) {
     data.frame()
   return(getsi_df)
 }
+
 
 
 
@@ -102,23 +115,24 @@ entropy_getsi <- function(getsi_df) {
 #' @param rna_da A named list of Dataframe objects, typically one per cell type,
 #'   containing RNA differential expression data with columns such as
 #'   avg_log2FC, p_val, gene_id, etc.
-#'
+#' @param gene_id A string indicating the name of the column in each data frame that contains gene identifiers (e.g., gene symbols).
 #' @return A Dataframe object with GETSI scores and entropy values in the
 #'   metadata columns.
 #'
 #' @export
-spicey_getsi <- function(rna_da) {
+spicey_getsi <- function(rna_da, gene_id) {
+  if (is.null(gene_id) || !is.character(gene_id)) {
+    stop("You must supply a valid 'gene_id' (character string) to indicate the gene identifier column.")
+  }
+
   message("→ Computing GETSI scores...")
-  getsi_df <- getsi(rna_da)
+  getsi_df <- getsi(rna_da = rna_da, gene_id = gene_id)
 
   message("→ Computing entropy on GETSI scores...")
   entropy_df <- entropy_getsi(getsi_df)
 
-  # Join entropy info with getsi results
   getsi_final <- as.data.frame(getsi_df) |>
     dplyr::left_join(entropy_df, by = "gene_id") |>
-    dplyr::select(-c(avg_FC,
-                     max_FC, norm_FC,
-                     weight, entropy))
+    dplyr::select(-c(avg_FC, max_FC, norm_FC, weight, entropy))
   return(getsi_final)
 }

@@ -4,15 +4,15 @@
 \alias{combine_gex_da}
 \title{Combine Differential Expression Results Across Cell Types}
 \usage{
-combine_gex_da(rna_da)
+combine_gex_da(rna_da, gene_id)
 }
 \arguments{
 \item{rna_da}{A named list of data frames. Each element corresponds to a cell type
 and contains differential expression results with genes as row names.}
-}
-\value{
-A single data frame combining all input differential expression results,
-with added columns for gene ids and cell types.
+
+\item{gene_id}{A string indicating the name of the column in each data frame that contains gene identifiers (e.g., gene symbols).
+@return A single data frame combining all input differential expression results,
+with added columns for gene ids and cell types.}
 }
 \description{
 This function takes a list of differential expression data frames (from scRNA-seq)

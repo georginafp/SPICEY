@@ -4,10 +4,12 @@
 \alias{getsi}
 \title{Compute GETSI scores on RNA data}
 \usage{
-getsi(rna_da)
+getsi(rna_da, gene_id)
 }
 \arguments{
 \item{rna_da}{Dataframe object with RNA differential expression data (avg_log2FC, p_val, cell_type, gene_id (gene_id, hgnc, ensembl_id...))}
+
+\item{gene_id}{A string indicating the name of the column in each data frame that contains gene identifiers (e.g., gene symbols).}
 }
 \value{
 Dataframe with computed GETSI scores (GETSI column)

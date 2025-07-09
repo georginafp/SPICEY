@@ -43,6 +43,9 @@ link_spicey_coaccessible <- function(retsi_annotated_coacc, getsi) {
 
 
 
+
+
+
 #' Link RETSI peaks with GETSI values from nearest genes
 #'
 #' @param retsi_annotated_nearest GRanges with RETSI scores and nearest genes.

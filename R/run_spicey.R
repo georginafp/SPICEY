@@ -7,6 +7,8 @@
 #'
 #' @param atac A Seurat or SummarizedExperiment object containing scATAC-seq data.
 #' @param rna A Seurat or SummarizedExperiment object containing scRNA-seq data.
+#' @param gene_id A string indicating the name of the column in each data frame that contains gene identifiers
+#'   (e.g., gene symbols). Required if \code{rna} is provided.
 #' @param annot_method Method for region-to-gene annotation: "nearest" or "coaccessibility".
 #' @param links Co-accessibility links (e.g., from Cicero or ArchR) for co-accessibility annotation.
 #' @param link_spicey_measures Logical; whether to link RETSI and GETSI via annotated genes.
@@ -24,6 +26,7 @@
 #' @export
 run_spicey <- function(atac = NULL,
                        rna = NULL,
+                       gene_id = NULL,
                        annot_method = NULL,
                        links = NULL,
                        link_spicey_measures = FALSE,
@@ -40,6 +43,10 @@ run_spicey <- function(atac = NULL,
     stop("At least one of 'atac' or 'rna' data must be provided.")
   }
 
+  if (!is.null(rna) && is.null(gene_id)) {
+    stop("Parameter 'gene_id' must be provided when RNA data is supplied.")
+  }
+
   # Compute RETSI
   if (!is.null(atac)) {
     retsi <- spicey_retsi(atac)
@@ -47,7 +54,7 @@ run_spicey <- function(atac = NULL,
 
   # Compute GETSI
   if (!is.null(rna)) {
-    getsi <- spicey_getsi(rna)
+    getsi <- spicey_getsi(rna, gene_id)
   }
 
   # If no annotation method, return based on inputs
@@ -113,7 +120,7 @@ run_spicey <- function(atac = NULL,
     }
     if (verbose) message("→ Computing GETSI (if not already computed)...")
     if (!exists("getsi")) {
-      getsi <- spicey_getsi(rna)
+      getsi <- spicey_getsi(rna, gene_id)
     }
 
     if (verbose) message("→ Linking RETSI and GETSI via ", annot_method, "...")
@@ -130,11 +137,9 @@ run_spicey <- function(atac = NULL,
         getsi = getsi
       )
     }
-    # Return the combined linked data.frame/tibble, NOT a list
     message("🌶 SPICEY pipeline successfully completed")
     return(combined)
   } else {
-    # Linking is FALSE: return a list with retsi_annotated and getsi if both available
     if (!is.null(rna)) {
       message("🌶 SPICEY pipeline successfully completed")
       return(list(retsi_annotated = retsi_annotated, getsi = getsi))
