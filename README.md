@@ -25,7 +25,7 @@ Now you can load the package using `library(SPICEY)`.
 
 ## Basic usage
 
-For detailed instructions on how to use SPICEY, please see the [vignette](https://georginafp.github.io/SPICEY/articles/SPICEY.html).
+For detailed instructions on how to use SPICEY, please see the vignette once the package is installed using: `vignette("SPICEY")`.
 
 ``` r
 library(SPICEY)
