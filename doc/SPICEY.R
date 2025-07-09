@@ -41,7 +41,7 @@ retsi <- spicey_retsi(atac)
 head(retsi)
 
 ## ----getsi, message=FALSE, warning=FALSE--------------------------------------
-getsi <- spicey_getsi(rna)
+getsi <- spicey_getsi(rna, gene_id = "gene_id")
 head(getsi)
 
 ## ----re-gene-nearest, message=FALSE, warning=FALSE----------------------------
@@ -82,6 +82,7 @@ head(spicey_coacc)
 spicey_nearest <- run_spicey(
   atac = atac, 
   rna = rna, 
+  gene_id = "gene_id",
   annot_method = "nearest", 
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
   annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
@@ -92,6 +93,7 @@ head(spicey_nearest)
 spicey_coacc <- run_spicey(
   atac = atac,
   rna = rna,
+  gene_id = "gene_id",
   annot_method = "coaccessibility",
   links = coacc_links,
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
