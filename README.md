@@ -32,18 +32,19 @@ For detailed instructions on how to use SPICEY, please see the vignette once the
 library(SPICEY)
 
 # Compute GETSI 
-results <- run_spicey(rna = rna)
+results <- run_spicey(rna = rna, gene_id = "gene_id")
 
 # Compute RETSI
 results <- run_spicey(atac=atac)
 
 # Compute GETSI + RETSI
-results <- run_spicey(atac=atac, rna=rna)
+results <- run_spicey(atac=atac, rna=rna, gene_id = "gene_id")
 
 # Compute GETSI + RETSI and link RE to target genes through nearest gene method
 result <- run_spicey(
   atac = atac, 
   rna = rna, 
+  gene_id = "gene_id",
   annot_method = "nearest", 
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
   annot_dbi = org.Hs.eg.db,
@@ -54,6 +55,7 @@ result <- run_spicey(
 result <- run_spicey(
   atac = atac, 
   rna = rna, 
+  gene_id = "gene_id",
   annot_method = "coaccessibility",
   links = coaccess_links,
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene
