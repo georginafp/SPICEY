@@ -26,31 +26,20 @@ Depends:
     grDevices
 Imports: 
     GenomicRanges,
-    GenomicFeatures,
+    AnnotationDbi,
     dplyr,
     tidyr,
     regioneR,
-    purrr,
     Signac,
     tibble,
-    data.table,
     InteractionSet,
-    stringr,
-    tools,
     GenomeInfoDb,
-    biomaRt,
-    plyranges,
-    AnnotationDbi,
-    BiocParallel,
-    ChIPseeker,
-    org.Hs.eg.db,
-    TxDb.Hsapiens.UCSC.hg38.knownGene, 
-    devtools, 
-    pkgdown,
-    roxygen2,
-    cicero
+    ChIPseeker
 Suggests:
     BiocStyle,
+    devtools,
+    pkgdown,
+    roxygen2,
     knitr,
     rmarkdown,
     testthat (>= 3.0.0)

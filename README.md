@@ -66,6 +66,7 @@ result <- run_spicey(
 result <- run_spicey(
   atac = atac, 
   rna = rna, 
+  gene_id = "gene_id",
   link_spicey_measures = TRUE,
   annot_method = "coaccessibility",
   links = coaccess_links,
