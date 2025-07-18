@@ -258,9 +258,11 @@ This mode links each regulatory region to its nearest gene TSS.
 -   `verbose`: Display progress (default: `TRUE`)
 
 ```{r re-gene-nearest, message=FALSE, warning=FALSE}
+
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene
 retsi_gene_nearest <- annotate_with_nearest(
   retsi = retsi,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  txdb = txdb, 
   annot_dbi = org.Hs.eg.db::org.Hs.eg.db
 )
 
@@ -297,6 +299,8 @@ This mode links regulatory regions to genes via co-accessibility interactions, w
 
 ```{r re-gene-coaccessibility, message=FALSE, warning=FALSE}
 
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene
+
 # Filter links for high coaccessibility score
 coacc_links <- cicero_links |> 
   dplyr::filter(coaccess > 0.5)
@@ -304,7 +308,7 @@ coacc_links <- cicero_links |>
 retsi_gene_coacc <- annotate_with_coaccessibility(
   links = coacc_links,
   retsi = retsi,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  txdb = txdb, 
   annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
   coaccess_cutoff_override = 0.25
   )
@@ -417,13 +421,14 @@ For users who prefer to run each step independently—for example, to apply cust
 -   `verbose`: *(default = TRUE)* Whether to display progress messages during execution.
 
 ```{r spicey-all, message=FALSE, warning=FALSE}
+txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene
 
 spicey_nearest <- run_spicey(
   atac = atac, 
   rna = rna, 
   gene_id = "gene_id",
   annot_method = "nearest", 
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  txdb = txdb, 
   annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
   link_spicey_measures = TRUE
 )
@@ -435,7 +440,7 @@ spicey_coacc <- run_spicey(
   gene_id = "gene_id",
   annot_method = "coaccessibility",
   links = coacc_links,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene, 
+  txdb = txdb, 
   annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
   coaccess_cutoff_override = 0.25,
   link_spicey_measures = TRUE

@@ -31,13 +31,10 @@ retsi <- function(atac_da) {
       p_val_adj = p.adjust(p_val, method = "fdr")
     ) |>
     dplyr::group_by(region) |>
-    dplyr::mutate(max_FC = max(avg_FC, na.rm = TRUE)) |>
-    dplyr::ungroup() |>
-    dplyr::group_by(cell_type) |>
     dplyr::mutate(
+      max_FC = max(avg_FC, na.rm = TRUE),
       p_val_adj = ifelse(p_val_adj == 0, min(p_val_adj[p_val_adj > 0], na.rm = TRUE), p_val_adj),
-      weight = scales::rescale(-log10(p_val_adj), to = c(0, 1))
-    ) |>
+      weight = scales::rescale(-log10(p_val_adj), to = c(0, 1))) |>
     dplyr::group_by(cell_type, region) |>
     dplyr::mutate(
       norm_FC = avg_FC / max_FC,
@@ -93,14 +90,19 @@ entropy_retsi <- function(retsi) {
 #'   including \code{region}, \code{cell_type}, \code{RETSI}, and \code{norm_entropy}.
 #' @export
 spicey_retsi <- function(atac_da) {
-  # Validate input
+  # Convert to list if not already
   if (!is.list(atac_da)) {
-    stop("Input must be a list of GRanges or data.frames")
+    if (is(atac_da, "GRangesList")) {
+      atac_da <- as.list(atac_da)
+    } else {
+      stop("Input must be a GRangesList or a list of data.frame/GRanges.")
+    }
   }
 
+  # Validate first element
   first_class <- class(atac_da[[1]])
   if (!first_class %in% c("GRanges", "data.frame")) {
-    stop("Each element in the list must be either a GRanges or a data.frame")
+    stop("Each element in the list must be either a data.frame or a GRanges object.")
   }
 
   message("→ Computing RETSI scores...")
@@ -112,9 +114,9 @@ spicey_retsi <- function(atac_da) {
   # Merge entropy and return cleaned result
   retsi_final <- retsi_df |>
     dplyr::left_join(entropy_df, by = "region") |>
-    dplyr::select(-c(avg_FC,
-                     max_FC, norm_FC,
-                     weight, entropy))
-  data.frame()
+    dplyr::select(-c(avg_FC, max_FC, norm_FC, weight, entropy))
+
   return(retsi_final)
 }
+
+

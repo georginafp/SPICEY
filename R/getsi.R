@@ -57,11 +57,7 @@ getsi <- function(rna_da, gene_id) {
     ) |>
     group_by(gene_id) |>
     mutate(
-      max_FC = max(avg_FC, na.rm = TRUE)
-    ) |>
-    dplyr::ungroup() |>
-    group_by(cell_type) |>
-    mutate(
+      max_FC = max(avg_FC, na.rm = TRUE),
       p_val_adj = ifelse(p_val_adj == 0, min(p_val_adj[p_val_adj > 0], na.rm=TRUE), p_val_adj),
       weight = scales::rescale(-log10(p_val_adj), to=c(0, 1))
     ) |>
