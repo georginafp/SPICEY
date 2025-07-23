@@ -12,13 +12,15 @@ get_main_seqlevels(
 )
 }
 \arguments{
+\item{txdb}{A TxDb object (e.g., from \code{GenomicFeatures::makeTxDbFromGFF()}
+or a prebuilt TxDb package).}
+
 \item{keep_mito}{Logical, whether to keep mitochondrial/plastid contigs.}
 
-\item{include_only}{Optional character vector of seqlevels to force-include (manual override).}
+\item{include_only}{Optional character vector of seqlevels to
+force-include (manual override).}
 
 \item{verbose}{Logical, print what is kept/removed.}
-
-\item{x}{A TxDb, GRanges, or similar object.}
 }
 \value{
 Character vector of filtered seqlevels.

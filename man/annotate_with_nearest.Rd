@@ -46,3 +46,14 @@ TSS (transcription start site), classifies them as Promoter (<2kb) or Distal, an
 the nearest gene ID using Biomart-annotated genes. Optionally, it can annotate whether a
 region overlaps a TSS directly using 1-bp TSS coordinates.
 }
+\examples{
+# Annotate REs using nearest TSS and classify as Promoter or Distal
+data(atac)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+retsi <- compute_spicey_index(atac=atac)
+retsi_gene_nearest <- annotate_with_nearest(
+  retsi = retsi,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+  annot_dbi = org.Hs.eg.db::org.Hs.eg.db
+)
+}

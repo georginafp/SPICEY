@@ -54,3 +54,17 @@ regions from a TxDb object, optionally filters for protein-coding genes, and lin
 based on chromatin co-accessibility. Optionally, REs overlapping a transcription start site (TSS)
 can also be annotated directly.
 }
+\examples{
+data(cicero_links)
+data(atac)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+retsi <- compute_spicey_index(atac=atac)
+# Annotate REs using co-accessibility links to predict gene targets
+retsi_gene_coacc <- annotate_with_coaccessibility(
+  links = cicero_links,
+  retsi = retsi,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+  annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+  coaccess_cutoff_override = 0.25
+)
+}

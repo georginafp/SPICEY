@@ -3,7 +3,7 @@
 \name{get_promoters}
 \alias{get_promoters}
 \title{Get Promoter Regions with Optional Filtering for Protein-Coding Genes
-Extracts promoter regions (±2kb default) from a TxDb object, optionally restricting to protein-coding genes
+Extracts promoter regions (+/- 2kb default) from a TxDb object, optionally restricting to protein-coding genes
 and retaining only primary chromosomes (using a robust internal filter). Gene symbols and types are added using an AnnotationDbi object.}
 \usage{
 get_promoters(
@@ -30,6 +30,6 @@ A \code{GRanges} object of promoter regions, annotated with gene symbols, option
 }
 \description{
 Get Promoter Regions with Optional Filtering for Protein-Coding Genes
-Extracts promoter regions (±2kb default) from a TxDb object, optionally restricting to protein-coding genes
+Extracts promoter regions (+/- 2kb default) from a TxDb object, optionally restricting to protein-coding genes
 and retaining only primary chromosomes (using a robust internal filter). Gene symbols and types are added using an AnnotationDbi object.
 }

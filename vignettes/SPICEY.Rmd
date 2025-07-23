@@ -200,7 +200,7 @@ To calculate the **Regulatory Element Tissue Specificity Index (RETSI)**, the fo
     -   `cell_type`: Cell type or cluster label
 
 ```{r retsi, message=FALSE, warning=FALSE}
-retsi <- spicey_retsi(atac)
+retsi <- compute_spicey_index(atac=atac)
 head(retsi)
 ```
 
@@ -221,7 +221,7 @@ To calculate the **Gene Expression Tissue Specificity Index (GETSI)**, the requi
 -   **`gene_id`**: A `character string` indicating the name of the column in each data frame that contains gene identifiers (e.g. official gene symbol).
 
 ```{r getsi, message=FALSE, warning=FALSE}
-getsi <- spicey_getsi(rna, gene_id = "gene_id")
+getsi <- compute_spicey_index(rna=rna, gene_id = "gene_id")
 head(getsi)
 ```
 
@@ -302,11 +302,8 @@ This mode links regulatory regions to genes via co-accessibility interactions, w
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene
 
 # Filter links for high coaccessibility score
-coacc_links <- cicero_links |> 
-  dplyr::filter(coaccess > 0.5)
-
 retsi_gene_coacc <- annotate_with_coaccessibility(
-  links = coacc_links,
+  links = cicero_links,
   retsi = retsi,
   txdb = txdb, 
   annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
@@ -327,7 +324,10 @@ To construct an integrated regulatory network that links RETSI and GETSI scores,
 -   `getsi`: Output from `spicey_getsi()`, providing GETSI scores for genes
 
 ```{r spicey-nearest, message=FALSE, warning=FALSE}
-spicey_nearest <- link_spicey_nearest(retsi_gene_nearest, getsi)
+
+spicey_nearest <- link_spicey(retsi_annotated = retsi_gene_nearest, 
+                              getsi = getsi, 
+                              method = "nearest")
 head(spicey_nearest)
 ```
 
@@ -340,7 +340,10 @@ head(spicey_nearest)
 By integrating RETSI and GETSI, SPICEY enables comprehensive analysis of tissue-specific regulatory logic at both the epigenetic and transcriptional levels.
 
 ```{r spicey-coaccessibility, message=FALSE, warning=FALSE}
-spicey_coacc <- link_spicey_coaccessible(retsi_gene_coacc, getsi)
+spicey_coacc <- link_spicey(retsi_annotated = retsi_gene_coacc, 
+                            getsi = getsi, 
+                            method = "coaccessibility")
+
 head(spicey_coacc)
 ```
 
@@ -423,7 +426,7 @@ For users who prefer to run each step independently—for example, to apply cust
 ```{r spicey-all, message=FALSE, warning=FALSE}
 txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene::TxDb.Hsapiens.UCSC.hg38.knownGene
 
-spicey_nearest <- run_spicey(
+spicey_nearest <- SPICEY(
   atac = atac, 
   rna = rna, 
   gene_id = "gene_id",
@@ -434,12 +437,12 @@ spicey_nearest <- run_spicey(
 )
 head(spicey_nearest)
 
-spicey_coacc <- run_spicey(
+spicey_coacc <- SPICEY(
   atac = atac,
   rna = rna,
   gene_id = "gene_id",
   annot_method = "coaccessibility",
-  links = coacc_links,
+  links = cicero_links,
   txdb = txdb, 
   annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
   coaccess_cutoff_override = 0.25,
@@ -480,3 +483,12 @@ This annotated `data frame` object thus serves as a comprehensive resource combi
 ```
 
 # References
+
+# SessionInfo
+
+```{r sessionInfo}
+
+sessionInfo()
+
+```
+

@@ -13,19 +13,19 @@
 #'   \item \code{TSS_gene}: Gene symbol of the overlapping TSS, if any.
 #' }
 #'
-#' @importFrom GenomicRanges makeGRangesFromDataFrame promoters findOverlaps
+#' @importFrom GenomicRanges makeGRangesFromDataFrame promoters findOverlaps mcols
 #' @importFrom AnnotationDbi mapIds
-#' @export
+#' @importFrom S4Vectors queryHits subjectHits
 annotate_tss <- function(txdb, re, annot_dbi) {
 
   prom_tss <- promoters(genes(txdb), upstream=0, downstream=1)  # TSS as 1 bp ranges
-  gene_ids <- mcols(prom_tss)$gene_id
+  gene_ids <- GenomicRanges::mcols(prom_tss)$gene_id
   symbols <- mapIds(annot_dbi,
                     keys=gene_ids,
                     column="SYMBOL",
                     keytype="ENTREZID",
                     multiVals="first")
-  mcols(prom_tss)$symbol <- symbols
+  GenomicRanges::mcols(prom_tss)$symbol <- symbols
 
   # Convert to GRanges if needed
   if (inherits(re, "data.frame") && !inherits(re, "GRanges")) {
@@ -36,12 +36,12 @@ annotate_tss <- function(txdb, re, annot_dbi) {
   hits <- findOverlaps(re, prom_tss)
 
   # Initialize columns
-  mcols(re)$in_TSS <- FALSE
-  mcols(re)$TSS_gene <- NA_character_
+  GenomicRanges::mcols(re)$in_TSS <- FALSE
+  GenomicRanges::mcols(re)$TSS_gene <- NA_character_
 
   # Mark TRUE and add gene symbol for those overlapping
-  mcols(re)$in_TSS[queryHits(hits)] <- TRUE
-  mcols(re)$TSS_gene[queryHits(hits)] <- mcols(prom_tss)$symbol[subjectHits(hits)]
+  GenomicRanges::mcols(re)$in_TSS[queryHits(hits)] <- TRUE
+  GenomicRanges::mcols(re)$TSS_gene[queryHits(hits)] <- GenomicRanges::mcols(prom_tss)$symbol[subjectHits(hits)]
   re <- re |> data.frame()
   return(re)
 }
@@ -56,16 +56,15 @@ annotate_tss <- function(txdb, re, annot_dbi) {
 #' @param filter_promoter_distal Logical, whether to keep only Promoter-Distal links (default TRUE).
 #' @param txdb TxDb object for peak annotation (required if filter_promoter_distal=TRUE).
 #' @return GInteractions object annotated with coaccess, CCAN1, CCAN2 metadata columns.
-#' @export
 annotate_links_with_ccans <- function(links,
                                       coaccess_cutoff_override = 0.25,
                                       tolerance_digits = 2,
                                       filter_promoter_distal = TRUE,
                                       txdb = NULL) {
   # Generate CCAN assignments
-  ccan <- generate_ccans(links,
-                         coaccess_cutoff_override = coaccess_cutoff_override,
-                         tolerance_digits = tolerance_digits)
+  ccan <- cicero::generate_ccans(links,
+                                 coaccess_cutoff_override = coaccess_cutoff_override,
+                                 tolerance_digits = tolerance_digits)
 
   # Join CCAN annotations
   links <- links |>
@@ -127,7 +126,8 @@ annotate_links_with_ccans <- function(links,
 #' @param name_column Character, metadata column in gr to use as identifier (default "region")
 #' @param split Character, "ccan" returns names per CCAN, "name" returns CCANs per name
 #' @return Named list split by CCAN or name as requested
-#' @export
+#' @importFrom GenomicRanges findOverlaps mcols
+#' @importFrom S4Vectors queryHits subjectHits
 get_ccan <- function(links, gr, name_column = "region", split = c("ccan", "name")) {
   split <- match.arg(split)
 
@@ -135,10 +135,10 @@ get_ccan <- function(links, gr, name_column = "region", split = c("ccan", "name"
   hits2 <- findOverlaps(gr, links, use.region = "second")
 
   ccan_df <- rbind(
-    data.frame(ccan = mcols(links[subjectHits(hits1)])$CCAN1,
-               name = mcols(gr[queryHits(hits1)])[[name_column]]),
-    data.frame(ccan = mcols(links[subjectHits(hits2)])$CCAN2,
-               name = mcols(gr[queryHits(hits2)])[[name_column]])) |>
+    data.frame(ccan = GenomicRanges::mcols(links[subjectHits(hits1)])$CCAN1,
+               name = GenomicRanges::mcols(gr[queryHits(hits1)])[[name_column]]),
+    data.frame(ccan = GenomicRanges::mcols(links[subjectHits(hits2)])$CCAN2,
+               name = GenomicRanges::mcols(gr[queryHits(hits2)])[[name_column]])) |>
     dplyr::filter(!is.na(ccan), !is.na(name)) |>
     unique()
 
@@ -157,12 +157,11 @@ get_ccan <- function(links, gr, name_column = "region", split = c("ccan", "name"
 #' @param re GRanges of regulatory elements with 'region' column
 #' @param proms GRanges of promoters with 'gene_id' column
 #' @return GRanges of regulatory elements annotated with linked genes
-#' @export
 get_targets_links <- function(links, re, proms) {
   res <- get_ccan(links, re, name_column = "region", split = "name")
   re$CCAN <- res[re$region]
   genes <- get_ccan(links, proms, name_column = "gene_id", split = "ccan")
-  mcols(re)$gene_coacc <- lapply(re$CCAN, function(x) {
+  GenomicRanges::mcols(re)$gene_coacc <- lapply(re$CCAN, function(x) {
     if (!is.null(x)) unlist(genes[as.character(x)]) else NA
   })
   return(re)
@@ -198,11 +197,25 @@ get_targets_links <- function(links, re, proms) {
 #'   \item Optional: TSS overlap and TSS gene symbol
 #' }
 #'
-#' @importFrom GenomicRanges makeGRangesFromDataFrame distanceToNearest
-#' @importFrom GenomeInfoDb keepSeqlevels
+#' @importFrom GenomicRanges promoters distanceToNearest makeGRangesFromDataFrame mcols
+#' @importFrom GenomeInfoDb keepSeqlevels seqlevels
 #' @importFrom tidyr unnest
 #' @importFrom dplyr select
+#' @importFrom S4Vectors queryHits subjectHits
 #' @export
+#' @examples
+#' data(cicero_links)
+#' data(atac)
+#' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+#' retsi <- compute_spicey_index(atac=atac)
+#' # Annotate REs using co-accessibility links to predict gene targets
+#' retsi_gene_coacc <- annotate_with_coaccessibility(
+#'   links = cicero_links,
+#'   retsi = retsi,
+#'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'   annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+#'   coaccess_cutoff_override = 0.25
+#' )
 annotate_with_coaccessibility <- function(links,
                                           retsi,
                                           txdb,
@@ -240,7 +253,7 @@ annotate_with_coaccessibility <- function(links,
   # Compute distance to nearest TSS
   nearest_hits <- GenomicRanges::distanceToNearest(retsi, proms)
   retsi$distanceToTSS <- NA_integer_
-  retsi$distanceToTSS[queryHits(nearest_hits)] <- mcols(nearest_hits)$distance
+  retsi$distanceToTSS[queryHits(nearest_hits)] <- GenomicRanges::mcols(nearest_hits)$distance
 
   # Annotate as Promoter vs. Distal
   retsi$annotation <- ifelse(
@@ -310,10 +323,19 @@ annotate_with_coaccessibility <- function(links,
 #'   \item \code{TSS_gene} (optional): Gene symbol for overlapping TSS
 #'   \item Other original metadata
 #' }
-#'
-#' @importFrom GenomicRanges promoters distanceToNearest makeGRangesFromDataFrame
-#' @importFrom GenomeInfoDb keepSeqlevels
+#' @importFrom GenomicRanges promoters distanceToNearest makeGRangesFromDataFrame mcols
+#' @importFrom GenomeInfoDb keepSeqlevels seqlevels
 #' @export
+#' @examples
+#' # Annotate REs using nearest TSS and classify as Promoter or Distal
+#' data(atac)
+#' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+#' retsi <- compute_spicey_index(atac=atac)
+#' retsi_gene_nearest <- annotate_with_nearest(
+#'   retsi = retsi,
+#'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'   annot_dbi = org.Hs.eg.db::org.Hs.eg.db
+#' )
 annotate_with_nearest <- function(retsi,
                                   txdb,
                                   annot_dbi,
@@ -353,7 +375,7 @@ annotate_with_nearest <- function(retsi,
   retsi$nearestGeneSymbol <- NA_character_
 
   # Fill distance and gene symbol info for matched peaks
-  retsi$distanceToTSS[queryHits(nearest_hits)] <- mcols(nearest_hits)$distance
+  retsi$distanceToTSS[queryHits(nearest_hits)] <- GenomicRanges::mcols(nearest_hits)$distance
   retsi$nearestGeneSymbol[queryHits(nearest_hits)] <- proms$gene_id[subjectHits(nearest_hits)]
 
   # Annotate as Promoter vs. Distal

@@ -20,7 +20,6 @@ License: Artistic-2.0
 Encoding: UTF-8
 Depends: 
     R (>= 4.1.0),
-    methods,
     utils,
     stats,
     grDevices
@@ -28,6 +27,7 @@ Imports:
     GenomicRanges,
     GenomicFeatures,
     AnnotationDbi,
+    S4Vectors,
     dplyr,
     tidyr,
     regioneR,
@@ -35,7 +35,8 @@ Imports:
     tibble,
     InteractionSet,
     GenomeInfoDb,
-    ChIPseeker
+    ChIPseeker,
+    scales
 Suggests:
     BiocStyle,
     cicero,
@@ -52,21 +53,23 @@ biocViews:
     Transcriptomics,
     Epigenetics,
     SingleCell,
-    CellType,
-    TissueSpecificity,
     DifferentialExpression,
-    DataIntegration,
-    CellTypeSpecificity,
-    Specificity,
-    atac,
-    rna,
-    scRNA,
-    scATAC,
-    scRNA-seq,
-    scATAC-seq
+    DifferentialPeakCalling,
+    GeneRegulation,
+    GeneTarget,
+    GenomeAnnotation,
+    BiomedicalInformatics,
+    MathematicalBiology,
+    Genome,
+    Tissue,
+    GeneExpression,
+    CellCulture,
+    EpigeneticsWorkflow,
+    GeneExpressionWorkflow,
+    SingleCellWorkflow
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 URL: https://georginafp.github.io/SPICEY
 BugReports: https://github.com/georginafp/SPICEY/issues
-LazyData: true
+LazyData: false
 Config/testthat/edition: 3
