@@ -7,15 +7,22 @@
 get_targets_links(links, re, proms)
 }
 \arguments{
-\item{links}{GInteractions with CCAN metadata}
+\item{links}{A \code{GInteractions} object containing co-accessibility links.
+Must have metadata columns \code{CCAN1} and \code{CCAN2}
+representing CCAN IDs for each anchor in the interaction.}
 
-\item{re}{GRanges of regulatory elements with 'region' column}
+\item{re}{A \code{GRanges} object of regulatory elements with a metadata column
+named \code{"region"} that identifies each region.}
 
-\item{proms}{GRanges of promoters with 'gene_id' column}
+\item{proms}{A \code{GRanges} object of gene promoters}
 }
 \value{
-GRanges of regulatory elements annotated with linked genes
+A \code{GRanges} object identical to \code{re} but with an added metadata
+column \code{gene_coacc} that contains a list of linked gene IDs per RE.
 }
 \description{
-Link regulatory elements to genes based on shared CCAN membership
+This function annotates regulatory elements by linking them to gene promoters
+through shared CCAN (co-accessibility network) membership derived from co-accessibile links.
+Each regulatory region is assigned the gene IDs of promoters that belong to the same CCAN,
+thus identifying putative gene targets based on chromatin co-accessibility.
 }

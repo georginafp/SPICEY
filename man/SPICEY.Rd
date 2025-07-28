@@ -2,7 +2,7 @@
 % Please edit documentation in R/SPICEY.R
 \name{SPICEY}
 \alias{SPICEY}
-\title{Runs the full SPICEY pipeline}
+\title{Run the full SPICEY pipeline for tissue specificity analysis}
 \usage{
 SPICEY(
   atac = NULL,
@@ -22,73 +22,82 @@ SPICEY(
 )
 }
 \arguments{
-\item{atac}{Single-cell ATAC-seq data (Seurat or SummarizedExperiment).}
+\item{atac}{A list of data frames (or \code{GRanges}-like objects).
+Each element corresponds to a cell type containing differential chromatin
+accessibility results with required columns:
+\describe{
+\item{seqnames}{Chromosome name of the regulatory region (e.g., "chr1").}
+\item{start}{Start coordinate of the peak.}
+\item{end}{End coordinate of the peak.}
+\item{avg_log2FC}{Average log2 fold-change for accessibility in that cell type.}
+\item{p_val}{Raw p-value for the differential test.}
+\item{p_val_adj}{Adjusted p-value (e.g., FDR).}
+\item{cell_type}{Cell type or cluster name.}
+}}
 
-\item{rna}{Single-cell RNA-seq data (Seurat or SummarizedExperiment).}
+\item{rna}{A list of data frames (or \code{GRanges}-like objects).
+Each element corresponds to a cell type containing differential expression
+results, with required columns:
+\describe{
+\item{gene_id}{Identifier of the gene (e.g., gene symbol, Ensembl ID).}
+\item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
+\item{p_val}{Raw p-value for the differential test.}
+\item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
+\item{cell_type}{Cell type or cluster label.}
+}
+Note that the same peak may appear multiple times across cell types.}
 
-\item{gene_id}{Column name for gene IDs; required if RNA data is provided.}
+\item{gene_id}{A character string specifying the column name in each list element
+that contains the gene identifiers.}
 
-\item{annot_method}{Character; Annotation method to link regulatory elements to genes.
-Must be either \code{"nearest"} or \code{"coaccessibility"}. This specifies which
-gene annotation strategy is used.}
+\item{annot_method}{Optional annotation method: \code{"nearest"} or \code{"coaccessibility"}.}
 
-\item{links}{Co-accessibility links data; required if \code{annot_method} is \code{"coaccessibility"}.}
+\item{links}{\code{GInteractions} object with co-accessibility links (required if \code{annot_method = "coaccessibility"}).}
 
-\item{link_spicey_measures}{Logical; whether to link RETSI and GETSI by gene using \code{link_spicey}.}
+\item{link_spicey_measures}{Logical; link RETSI and GETSI scores (default FALSE).}
 
-\item{coaccess_cutoff_override}{Numeric cutoff for co-accessibility (default 0.25).}
+\item{coaccess_cutoff_override}{Numeric; cutoff for co-accessibility clustering (default 0.25).}
 
-\item{filter_promoter_distal}{Logical; filter promoter-distal links (default TRUE).}
+\item{filter_promoter_distal}{Logical; filter to promoter-distal links (default TRUE).}
 
-\item{filter_protein_coding}{Logical; filter to protein-coding genes (default TRUE).}
+\item{filter_protein_coding}{Logical; restrict to protein-coding genes (default TRUE).}
 
-\item{txdb}{TxDb object for annotation; required if annotation is used.}
+\item{txdb}{\code{TxDb} object for genome annotation (required if annotation requested).}
 
-\item{keep_mito}{Logical; whether to keep mitochondrial regions (default FALSE).}
+\item{keep_mito}{Logical; keep mitochondrial chromosomes (default FALSE).}
 
-\item{annot_dbi}{AnnotationDbi object for gene info; required if annotation is used.}
+\item{annot_dbi}{\code{AnnotationDbi} object for gene ID mapping (required if annotation requested).}
 
-\item{add_tss_annotation}{Logical; include TSS annotation columns (default FALSE).}
+\item{add_tss_annotation}{Logical; annotate regulatory elements overlapping TSS (default FALSE).}
 
-\item{verbose}{Logical; print messages during execution (default TRUE).}
+\item{verbose}{Logical; print messages (default TRUE).}
 }
 \value{
-Either a tibble/data.frame or a list:
-If \code{link_spicey_measures} is \code{TRUE}, returns a combined tibble/data.frame
-with specificity and annotation values. If \code{FALSE}, returns a list containing
-separate elements for RETSI and GETSI, each with their respective data.
+Depending on inputs, returns RETSI and/or GETSI data frames, optionally linked and annotated.
 }
 \description{
-This function runs the full SPICEY pipeline to compute tissue specificity
-scores from single cell ATAC-seq (RETSI) and/or RNA-seq (GETSI) data.
-It annotates regulatory elements to target genes via nearest-gene or
-co-accessibility annotation, and optionally integrates RETSI and GETSI measures
-by linking them using the specified annotation method.
+Computes tissue-specificity scores from single-cell chromatin accessibility (RETSI)
+and/or gene expression (GETSI) data. Supports:
+\itemize{
+\item RETSI calculation from scATAC-seq data.
+\item GETSI calculation from scRNA-seq data.
+\item Optional annotation of regulatory elements to genes via \code{"nearest"} or \code{"coaccessibility"} methods.
+\item Optional integration of RETSI and GETSI scores by linking gene associations.
+}
 }
 \examples{
-data(atac)
-data(rna)
-data(cicero_links)
+data(atac); data(rna); data(cicero_links)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-spicey_nearest <- SPICEY(
-  atac = atac,
-  rna = rna,
-  gene_id = "gene_id",
-  annot_method = "nearest",
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-  annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
-  link_spicey_measures = TRUE
-)
 
-spicey_coacc <- SPICEY(
-  atac = atac,
-  rna = rna,
-  gene_id = "gene_id",
-  annot_method = "coaccessibility",
-  links = cicero_links,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-  annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
-  link_spicey_measures = TRUE,
-  coaccess_cutoff_override = 0.25
-)
+SPICEY(atac, rna, gene_id = "gene_id", annot_method = "nearest",
+       txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+       annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+       link_spicey_measures = TRUE)
+
+SPICEY(atac, rna, gene_id = "gene_id", annot_method = "coaccessibility",
+       links = cicero_links,
+       txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+       annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+       link_spicey_measures = TRUE,
+       coaccess_cutoff_override = 0.25)
 }

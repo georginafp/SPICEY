@@ -2,31 +2,53 @@
 % Please edit documentation in R/spicey_indices.R
 \name{compute_spicey_index}
 \alias{compute_spicey_index}
-\title{Compute GETSI and/or RETSI specificity scores}
+\title{Compute cell type specificity scores from single-cell RNA and/or ATAC data}
 \usage{
 compute_spicey_index(rna = NULL, atac = NULL, gene_id = NULL)
 }
 \arguments{
-\item{rna}{A named list of Dataframe objects, typically one per cell type,
-containing RNA differential expression data with columns such as
-\code{avg_log2FC}, \code{p_val}, \code{gene_id} etc.}
+\item{rna}{A list of data frames (or \code{GRanges}-like objects).
+Each element corresponds to a cell type containing differential expression
+results, with required columns:
+\describe{
+\item{gene_id}{Identifier of the gene (e.g., gene symbol, Ensembl ID).}
+\item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
+\item{p_val}{Raw p-value for the differential test.}
+\item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
+\item{cell_type}{Cell type or cluster label.}}
+Note that the same peak may appear multiple times across cell types.}
 
-\item{atac}{A named list where each element corresponds to a
-cell type. Each must include \code{avg_log2FC}, \code{p_val}, and genomic coordinates.}
+\item{atac}{A list of data frames (or \code{GRanges}-like objects).
+Each element corresponds to a cell type containing differential chromatin
+accessibility results with required columns:
+\describe{
+\item{seqnames}{Chromosome name of the regulatory region (e.g., "chr1").}
+\item{start}{Start coordinate of the peak.}
+\item{end}{End coordinate of the peak.}
+\item{avg_log2FC}{Average log2 fold-change for accessibility in that cell type.}
+\item{p_val}{Raw p-value for the differential test.}
+\item{p_val_adj}{Adjusted p-value (e.g., FDR).}
+\item{cell_type}{Cell type or cluster name.}}}
 
-\item{gene_id}{A string indicating the name of the column in each data frame
-that contains gene identifiers (e.g., \code{"gene_id"} or \code{"gene"}).
-Required if \code{rna} is provided.}
+\item{gene_id}{A character string specifying the column name in each list element
+that contains the gene identifiers.#'}
 }
 \value{
-If only RNA or ATAC is provided, returns a single data.frame
-with scores and entropy.
-If both provided, returns a list with elements getsi and retsi.
+If only \code{rna} or \code{atac} is provided:
+A data frame with specificity scores for each feature:
+\describe{
+\item{GETSI or RETSI}{Specificity score (weighted log2FC).}
+\item{GETSI_entropy or RETSI_entropy}{Shannon entropy-based specificity measure.}
+\item{Other columns}{Coordinates (for ATAC), gene_id (for RNA), and cell_type.}}
+If both \code{rna} and \code{atac} are provided:
+A list with two elements: \code{getsi} and \code{retsi}, each as described above.
 }
 \description{
-This function computes GETSI scores for differential expression/accessibility
-data on scRNA-seq and/or scATAC-seq respectively, based on inputs provided.
-Both inputs are optional, but at least one must be given.
+Computes:
+\itemize{
+\item GETSI (Gene Expression Tissue Specificity Index) from single-cell RNA-seq differential expression data.
+\item RETSI (Regulatory Element Tissue Specificity Index) from single-cell ATAC-seq differential accessibility data.}
+Either RNA or ATAC input must be provided; if both are given, both indices are computed.
 }
 \examples{
 # Load example data (included with the package)

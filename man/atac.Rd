@@ -5,25 +5,30 @@
 \alias{atac}
 \title{Example single-cell ATAC-seq differential accessibility data}
 \format{
-A data frame or GRanges-like object with the following required columns:
+A data frame or \code{GRanges}-like object with the following required columns:
 \describe{
 \item{seqnames}{Chromosome name (e.g., "chr1")}
 \item{start}{Start coordinate of the peak}
 \item{end}{End coordinate of the peak}
-\item{avg_log2FC}{Average log2 fold-change in accessibility for the peak in the specific cell type}
-\item{p_val}{Raw or adjusted p-value from differential accessibility analysis}
-\item{cell_type}{Cell type label associated with the differential measurement}
+\item{avg_log2FC}{Average log2 fold-change of accessibility for the peak in the specific cell type}
+\item{p_val}{Raw or adjusted p-value from differential accessibility testing}
+\item{cell_type}{Cell type or cluster label associated with each measurement}
 }
-Multiple rows may exist per peak, each for a different cell type.
 }
 \source{
-Simulated differential ATAC-seq data for SPICEY
+Simulated single-cell ATAC-seq differential accessibility data used in SPICEY examples.
 }
 \usage{
 data(atac)
 }
 \description{
-A toy or example dataset representing single-cell ATAC-seq differential analysis results.
-Each row corresponds to a chromatin peak assessed for differential accessibility across one or more cell types.
+A simulated example dataset representing single-cell ATAC-seq
+differential accessibility results.
+Each row corresponds to a chromatin accessibility peak tested for
+differential accessibility across one or more cell types.
+The dataset is formatted as a list of \code{GRanges} objects or
+data frames (convertible to \code{GRanges}),  where each element represents
+differential accessibility statistics for a specific cell type.
+Multiple rows may exist per peak, each representing results in a different cell type.
 }
 \keyword{datasets}

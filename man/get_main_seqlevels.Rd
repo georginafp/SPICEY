@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{get_main_seqlevels}
 \alias{get_main_seqlevels}
-\title{Get main chromosomes from a GRanges or TxDb, filtering alt/hap/random/etc.}
+\title{Filter Main Chromosomes from Genome Annotation}
 \usage{
 get_main_seqlevels(
   txdb,
@@ -12,19 +12,24 @@ get_main_seqlevels(
 )
 }
 \arguments{
-\item{txdb}{A TxDb object (e.g., from \code{GenomicFeatures::makeTxDbFromGFF()}
-or a prebuilt TxDb package).}
+\item{txdb}{A \code{TxDb}, \code{GRanges}, or any object supporting \code{seqlevels()}.}
 
-\item{keep_mito}{Logical, whether to keep mitochondrial/plastid contigs.}
+\item{keep_mito}{Logical (default = \code{FALSE}). Keep mitochondrial chromosomes.}
 
-\item{include_only}{Optional character vector of seqlevels to
-force-include (manual override).}
+\item{include_only}{Character vector of seqlevels to keep (ignores other filters if set).}
 
-\item{verbose}{Logical, print what is kept/removed.}
+\item{verbose}{Logical (default = \code{FALSE}). Print retained/removed seqlevels.}
 }
 \value{
 Character vector of filtered seqlevels.
 }
 \description{
-Get main chromosomes from a GRanges or TxDb, filtering alt/hap/random/etc.
+Retrieves primary chromosomes from a genome annotation, excluding alternative contigs,
+haplotypes, decoys, and patches. Optionally keeps mitochondrial chromosomes or includes
+specific seqlevels.
+}
+\details{
+Excludes seqlevels matching: \code{"random"}, \code{"alt"}, \code{"fix"}, \code{"hap"},
+\code{"Un"}, \code{"decoy"}, \code{"PATCH"}, \code{"GL"}, \code{"KI"}, \code{"JH"}, \code{"HSCHR"}.
+Mitochondrial chromosomes match: \code{"chrM"}, \code{"^MT$"}, \code{"^Mt$"}, \code{"^Pt$"}.
 }

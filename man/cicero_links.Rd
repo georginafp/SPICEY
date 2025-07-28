@@ -7,20 +7,22 @@
 \format{
 A data frame with the following columns:
 \describe{
-\item{Peak1}{Genomic coordinate or identifier of the first peak}
-\item{Peak2}{Genomic coordinate or identifier of the second peak}
-\item{coaccess}{Co-accessibility score or correlation value between the two peaks}
+\item{Peak1}{Genomic coordinate or peak identifier for the first peak in the pair}
+\item{Peak2}{Genomic coordinate or peak identifier for the second peak in the pair}
+\item{coaccess}{Co-accessibility score or correlation value quantifying the linkage}
 }
-Peaks must correspond exactly to those used in the ATAC-seq input.
 }
 \source{
-Simulated Cicero results on example ATAC-seq data
+Simulated Cicero co-accessibility results on example single-cell ATAC-seq data.
 }
 \usage{
 data(cicero_links)
 }
 \description{
-A toy or example dataset representing co-accessibility links inferred from tools such as Cicero.
-These links are used in SPICEY for associating regulatory elements to target genes.
+A simulated example dataset of co-accessibility links inferred
+from single-cell ATAC-seq data using tools such as Cicero or Signac's LinkPeaks().
+These links support integrative analysis by associating regulatory elements
+with putative target genes. The peaks referenced here must exactly match
+those in the ATAC-seq differential accessibility dataset.
 }
 \keyword{datasets}

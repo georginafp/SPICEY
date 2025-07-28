@@ -1,87 +1,135 @@
-#' Compute specificity index for grouped features
+#' Calculate specificity scores for grouped features
 #'
-#' Computes a specificity score for features (e.g., genes or regions)
-#' by rescaling fold-change and significance values.
-#' @param df A data frame containing differential accessibility
-#' or expression data.
-#' @param group_col A string indicating the name of the column
-#' to group by (e.g., "gene_id" or "region").
+#' This function computes a specificity index for different features
+#' (e.g., genes or regions) based on differential expression or accessibility data.
+#' It rescales fold-change values and weights them by significance
+#' to quantify how specific a feature's activity is to a particular cell type.
+#' @param da A data.frame containing differential results with at least the following columns:
+#'   \describe{
+#'     \item{avg_log2FC}{Average log2 fold-change of the feature (gene or region).}
+#'     \item{p_val}{Raw p-value from the differential test.}
+#'     \item{cell_type}{Cell type or cluster label.}
+#'     \item{\code{[group_col]}}{Column containing the feautre identifier (e.g., gene_id or region)
+#'   The **name of this column must match the value passed to the `group_col` argument**}}
+#' @param group_col A string specifying the name of the column in \code{da} that
+#' identifies each feature, such as \code{gene_id} for genes or \code{region} for ATAC peaks.
+#' @return A data.frame identical to the input but with additional columns:
+#'   \describe{
+#'     \item{avg_FC}{Fold-change converted from log2 scale.}
+#'     \item{p_val_adj}{FDR-adjusted p-values computed across all entries.}
+#'     \item{max_FC}{Maximum fold-change observed within each feature group.}
+#'     \item{weight}{Normalized significance weight derived from adjusted p-values.}
+#'     \item{norm_FC}{Fold-change normalized by maximum fold-change in the group.}
+#'     \item{score}{Specificity score computed as the product of normalized fold-change signficantly weighted.}}
 #' @importFrom dplyr mutate group_by ungroup
 #' @importFrom stats p.adjust
 #' @importFrom scales rescale
-#' @return A data frame with an additional column `score`
-#' representing the specificity index.
-specificity_index <- function(df, group_col) {
-  stopifnot(group_col %in% colnames(df))
-
-  df |>
+specificity_index <- function(da, group_col) {
+  stopifnot(group_col %in% colnames(da))
+  da |>
     dplyr::mutate(
       avg_FC = 2^avg_log2FC,
-      p_val_adj = p.adjust(p_val, method = "fdr")
-    ) |>
+      p_val_adj = p.adjust(p_val, method = "fdr")) |>
     dplyr::group_by(.data[[group_col]]) |>
     dplyr::mutate(
       max_FC = max(avg_FC, na.rm = TRUE),
-      p_val_adj = ifelse(p_val_adj == 0, min(p_val_adj[p_val_adj > 0],
-                                             na.rm = TRUE), p_val_adj),
-      weight = rescale(-log10(p_val_adj), to = c(0, 1))
-    ) |>
+      p_val_adj = ifelse(p_val_adj == 0,
+                         min(p_val_adj[p_val_adj > 0], na.rm = TRUE),
+                         p_val_adj),
+      weight = rescale(-log10(p_val_adj), to = c(0, 1))) |>
     dplyr::group_by(cell_type, .data[[group_col]]) |>
     dplyr::mutate(
       norm_FC = avg_FC / max_FC,
-      score = norm_FC * weight
-    ) |>
+      score = norm_FC * weight) |>
     dplyr::ungroup() |>
     data.frame()
 }
 
 
-#' Compute normalized entropy of specificity scores
-#'
-#' General function to compute entropy given a dataframe, grouping column, and score column.
-#'
-#' @param df Data.frame with columns for group_col, cell_type, and score_col.
-#' @param group_col Character string name of grouping column ("gene_id" or "region").
-#' @return Data.frame with group_col and norm_entropy columns.
-#' @importFrom dplyr group_by mutate summarise
-entropy_index <- function(df, group_col) {
-  df <- data.frame(df)
-  n_celltypes <- length(unique(df$cell_type))
 
-  df |>
+
+#' Calculate normalized shannon-entropy of specificity scores
+#'
+#' Computes the entropy of specificity scores (RETSI or GETSI) across cell types
+#' Entropy quantifies how evenly a feature's activity is distributed among cell types,
+#' yielding scores from 0 to 1, where  where values close to 1 indicate
+#' widespread distribution across cell types, and values near 0 denote dominating
+#' distribution towards one cell type.
+#' @param spec_df A data.frame containing the computed specificity scores
+#' containing at least the following columns:
+#'   \describe{
+#'     \item{cell_type}{Cell type or cluster label.}
+#'     \item{score}{Specificity score for each feature in each cell type.}
+#'     \item{\code{[group_col]}}{Column containing the feautre identifier (e.g., gene_id or region)
+#'   The **name of this column must match the value passed to the `group_col` argument**}}
+#' @param group_col A string specifying the name of the column in \code{da} that
+#' identifies each feature, such as \code{gene_id} for genes or \code{region} for ATAC peaks.
+#' @return A data.frame with one row per feature, containing:
+#'   \describe{
+#'     \item{group_col}{Feature identifier.}
+#'     \item{entropy}{Raw Shannon entropy computed from specificity scores.}
+#'     \item{norm_entropy}{Normalized entropy score (1 - exp(-entropy))
+#'     bounded between 0 and 1, where lower values indicate higher specificity.}}
+#' @importFrom dplyr group_by mutate summarise
+entropy_index <- function(spec_df, group_col) {
+  spec_df <- data.frame(spec_df)
+  n_celltypes <- length(unique(spec_df$cell_type))
+  spec_df |>
     dplyr::group_by(.data[[group_col]]) |>
     dplyr::mutate(
       prob = score / sum(score, na.rm = TRUE),
-      entropy_component = -prob * log2(prob)
-    ) |>
+      entropy_component = -prob * log2(prob)) |>
     dplyr::summarise(
       entropy = sum(entropy_component, na.rm = TRUE),
       norm_entropy = 1 - exp(-entropy),
-      .groups = "drop"
-    ) |>
+      .groups = "drop") |>
     data.frame()
 }
 
 
 
-#' Compute GETSI and/or RETSI specificity scores
+
+
+#' Compute cell type specificity scores from single-cell RNA and/or ATAC data
 #'
-#' This function computes GETSI scores for differential expression/accessibility
-#' data on scRNA-seq and/or scATAC-seq respectively, based on inputs provided.
-#' Both inputs are optional, but at least one must be given.
-#' @param rna A named list of Dataframe objects, typically one per cell type,
-#'  containing RNA differential expression data with columns such as
-#'  `avg_log2FC`, `p_val`, `gene_id` etc.
-#' @param gene_id A string indicating the name of the column in each data frame
-#' that contains gene identifiers (e.g., `"gene_id"` or `"gene"`).
-#' Required if `rna` is provided.
-#' @param atac A named list where each element corresponds to a
-#' cell type. Each must include `avg_log2FC`, `p_val`, and genomic coordinates.
+#' Computes:
+#' \itemize{
+#'   \item GETSI (Gene Expression Tissue Specificity Index) from single-cell RNA-seq differential expression data.
+#'   \item RETSI (Regulatory Element Tissue Specificity Index) from single-cell ATAC-seq differential accessibility data.}
+#' Either RNA or ATAC input must be provided; if both are given, both indices are computed.
+#' @param rna A list of data frames (or \code{GRanges}-like objects).
+#'   Each element corresponds to a cell type containing differential expression
+#'   results, with required columns:
+#'   \describe{
+#'     \item{gene_id}{Identifier of the gene (e.g., gene symbol, Ensembl ID).}
+#'     \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
+#'     \item{p_val}{Raw p-value for the differential test.}
+#'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
+#'     \item{cell_type}{Cell type or cluster label.}}
+#'   Note that the same peak may appear multiple times across cell types.
+#' @param atac A list of data frames (or \code{GRanges}-like objects).
+#'   Each element corresponds to a cell type containing differential chromatin
+#'   accessibility results with required columns:
+#'   \describe{
+#'     \item{seqnames}{Chromosome name of the regulatory region (e.g., "chr1").}
+#'     \item{start}{Start coordinate of the peak.}
+#'     \item{end}{End coordinate of the peak.}
+#'     \item{avg_log2FC}{Average log2 fold-change for accessibility in that cell type.}
+#'     \item{p_val}{Raw p-value for the differential test.}
+#'     \item{p_val_adj}{Adjusted p-value (e.g., FDR).}
+#'     \item{cell_type}{Cell type or cluster name.}}
+#' @param gene_id A character string specifying the column name in each list element
+#'   that contains the gene identifiers.#'
+#' @return If only \code{rna} or \code{atac} is provided:
+#'   A data frame with specificity scores for each feature:
+#'   \describe{
+#'     \item{GETSI or RETSI}{Specificity score (weighted log2FC).}
+#'     \item{GETSI_entropy or RETSI_entropy}{Shannon entropy-based specificity measure.}
+#'     \item{Other columns}{Coordinates (for ATAC), gene_id (for RNA), and cell_type.}}
+#'   If both \code{rna} and \code{atac} are provided:
+#'   A list with two elements: \code{getsi} and \code{retsi}, each as described above.
 #' @importFrom stats p.adjust
 #' @importFrom dplyr rename
-#' @return If only RNA or ATAC is provided, returns a single data.frame
-#' with scores and entropy.
-#' If both provided, returns a list with elements getsi and retsi.
 #' @export
 #' @examples
 #' # Load example data (included with the package)
@@ -97,15 +145,13 @@ entropy_index <- function(df, group_col) {
 #' # Compute RETSI only
 #' spicey_retsi <- compute_spicey_index(atac = atac)
 compute_spicey_index <- function(rna = NULL,
-                         atac = NULL,
-                         gene_id = NULL) {
+                                 atac = NULL,
+                                 gene_id = NULL) {
   if (is.null(rna) && is.null(atac)) {
     stop("You must provide at least one of 'rna' or 'atac'.")
   }
-
   result <- list()
 
-  # GETSI
   if (!is.null(rna)) {
     if (is.null(gene_id)) stop("You must specify 'gene_id' for RNA input.")
     message("Computing GETSI...")
@@ -124,7 +170,6 @@ compute_spicey_index <- function(rna = NULL,
     result$getsi <- getsi_final
   }
 
-  # RETSI
   if (!is.null(atac)) {
     message("Computing RETSI...")
     if (inherits(atac[[1]], "GRanges")) {

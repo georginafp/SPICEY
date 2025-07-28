@@ -1,58 +1,71 @@
-#' Runs the full SPICEY pipeline
+#' Run the full SPICEY pipeline for tissue specificity analysis
 #'
-#' This function runs the full SPICEY pipeline to compute tissue specificity
-#' scores from single cell ATAC-seq (RETSI) and/or RNA-seq (GETSI) data.
-#' It annotates regulatory elements to target genes via nearest-gene or
-#' co-accessibility annotation, and optionally integrates RETSI and GETSI measures
-#' by linking them using the specified annotation method.
-#'
-#' @param atac Single-cell ATAC-seq data (Seurat or SummarizedExperiment).
-#' @param rna Single-cell RNA-seq data (Seurat or SummarizedExperiment).
-#' @param gene_id Column name for gene IDs; required if RNA data is provided.
-#' @param annot_method Character; Annotation method to link regulatory elements to genes.
-#'   Must be either `"nearest"` or `"coaccessibility"`. This specifies which
-#'   gene annotation strategy is used.
-#' @param links Co-accessibility links data; required if `annot_method` is `"coaccessibility"`.
-#' @param link_spicey_measures Logical; whether to link RETSI and GETSI by gene using `link_spicey`.
-#' @param coaccess_cutoff_override Numeric cutoff for co-accessibility (default 0.25).
-#' @param filter_promoter_distal Logical; filter promoter-distal links (default TRUE).
-#' @param filter_protein_coding Logical; filter to protein-coding genes (default TRUE).
-#' @param keep_mito Logical; whether to keep mitochondrial regions (default FALSE).
-#' @param txdb TxDb object for annotation; required if annotation is used.
-#' @param annot_dbi AnnotationDbi object for gene info; required if annotation is used.
-#' @param add_tss_annotation Logical; include TSS annotation columns (default FALSE).
-#' @param verbose Logical; print messages during execution (default TRUE).
-#' @return Either a tibble/data.frame or a list:
-#'   If \code{link_spicey_measures} is \code{TRUE}, returns a combined tibble/data.frame
-#'   with specificity and annotation values. If \code{FALSE}, returns a list containing
-#'   separate elements for RETSI and GETSI, each with their respective data.
-#' @export
+#' Computes tissue-specificity scores from single-cell chromatin accessibility (RETSI)
+#' and/or gene expression (GETSI) data. Supports:
+#' \itemize{
+#'   \item RETSI calculation from scATAC-seq data.
+#'   \item GETSI calculation from scRNA-seq data.
+#'   \item Optional annotation of regulatory elements to genes via \code{"nearest"} or \code{"coaccessibility"} methods.
+#'   \item Optional integration of RETSI and GETSI scores by linking gene associations.
+#' }
+#' @param rna A list of data frames (or \code{GRanges}-like objects).
+#'   Each element corresponds to a cell type containing differential expression
+#'   results, with required columns:
+#'   \describe{
+#'     \item{gene_id}{Identifier of the gene (e.g., gene symbol, Ensembl ID).}
+#'     \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
+#'     \item{p_val}{Raw p-value for the differential test.}
+#'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
+#'     \item{cell_type}{Cell type or cluster label.}
+#'   }
+#'   Note that the same peak may appear multiple times across cell types.
+#' @param atac A list of data frames (or \code{GRanges}-like objects).
+#'   Each element corresponds to a cell type containing differential chromatin
+#'   accessibility results with required columns:
+#'   \describe{
+#'     \item{seqnames}{Chromosome name of the regulatory region (e.g., "chr1").}
+#'     \item{start}{Start coordinate of the peak.}
+#'     \item{end}{End coordinate of the peak.}
+#'     \item{avg_log2FC}{Average log2 fold-change for accessibility in that cell type.}
+#'     \item{p_val}{Raw p-value for the differential test.}
+#'     \item{p_val_adj}{Adjusted p-value (e.g., FDR).}
+#'     \item{cell_type}{Cell type or cluster name.}
+#'   }
+#' @param gene_id A character string specifying the column name in each list element
+#'   that contains the gene identifiers.
+#' @param annot_method Optional annotation method: \code{"nearest"} or \code{"coaccessibility"}.
+#' @param links \code{GInteractions} object with co-accessibility links (required if \code{annot_method = "coaccessibility"}).
+#' @param link_spicey_measures Logical; link RETSI and GETSI scores (default FALSE).
+#' @param coaccess_cutoff_override Numeric; cutoff for co-accessibility clustering (default 0.25).
+#' @param filter_promoter_distal Logical; filter to promoter-distal links (default TRUE).
+#' @param filter_protein_coding Logical; restrict to protein-coding genes (default TRUE).
+#' @param keep_mito Logical; keep mitochondrial chromosomes (default FALSE).
+#' @param txdb \code{TxDb} object for genome annotation (required if annotation requested).
+#' @param annot_dbi \code{AnnotationDbi} object for gene ID mapping (required if annotation requested).
+#' @param add_tss_annotation Logical; annotate regulatory elements overlapping TSS (default FALSE).
+#' @param verbose Logical; print messages (default TRUE).
+#' @return Depending on inputs, returns RETSI and/or GETSI data frames, optionally linked and annotated.
 #' @examples
-#' data(atac)
-#' data(rna)
-#' data(cicero_links)
+#' data(atac); data(rna); data(cicero_links)
 #' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-#' spicey_nearest <- SPICEY(
-#'   atac = atac,
-#'   rna = rna,
-#'   gene_id = "gene_id",
-#'   annot_method = "nearest",
-#'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-#'   annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
-#'   link_spicey_measures = TRUE
-#' )
 #'
-#' spicey_coacc <- SPICEY(
-#'   atac = atac,
-#'   rna = rna,
-#'   gene_id = "gene_id",
-#'   annot_method = "coaccessibility",
-#'   links = cicero_links,
-#'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-#'   annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
-#'   link_spicey_measures = TRUE,
-#'   coaccess_cutoff_override = 0.25
-#' )
+#' SPICEY(atac, rna, gene_id = "gene_id", annot_method = "nearest",
+#'        txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'        annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+#'        link_spicey_measures = TRUE)
+#'
+#' SPICEY(atac, rna, gene_id = "gene_id", annot_method = "coaccessibility",
+#'        links = cicero_links,
+#'        txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'        annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
+#'        link_spicey_measures = TRUE,
+#'        coaccess_cutoff_override = 0.25)
+#' @importFrom GenomicRanges promoters distanceToNearest makeGRangesFromDataFrame mcols
+#' @importFrom GenomeInfoDb keepSeqlevels seqlevels
+#' @importFrom tidyr unnest
+#' @importFrom dplyr select
+#' @importFrom S4Vectors queryHits subjectHits
+#' @export
 SPICEY <- function(atac = NULL,
                    rna = NULL,
                    gene_id = NULL,
@@ -135,22 +148,18 @@ SPICEY <- function(atac = NULL,
 
   if (link_spicey_measures) {
     if (is.null(getsi)) stop("RNA data must be provided to link RETSI and GETSI.")
-
-    # Use the generalized link_spicey function with explicit method
     combined <- link_spicey(
       retsi_annotated = retsi_annotated,
       getsi = getsi,
-      method = annot_method
-    )
-
+      method = annot_method)
     message("SPICEY pipeline successfully completed")
     return(combined)
   }
 
   out <- list(retsi_annotated = retsi_annotated)
   if (!is.null(getsi)) out$getsi <- getsi
-
   message("SPICEY pipeline successfully completed")
+
   if (length(out) == 1) {
     return(out[[1]])
   } else {

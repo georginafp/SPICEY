@@ -2,35 +2,53 @@
 % Please edit documentation in R/link_spicey.R
 \name{link_spicey}
 \alias{link_spicey}
-\title{Link RETSI peaks with GETSI values based on gene linkage method}
+\title{Link RETSI regions to GETSI scores using gene-based association methods}
 \usage{
 link_spicey(retsi_annotated, getsi, method = NULL)
 }
 \arguments{
-\item{retsi_annotated}{A \code{data.frame} object containing RETSI results
-including one of: \code{gene_coacc} (for coaccessibility) or \code{nearestGeneSymbol} (for nearest).}
-
-\item{getsi}{A \code{data.frame} or tibble containing GETSI results with columns:
+\item{retsi_annotated}{A \code{GRanges} or \code{data.frame} of regulatory regions
+with computed RETSI scores. Must include at least:
 \itemize{
-\item \code{gene_id}
-\item \code{cell_type}
-\item \code{GETSI}
-\item \code{GETSI_entropy}
-}}
+\item \code{RETSI} — Regulatory Element Tissue Specificity Index score.
+\item \code{RETSI_entropy} — Entropy-based specificity score for accessibility.
+\item \code{nearestGeneSymbol} or \code{gene_coacc} — Gene name or ID used for linking
+depending on \code{method}:
+\itemize{
+\item If \code{method = "nearest"}, uses \code{nearestGeneSymbol}.
+\item If \code{method = "coaccessibility"}, uses \code{gene_coacc}}}}
 
-\item{method}{Character; either \code{"coaccessibility"} or \code{"nearest"} to indicate
-the gene linkage method used to associate RETSI regions with GETSI scores.
-If \code{"coaccessibility"}, links are based on co-accessible genes (\code{gene_coacc});
-if \code{"nearest"}, links are based on the nearest gene symbol (\code{nearestGeneSymbol}).}
+\item{getsi}{A \code{data.frame} containing GETSI results, with at least the following columns:
+\describe{
+\item{\code{[gene_id]}}{Gene identifier column (e.g., gene symbol or Ensembl ID).
+The identifier format must match the one used in the selected linking method.}
+\item{\code{cell_type}}{Cell type or cluster name (used for merging).}
+\item{\code{GETSI}}{Gene Expression Tissue Specificity Index score.}
+\item{\code{GETSI_entropy}}{Entropy-based specificity score for expression.}}}
+
+\item{method}{Character string specifying the linking strategy:
+\itemize{
+\item \code{"nearest"} — link peaks to the nearest annotated gene.
+\item \code{"coaccessibility"} — link peaks using co-accessibility associations.}
+The gene identifiers in \code{getsi} must be consistent with those used in the selected method
+(e.g., both should use gene symbols or both Ensembl IDs) to avoid mismatched links.}
 }
 \value{
-A \code{data.frame} combining RETSI and GETSI specificity scores,
-linked by gene identifier and including entropy values for each.
+A \code{data.frame} combining RETSI and GETSI information, including:
+\itemize{
+\item Regulatory region coordinates (\code{seqnames}, \code{start}, \code{end}).
+\item Cell type.
+\item Linked gene (\code{gene_linked}).
+\item RETSI and RETSI_entropy.
+\item GETSI and GETSI_entropy.}
 }
 \description{
-This generalized function links RETSI (Regulatory Element Tissue Specificity Index) regions
-with GETSI (Gene Expression Tissue Specificity Index) scores based on either coaccessibility
-or nearest gene annotation.
+This function connects regulatory regions scored with RETSI
+(Regulatory Element Tissue Specificity Index) to genes scored with
+GETSI (Gene Expression Tissue Specificity Index), based on either:
+\itemize{
+\item \code{"nearest"} — links to the closest gene using the \code{nearestGeneSymbol} column.
+\item \code{"coaccessibility"} — links based on co-accessibility networks using the \code{gene_coacc} column.}
 }
 \examples{
 data(atac)
@@ -55,6 +73,5 @@ retsi_gene_coacc <- annotate_with_coaccessibility(links = cicero_links,
 spicey_coacc <- link_spicey(
   retsi_annotated = retsi_gene_coacc,
   getsi = getsi,
-  method = "coaccessibility"
-)
+  method = "coaccessibility")
 }

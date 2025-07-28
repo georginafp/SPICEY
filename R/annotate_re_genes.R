@@ -1,18 +1,19 @@
 #' Annotate regulatory elements overlapping transcription start sites (TSS)
 #'
-#' This function identifies regulatory elements that directly overlap annotated
-#' transcription start sites (TSS, defined as 1 bp ranges) and assigns the corresponding gene symbols.
-#'
-#' @param txdb A \code{TxDb} object used to extract gene coordinates.
-#' @param re A \code{GRanges} object or data.frame of regulatory elements to annotate.
-#' @param annot_dbi An \code{AnnotationDbi} object (e.g., \code{org.Hs.eg.db}) for gene symbol mapping.
-#'
-#' @return A \code{data.frame} of regulatory elements annotated with:
-#' \itemize{
-#'   \item \code{in_TSS}: Logical indicating whether the element overlaps a TSS.
-#'   \item \code{TSS_gene}: Gene symbol of the overlapping TSS, if any.
-#' }
-#'
+#' Identifies regulatory elements that overlap precisely defined transcription
+#' start sites (TSS) and assigns the corresponding gene symbols to these elements.
+#' @param txdb A `TxDb` object (from \pkg{GenomicFeatures}), a `GRanges` object,
+#' or any object that supports `GenomeInfoDb::seqlevels()`.
+#' For example, you can create a TxDb using: `GenomicFeatures::makeTxDbFromGFF()`
+#' or use a prebuilt TxDb such as `TxDb.Hsapiens.UCSC.hg38.knownGene`.
+#' @param re A \code{GRanges} or \code{data.frame} with regulatory regions to be annotated.
+#'           If a \code{data.frame}, it must be convertible to \code{GRanges} with genomic coordinates.
+#' @param annot_dbi An `AnnotationDbi` object (e.g., \pkg{org.Hs.eg.db})
+#' for mapping gene IDs to gene symbols and types.
+#' @return A \code{data.frame} containing the input regulatory elements with added columns:
+#' \describe{
+#'   \item{\code{in_TSS}}{Logical indicating whether the element overlaps a TSS.}
+#'   \item{\code{TSS_gene}}{Gene symbol of the overlapping TSS, or \code{NA} if none.}}
 #' @importFrom GenomicRanges makeGRangesFromDataFrame promoters findOverlaps mcols
 #' @importFrom AnnotationDbi mapIds
 #' @importFrom S4Vectors queryHits subjectHits
@@ -49,13 +50,49 @@ annotate_tss <- function(txdb, re, annot_dbi) {
 
 
 
-#' Annotate co-accessible links with CCAN membership and return GInteractions
-#' @param links A data.frame of co-accessibility links with columns Peak1, Peak2, coaccess.
-#' @param coaccess_cutoff_override Numeric, coaccessibility cutoff for CCAN generation (default 0.25).
-#' @param tolerance_digits Integer, rounding precision for cutoff (default 2).
-#' @param filter_promoter_distal Logical, whether to keep only Promoter-Distal links (default TRUE).
-#' @param txdb TxDb object for peak annotation (required if filter_promoter_distal=TRUE).
-#' @return GInteractions object annotated with coaccess, CCAN1, CCAN2 metadata columns.
+
+
+
+#' Annotate co-accessible links with CCAN membership
+#'
+#' Processes co-accessibility links to assign CCAN (co-accessibility network)
+#' membership to each peak. Optionally filters links to retain only promoter-distal
+#' interactions, and converts the result to a \code{GInteractions} object annotated
+#' with co-accessibility scores and CCAN metadata.
+#' @param links A \code{data.frame} of co-accessibility links with at least three columns:
+#' \describe{
+#'   \item{\code{Peak1}}{Character vector specifying the first peak in the
+#'   co-accessibility link. Each peak is typically represented as a
+#'   genomic coordinate string, e.g., "chr1-123456-123789".}
+#'   \item{\code{Peak2}}{Character vector specifying the second peak in the
+#'   co-accessibility link, in the same format as \code{Peak1}.}
+#'   \item{\code{coaccess}}{Numeric vector representing the co-accessibility
+#'   score between \code{Peak1} and \code{Peak2}.
+#'   This score quantifies the strength of coordinated accessibility between the
+#'   two peaks, where higher values indicate stronger putative regulatory interaction.}}
+#' @param coaccess_cutoff_override Numeric; co-accessibility score cutoff used
+#'   for defining CCAN membership clusters. Peaks connected by edges with co-accessibility
+#'   scores above this threshold will be clustered together (default: \code{0.25}).
+#' @param tolerance_digits Integer; number of decimal digits to round co-accessibility
+#'   scores when detecting CCAN clusters. This controls the precision of clustering (default: \code{2}).
+#' @param filter_promoter_distal Logical; whether to filter links to keep only those connecting
+#'   promoter regions to distal elements (default: \code{TRUE}). Promoter regions are defined
+#'   based on the provided \code{txdb} annotation.
+#' @param txdb A \code{TxDb} object (from \pkg{GenomicFeatures}) representing genome annotation.
+#'   This is used to identify promoter regions when filtering promoter-distal links. Can be created using
+#'   \code{GenomicFeatures::makeTxDbFromGFF()} or a prebuilt TxDb package like \code{TxDb.Hsapiens.UCSC.hg38.knownGene}.
+#' @return A \code{GInteractions} object where each row corresponds to a co-accessible peak pair,
+#'   with the following metadata columns:
+#'   \describe{
+#'     \item{\code{coaccess}}{Co-accessibility score between \code{Peak1} and \code{Peak2}.}
+#'     \item{\code{CCAN1}}{Identifier of the CCAN (co-accessibility network cluster)
+#'     that \code{Peak1} belongs to. CCANs group highly connected peaks based on co-accessibility.}
+#'     \item{\code{CCAN2}}{Identifier of the CCAN cluster that \code{Peak2} belongs to.}}
+#' @importFrom dplyr left_join filter rename
+#' @importFrom regioneR toGRanges
+#' @importFrom ChIPseeker annotatePeak
+#' @importFrom InteractionSet GInteractions
+#' @importFrom Signac StringToGRanges
 annotate_links_with_ccans <- function(links,
                                       coaccess_cutoff_override = 0.25,
                                       tolerance_digits = 2,
@@ -120,12 +157,28 @@ annotate_links_with_ccans <- function(links,
 
 
 
-#' Extract CCAN membership from links for a given GRanges object
-#' @param links GInteractions with CCAN1 and CCAN2 metadata columns
-#' @param gr GRanges to query
-#' @param name_column Character, metadata column in gr to use as identifier (default "region")
-#' @param split Character, "ccan" returns names per CCAN, "name" returns CCANs per name
-#' @return Named list split by CCAN or name as requested
+#' Extract CCAN membership for genomic regions from co-accessibile Links
+#'
+#' Given a set of co-accessibility links with CCAN (co-accessibility network) annotations,
+#' this function finds which CCANs each genomic region belongs to, or conversely, which
+#' regions belong to each CCAN. This helps to identify the grouping of regulatory elements
+#' within shared co-accessibility networks.
+#' @param links A \code{GInteractions} object containing co-accessibility links.
+#'              Must have metadata columns \code{CCAN1} and \code{CCAN2}
+#'              representing CCAN IDs for each anchor in the interaction.
+#' @param gr A \code{GRanges} object representing genomic regions to query.
+#' @param name_column A \code{character} string specifying the metadata column name in
+#'                    \code{gr} to use as the region identifier. Default is \code{"region"}.
+#' @param split A \code{character} indicating the desired output split:
+#'              \itemize{
+#'                \item \code{"ccan"}: returns a named list with CCAN IDs as names,
+#'                       each containing a vector of region identifiers.
+#'                \item \code{"name"}: returns a named list with region identifiers as names,
+#'                       each containing a vector of CCAN IDs.
+#'              }
+#'              Default is \code{c("ccan", "name")}, with \code{"ccan"} selected by default.
+#' @return A named \code{list} mapping CCANs to region names or vice versa, depending on
+#'         the \code{split} argument.
 #' @importFrom GenomicRanges findOverlaps mcols
 #' @importFrom S4Vectors queryHits subjectHits
 get_ccan <- function(links, gr, name_column = "region", split = c("ccan", "name")) {
@@ -152,11 +205,22 @@ get_ccan <- function(links, gr, name_column = "region", split = c("ccan", "name"
 
 
 
+
+
 #' Link regulatory elements to genes based on shared CCAN membership
-#' @param links GInteractions with CCAN metadata
-#' @param re GRanges of regulatory elements with 'region' column
-#' @param proms GRanges of promoters with 'gene_id' column
-#' @return GRanges of regulatory elements annotated with linked genes
+#'
+#' This function annotates regulatory elements by linking them to gene promoters
+#' through shared CCAN (co-accessibility network) membership derived from co-accessibile links.
+#' Each regulatory region is assigned the gene IDs of promoters that belong to the same CCAN,
+#' thus identifying putative gene targets based on chromatin co-accessibility.
+#' @param links A \code{GInteractions} object containing co-accessibility links.
+#'              Must have metadata columns \code{CCAN1} and \code{CCAN2}
+#'              representing CCAN IDs for each anchor in the interaction.
+#' @param re A \code{GRanges} object of regulatory elements with a metadata column
+#'           named \code{"region"} that identifies each region.
+#' @param proms A \code{GRanges} object of gene promoters
+#' @return A \code{GRanges} object identical to \code{re} but with an added metadata
+#'         column \code{gene_coacc} that contains a list of linked gene IDs per RE.
 get_targets_links <- function(links, re, proms) {
   res <- get_ccan(links, re, name_column = "region", split = "name")
   re$CCAN <- res[re$region]
@@ -170,33 +234,40 @@ get_targets_links <- function(links, re, proms) {
 
 
 
-#' Annotate Regulatory Elements with Gene Targets Using Co-Accessibility Links
+#' Annotate regulatory regions to their gene targets using co-accessible links
 #'
-#' This function annotates regulatory elements (REs) with their putative gene targets by integrating
-#' co-accessibility links that include CCAN (co-accessibility networks) metadata. It extracts promoter
-#' regions from a TxDb object, optionally filters for protein-coding genes, and links REs to genes
-#' based on chromatin co-accessibility. Optionally, REs overlapping a transcription start site (TSS)
-#' can also be annotated directly.
-#'
-#' @param links A \code{GInteractions} object representing co-accessibility links with CCAN metadata.
-#' @param retsi A \code{GRanges} or \code{data.frame} object representing regulatory elements to annotate.
-#'              If a data.frame, must contain columns sufficient to construct \code{GRanges} (e.g., seqnames, start, end).
-#' @param txdb A \code{TxDb} object used to extract promoter regions and TSS annotations.
-#' @param annot_dbi An \code{AnnotationDbi} annotation database object (e.g., \code{org.Hs.eg.db}) for mapping gene IDs to gene symbols and types.
-#' @param protein_coding_only Logical indicating whether to restrict promoter regions to protein-coding genes only (default: \code{TRUE}).
-#' @param keep_mito Logical indicating whether to keep mitochondrial (chrM/MT) chromosomes in promoter extraction (default: \code{FALSE}).
-#' @param verbose Logical; if \code{TRUE}, informative messages are printed during processing (default: \code{TRUE}).
-#' @param coaccess_cutoff_override Numeric; co-accessibility score cutoff to override default filtering in \code{annotate_links_with_ccans} (default: \code{0.25}).
-#' @param filter_promoter_distal Logical; whether to filter links to retain only promoter-distal interactions (default: \code{TRUE}).
-#' @param add_tss_annotation Logical; whether to annotate regulatory elements overlapping TSS directly (default: \code{TRUE}).
-#'
-#' @return A \code{data.frame} with regulatory elements annotated with:
+#' Annotate a set of regulatory elements with their putative target genes
+#' using co-accessibility links annotated with CCAN (co-accessibility network) metadata.
+#' The function extracts promoter regions from a given \code{TxDb} annotation,
+#' optionally filters for protein-coding genes, and annotates REs based on
+#' shared CCAN membership with promoters. Additionally, it computes the distance
+#' of each RE to the nearest TSS and can add direct TSS overlap annotations.
+#' @param links A \code{GInteractions} object containing co-accessibility links.
+#'   Must have metadata columns \code{CCAN1} and \code{CCAN2}
+#'   representing CCAN IDs for each anchor in the interaction.
+#' @param retsi A \code{GRanges} or \code{data.frame} of regulatory elements to annotate.
+#'   If a \code{data.frame}, it must have columns sufficient to construct
+#'   a \code{GRanges} object, including \code{seqnames}, \code{start}, and \code{end}.
+#' @param txdb A \code{TxDb} object (from \pkg{GenomicFeatures}) representing genome annotation.
+#'   Can be created using \code{GenomicFeatures::makeTxDbFromGFF()} or a prebuilt
+#'   TxDb package such as \code{TxDb.Hsapiens.UCSC.hg38.knownGene}.
+#' @param annot_dbi An \code{AnnotationDbi} object (e.g., \pkg{org.Hs.eg.db})
+#'   for mapping gene IDs to gene symbols and types.
+#' @param protein_coding_only Logical, default \code{TRUE}.
+#'   If \code{TRUE}, restricts to protein-coding genes based on the \code{GENETYPE} annotation in \code{annot_dbi}.
+#' @param keep_mito Logical, default \code{FALSE}. Whether to keep mitochondrial chromosomes.
+#' @param verbose Logical, default \code{TRUE}. If \code{TRUE}, prints informative messages.
+#' @param coaccess_cutoff_override Numeric; co-accessibility score cutoff used
+#'   for defining CCAN membership clusters. Default is \code{0.25}.
+#' @param filter_promoter_distal Logical, default \code{TRUE}.
+#'   Whether to filter links to keep only those connecting promoter regions to distal elements.
+#' @param add_tss_annotation Logical, default \code{TRUE}.
+#'   If \code{TRUE}, annotate REs that overlap TSS regions directly.
+#' @return A \code{data.frame} of regulatory elements annotated with:
 #' \itemize{
-#'   \item Distance to nearest TSS and promoter/distal classification
-#'   \item Co-accessible gene targets
-#'   \item Optional: TSS overlap and TSS gene symbol
-#' }
-#'
+#'   \item Distance to nearest TSS and classification as "Promoter" or "Distal".
+#'   \item Putative target genes linked by co-accessibility.
+#'   \item Optional direct TSS overlap and associated gene symbols.}
 #' @importFrom GenomicRanges promoters distanceToNearest makeGRangesFromDataFrame mcols
 #' @importFrom GenomeInfoDb keepSeqlevels seqlevels
 #' @importFrom tidyr unnest
@@ -214,8 +285,7 @@ get_targets_links <- function(links, re, proms) {
 #'   retsi = retsi,
 #'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
 #'   annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
-#'   coaccess_cutoff_override = 0.25
-#' )
+#'   coaccess_cutoff_override = 0.25)
 annotate_with_coaccessibility <- function(links,
                                           retsi,
                                           txdb,
@@ -230,66 +300,47 @@ annotate_with_coaccessibility <- function(links,
     message("Annotating regulatory elements to co-accessible genes...")
     message("Coaccessibility cutoff used: ", coaccess_cutoff_override)
   }
-
-  # Convert to GRanges if needed
   if (inherits(retsi, "data.frame") && !inherits(retsi, "GRanges")) {
     retsi <- GenomicRanges::makeGRangesFromDataFrame(retsi,
                                                      keep.extra.columns = TRUE)
   }
-
-  # Remove ALT contigs
   alt_chroms <- grep("_alt|random|fix|Un", seqlevels(retsi), value = TRUE)
   retsi <- GenomeInfoDb::keepSeqlevels(retsi,
                                        setdiff(seqlevels(retsi), alt_chroms),
                                        pruning.mode = "coarse")
-
-  # Extract promoter regions
-  proms <- get_promoters(txdb = txdb,
+proms <- get_promoters(txdb = txdb,
                          annot_dbi = annot_dbi,
                          keep_mito = keep_mito,
                          protein_coding_only = protein_coding_only,
                          verbose = verbose)
-
-  # Compute distance to nearest TSS
   nearest_hits <- GenomicRanges::distanceToNearest(retsi, proms)
   retsi$distanceToTSS <- NA_integer_
   retsi$distanceToTSS[queryHits(nearest_hits)] <- GenomicRanges::mcols(nearest_hits)$distance
-
-  # Annotate as Promoter vs. Distal
   retsi$annotation <- ifelse(
-    !is.na(retsi$distanceToTSS) & abs(retsi$distanceToTSS) <= 2000,
-    "Promoter",
-    "Distal"
-  )
+    !is.na(retsi$distanceToTSS) &
+    abs(retsi$distanceToTSS) <= 2000, "Promoter","Distal")
 
-  # Annotate links with CCANs
   annotated_links <- annotate_links_with_ccans(
     links = links,
     coaccess_cutoff_override = coaccess_cutoff_override,
     filter_promoter_distal = filter_promoter_distal,
-    txdb = txdb
-  )
+    txdb = txdb)
 
-  # Get target genes from co-accessibility
   re_annotated <- get_targets_links(
     links = annotated_links,
     re = retsi,
-    proms = proms
-  )
+    proms = proms)
 
-  # Unnest gene_coacc column and drop CCAN
   re_unnested <- tidyr::unnest(as.data.frame(re_annotated),
                                cols = "gene_coacc") |>
     dplyr::select(-c(CCAN)) |>
     data.frame()
 
-  # Optionally add TSS overlap annotation
   if (add_tss_annotation) {
     re_unnested <- annotate_tss(re_unnested,
                                 txdb = txdb,
                                 annot_dbi = annot_dbi)
   }
-
   return(re_unnested)
 }
 
@@ -298,44 +349,45 @@ annotate_with_coaccessibility <- function(links,
 
 
 
-
-#' Annotate regions with nearest gene and promoter information
+#' Annotate regulatory regions to their gene targets using distance to the nearest transcription start site (TSS)
 #'
-#' This function uses ChIPseeker-like logic to annotate peaks with distance to the nearest
-#' TSS (transcription start site), classifies them as Promoter (<2kb) or Distal, and adds
-#' the nearest gene ID using Biomart-annotated genes. Optionally, it can annotate whether a
-#' region overlaps a TSS directly using 1-bp TSS coordinates.
-#'
-#' @param retsi A \code{GRanges} object or \code{data.frame} containing regulatory elements to annotate.
-#' @param txdb A \code{TxDb} object used to extract promoter regions.
-#' @param annot_dbi An \code{AnnotationDbi} annotation database object (e.g., \code{org.Hs.eg.db}) for mapping gene IDs to gene symbols and types.
-#' @param protein_coding_only Logical indicating whether to restrict promoter regions to protein-coding genes only (default: \code{TRUE}).
-#' @param keep_mito Logical indicating whether to keep mitochondrial (chrM/MT) chromosomes in promoter extraction (default: \code{FALSE}).
-#' @param verbose Logical; if \code{TRUE}, informative messages are printed during processing (default: \code{TRUE}).
-#' @param add_tss_annotation Logical; whether to also annotate whether a region overlaps a TSS (default: \code{TRUE}).
-#'
-#' @return A \code{data.frame} with the following columns:
+#' Annotate a set of regulatory elements with their putative target genes
+#' based on distance to the nearest TSS, classifying as "Promoter" (<2kb) or "Distal",
+#' and adding the nearest gene symbol using Biomart-annotated genes.
+#' Optionally, annotate direct overlap with TSS using 1-bp TSS coordinates.
+#' @param retsi A \code{GRanges} or \code{data.frame} of regulatory elements to annotate.
+#'   If a \code{data.frame}, it must have columns sufficient to construct
+#'   a \code{GRanges} object, including \code{seqnames}, \code{start}, and \code{end}.
+#' @param txdb A \code{TxDb} object (from \pkg{GenomicFeatures}) representing genome annotation.
+#'   Can be created using \code{GenomicFeatures::makeTxDbFromGFF()} or a prebuilt
+#'   TxDb package such as \code{TxDb.Hsapiens.UCSC.hg38.knownGene}.
+#' @param annot_dbi An \code{AnnotationDbi} object (e.g., \pkg{org.Hs.eg.db})
+#'   for mapping gene IDs to gene symbols and types.
+#' @param protein_coding_only Logical, default \code{TRUE}.
+#'   If \code{TRUE}, restricts to protein-coding genes based on the \code{GENETYPE} annotation in \code{annot_dbi}.
+#' @param keep_mito Logical, default \code{FALSE}. Whether to keep mitochondrial chromosomes.
+#' @param verbose Logical, default \code{TRUE}. If \code{TRUE}, prints informative messages.
+#' @param add_tss_annotation Logical, default \code{TRUE}.
+#'   If \code{TRUE}, annotate REs overlapping TSS directly.
+#' @return A \code{data.frame} containing:
 #' \itemize{
-#'   \item \code{distanceToTSS}: Distance to the nearest TSS
-#'   \item \code{annotation}: Promoter/Distal classification based on distance
-#'   \item \code{nearestGeneSymbol}: Symbol of the nearest gene
-#'   \item \code{in_TSS} (optional): Logical indicating if RE overlaps a TSS
-#'   \item \code{TSS_gene} (optional): Gene symbol for overlapping TSS
-#'   \item Other original metadata
-#' }
+#'   \item \code{distanceToTSS}: Distance to nearest TSS.
+#'   \item \code{annotation}: "Promoter" (< 2kb) or "Distal".
+#'   \item \code{nearestGeneSymbol}: Symbol of the nearest gene.
+#'   \item Optional \code{in_TSS} and \code{TSS_gene} if \code{add_tss_annotation = TRUE}.
+#'   \item Other original metadata columns.}
 #' @importFrom GenomicRanges promoters distanceToNearest makeGRangesFromDataFrame mcols
 #' @importFrom GenomeInfoDb keepSeqlevels seqlevels
 #' @export
 #' @examples
-#' # Annotate REs using nearest TSS and classify as Promoter or Distal
-#' data(atac)
 #' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-#' retsi <- compute_spicey_index(atac=atac)
+#' library(org.Hs.eg.db)
+#' data(atac)
+#' retsi <- compute_spicey_index(atac = atac)
 #' retsi_gene_nearest <- annotate_with_nearest(
 #'   retsi = retsi,
 #'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-#'   annot_dbi = org.Hs.eg.db::org.Hs.eg.db
-#' )
+#'   annot_dbi = org.Hs.eg.db)
 annotate_with_nearest <- function(retsi,
                                   txdb,
                                   annot_dbi,
@@ -347,54 +399,37 @@ annotate_with_nearest <- function(retsi,
   if (verbose) {
     message("Annotating regulatory elements to nearest gene...")
   }
-
-  # Convert to GRanges if needed
   if (inherits(retsi, "data.frame") && !inherits(retsi, "GRanges")) {
     retsi <- GenomicRanges::makeGRangesFromDataFrame(retsi,
                                                      keep.extra.columns = TRUE)
   }
-
-  # Remove ALT contigs if needed
   alt_chroms <- grep("_alt|random|fix|Un", seqlevels(retsi), value = TRUE)
   retsi <- GenomeInfoDb::keepSeqlevels(retsi,
                                        setdiff(seqlevels(retsi), alt_chroms),
                                        pruning.mode = "coarse")
 
-  # Extract promoter regions
   proms <- get_promoters(txdb = txdb,
                          annot_dbi = annot_dbi,
                          keep_mito = keep_mito,
                          protein_coding_only = protein_coding_only,
                          verbose = verbose)
 
-  # Find nearest TSS and compute distance
   nearest_hits <- GenomicRanges::distanceToNearest(retsi, proms)
-
-  # Initialize annotation columns
   retsi$distanceToTSS <- NA_integer_
   retsi$nearestGeneSymbol <- NA_character_
-
-  # Fill distance and gene symbol info for matched peaks
   retsi$distanceToTSS[queryHits(nearest_hits)] <- GenomicRanges::mcols(nearest_hits)$distance
   retsi$nearestGeneSymbol[queryHits(nearest_hits)] <- proms$gene_id[subjectHits(nearest_hits)]
 
-  # Annotate as Promoter vs. Distal
   retsi$annotation <- ifelse(
-    !is.na(retsi$distanceToTSS) & abs(retsi$distanceToTSS) <= 2000,
-    "Promoter",
-    "Distal"
-  )
+    !is.na(retsi$distanceToTSS) &
+    abs(retsi$distanceToTSS) <= 2000, "Promoter","Distal")
 
-  # Optionally add direct TSS overlap annotation
   if (add_tss_annotation) {
     retsi <- annotate_tss(retsi,
                           txdb = txdb,
                           annot_dbi = annot_dbi)
   }
-
-  # Remove names and convert to data.frame before returning
   retsi_df <- retsi |>
     data.frame()
-
   return(retsi_df)
 }

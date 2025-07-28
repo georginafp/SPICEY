@@ -37,16 +37,16 @@ library(GenomicRanges)
 library(cicero)
 
 # Compute GETSI 
-results <- run_spicey(rna = rna, gene_id = "gene_id")
+results <- SPICEY(rna = rna, gene_id = "gene_id")
 
 # Compute RETSI
-results <- run_spicey(atac=atac)
+results <- SPICEY(atac=atac)
 
 # Compute GETSI + RETSI
-results <- run_spicey(atac=atac, rna=rna, gene_id = "gene_id")
+results <- SPICEY(atac=atac, rna=rna, gene_id = "gene_id")
 
 # Compute GETSI + RETSI and link RE to target genes through nearest gene method
-result <- run_spicey(
+result <- SPICEY(
   atac = atac, 
   rna = rna, 
   gene_id = "gene_id",
@@ -57,7 +57,7 @@ result <- run_spicey(
 )
 
 # Compute GETSI + RETSI and link RE to target genes through coaccessibility method
-result <- run_spicey(
+result <- SPICEY(
   atac = atac, 
   rna = rna, 
   gene_id = "gene_id",
@@ -68,7 +68,7 @@ result <- run_spicey(
 
 # Compute GETSI + RETSI and link RE to target genes through coaccessibility method
 # and link both SPICEY measures
-result <- run_spicey(
+result <- SPICEY(
   atac = atac, 
   rna = rna, 
   gene_id = "gene_id",

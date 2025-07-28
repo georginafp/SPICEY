@@ -2,9 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{get_promoters}
 \alias{get_promoters}
-\title{Get Promoter Regions with Optional Filtering for Protein-Coding Genes
-Extracts promoter regions (+/- 2kb default) from a TxDb object, optionally restricting to protein-coding genes
-and retaining only primary chromosomes (using a robust internal filter). Gene symbols and types are added using an AnnotationDbi object.}
+\title{Extract Promoter Regions from TxDb}
 \usage{
 get_promoters(
   txdb,
@@ -15,21 +13,21 @@ get_promoters(
 )
 }
 \arguments{
-\item{txdb}{A TxDb object (e.g., from \code{GenomicFeatures::makeTxDbFromGFF()} or a prebuilt TxDb package).}
+\item{txdb}{\code{TxDb} object from \pkg{GenomicFeatures}.}
 
-\item{annot_dbi}{An AnnotationDbi object (e.g., \code{org.Hs.eg.db}, \code{org.Mm.eg.db}) for mapping gene IDs to symbols and types.}
+\item{annot_dbi}{\code{AnnotationDbi} object (e.g., \pkg{org.Hs.eg.db}) for gene symbols/biotypes.}
 
-\item{keep_mito}{Logical; whether to keep mitochondrial chromosome (default = FALSE).}
+\item{keep_mito}{Logical (default = \code{FALSE}). Keep mitochondrial chromosomes.}
 
-\item{protein_coding_only}{Logical; whether to restrict to protein-coding genes (default = TRUE).}
+\item{protein_coding_only}{Logical (default = \code{TRUE}). Restrict to protein-coding genes.}
 
-\item{verbose}{Logical; print informative messages (default = TRUE).}
+\item{verbose}{Logical (default = \code{TRUE}). Print filtering details.}
 }
 \value{
-A \code{GRanges} object of promoter regions, annotated with gene symbols, optionally filtered to protein-coding genes.
+A \code{GRanges} of promoters with \code{gene_id}, \code{symbol}, and \code{gene_type}.
 }
 \description{
-Get Promoter Regions with Optional Filtering for Protein-Coding Genes
-Extracts promoter regions (+/- 2kb default) from a TxDb object, optionally restricting to protein-coding genes
-and retaining only primary chromosomes (using a robust internal filter). Gene symbols and types are added using an AnnotationDbi object.
+Extracts promoter regions (default: +/-2 kb from TSS) from a \code{TxDb} object,
+optionally filtering for protein-coding genes and main chromosomes. Gene symbols
+and biotypes are added using an \code{AnnotationDbi} object.
 }

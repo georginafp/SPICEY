@@ -2,22 +2,35 @@
 % Please edit documentation in R/spicey_indices.R
 \name{specificity_index}
 \alias{specificity_index}
-\title{Compute specificity index for grouped features}
+\title{Calculate specificity scores for grouped features}
 \usage{
-specificity_index(df, group_col)
+specificity_index(da, group_col)
 }
 \arguments{
-\item{df}{A data frame containing differential accessibility
-or expression data.}
+\item{da}{A data.frame containing differential results with at least the following columns:
+\describe{
+\item{avg_log2FC}{Average log2 fold-change of the feature (gene or region).}
+\item{p_val}{Raw p-value from the differential test.}
+\item{cell_type}{Cell type or cluster label.}
+\item{\code{[group_col]}}{Column containing the feautre identifier (e.g., gene_id or region)
+The \strong{name of this column must match the value passed to the \code{group_col} argument}}}}
 
-\item{group_col}{A string indicating the name of the column
-to group by (e.g., "gene_id" or "region").}
+\item{group_col}{A string specifying the name of the column in \code{da} that
+identifies each feature, such as \code{gene_id} for genes or \code{region} for ATAC peaks.}
 }
 \value{
-A data frame with an additional column \code{score}
-representing the specificity index.
+A data.frame identical to the input but with additional columns:
+\describe{
+\item{avg_FC}{Fold-change converted from log2 scale.}
+\item{p_val_adj}{FDR-adjusted p-values computed across all entries.}
+\item{max_FC}{Maximum fold-change observed within each feature group.}
+\item{weight}{Normalized significance weight derived from adjusted p-values.}
+\item{norm_FC}{Fold-change normalized by maximum fold-change in the group.}
+\item{score}{Specificity score computed as the product of normalized fold-change signficantly weighted.}}
 }
 \description{
-Computes a specificity score for features (e.g., genes or regions)
-by rescaling fold-change and significance values.
+This function computes a specificity index for different features
+(e.g., genes or regions) based on differential expression or accessibility data.
+It rescales fold-change values and weights them by significance
+to quantify how specific a feature's activity is to a particular cell type.
 }

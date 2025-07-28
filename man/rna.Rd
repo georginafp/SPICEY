@@ -3,25 +3,29 @@
 \docType{data}
 \name{rna}
 \alias{rna}
-\title{Example single cell RNA-seq differential expression data}
+\title{Example single-cell RNA-seq differential expression data}
 \format{
-A data frame or GRanges-like object with the following required columns:
+A data frame or \code{GRanges}-like object with the following required columns:
 \describe{
 \item{gene_id}{Gene identifier (e.g., official gene symbol or Ensembl ID)}
-\item{avg_log2FC}{Average log2 fold-change in expression for the gene in the specific cell type}
-\item{p_val}{Raw or adjusted p-value from differential expression analysis}
-\item{cell_type}{Cell type label associated with the differential measurement}
+\item{avg_log2FC}{Average log2 fold-change of expression for the gene in the specific cell type}
+\item{p_val}{Raw or adjusted p-value from differential expression testing}
+\item{cell_type}{Cell type or cluster label associated with each measurement}
 }
-Multiple rows may exist per gene, each for a different cell type.
 }
 \source{
-Simulated RNA-seq data for SPICEY
+Simulated single-cell RNA-seq differential expression data used in SPICEY examples.
 }
 \usage{
 data(rna)
 }
 \description{
-A toy or example dataset representing single-cell RNA-seq differential expression results.
+A simulated example dataset representing single-cell RNA-seq
+differential expression results.
 Each row corresponds to a gene tested across one or more cell types.
+The dataset is formatted as a list of \code{GRanges} objects or
+data frames (convertible to \code{GRanges}), where each element contains
+differential expression statistics for a specific cell type.
+Multiple rows may exist per gene, each representing results in a different cell type.
 }
 \keyword{datasets}

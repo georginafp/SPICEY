@@ -2,22 +2,36 @@
 % Please edit documentation in R/annotate_re_genes.R
 \name{get_ccan}
 \alias{get_ccan}
-\title{Extract CCAN membership from links for a given GRanges object}
+\title{Extract CCAN membership for genomic regions from co-accessibile Links}
 \usage{
 get_ccan(links, gr, name_column = "region", split = c("ccan", "name"))
 }
 \arguments{
-\item{links}{GInteractions with CCAN1 and CCAN2 metadata columns}
+\item{links}{A \code{GInteractions} object containing co-accessibility links.
+Must have metadata columns \code{CCAN1} and \code{CCAN2}
+representing CCAN IDs for each anchor in the interaction.}
 
-\item{gr}{GRanges to query}
+\item{gr}{A \code{GRanges} object representing genomic regions to query.}
 
-\item{name_column}{Character, metadata column in gr to use as identifier (default "region")}
+\item{name_column}{A \code{character} string specifying the metadata column name in
+\code{gr} to use as the region identifier. Default is \code{"region"}.}
 
-\item{split}{Character, "ccan" returns names per CCAN, "name" returns CCANs per name}
+\item{split}{A \code{character} indicating the desired output split:
+\itemize{
+\item \code{"ccan"}: returns a named list with CCAN IDs as names,
+each containing a vector of region identifiers.
+\item \code{"name"}: returns a named list with region identifiers as names,
+each containing a vector of CCAN IDs.
+}
+Default is \code{c("ccan", "name")}, with \code{"ccan"} selected by default.}
 }
 \value{
-Named list split by CCAN or name as requested
+A named \code{list} mapping CCANs to region names or vice versa, depending on
+the \code{split} argument.
 }
 \description{
-Extract CCAN membership from links for a given GRanges object
+Given a set of co-accessibility links with CCAN (co-accessibility network) annotations,
+this function finds which CCANs each genomic region belongs to, or conversely, which
+regions belong to each CCAN. This helps to identify the grouping of regulatory elements
+within shared co-accessibility networks.
 }

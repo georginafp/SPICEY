@@ -7,20 +7,24 @@
 annotate_tss(txdb, re, annot_dbi)
 }
 \arguments{
-\item{txdb}{A \code{TxDb} object used to extract gene coordinates.}
+\item{txdb}{A \code{TxDb} object (from \pkg{GenomicFeatures}), a \code{GRanges} object,
+or any object that supports \code{GenomeInfoDb::seqlevels()}.
+For example, you can create a TxDb using: \code{GenomicFeatures::makeTxDbFromGFF()}
+or use a prebuilt TxDb such as \code{TxDb.Hsapiens.UCSC.hg38.knownGene}.}
 
-\item{re}{A \code{GRanges} object or data.frame of regulatory elements to annotate.}
+\item{re}{A \code{GRanges} or \code{data.frame} with regulatory regions to be annotated.
+If a \code{data.frame}, it must be convertible to \code{GRanges} with genomic coordinates.}
 
-\item{annot_dbi}{An \code{AnnotationDbi} object (e.g., \code{org.Hs.eg.db}) for gene symbol mapping.}
+\item{annot_dbi}{An \code{AnnotationDbi} object (e.g., \pkg{org.Hs.eg.db})
+for mapping gene IDs to gene symbols and types.}
 }
 \value{
-A \code{data.frame} of regulatory elements annotated with:
-\itemize{
-\item \code{in_TSS}: Logical indicating whether the element overlaps a TSS.
-\item \code{TSS_gene}: Gene symbol of the overlapping TSS, if any.
-}
+A \code{data.frame} containing the input regulatory elements with added columns:
+\describe{
+\item{\code{in_TSS}}{Logical indicating whether the element overlaps a TSS.}
+\item{\code{TSS_gene}}{Gene symbol of the overlapping TSS, or \code{NA} if none.}}
 }
 \description{
-This function identifies regulatory elements that directly overlap annotated
-transcription start sites (TSS, defined as 1 bp ranges) and assigns the corresponding gene symbols.
+Identifies regulatory elements that overlap precisely defined transcription
+start sites (TSS) and assigns the corresponding gene symbols to these elements.
 }

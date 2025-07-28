@@ -4,21 +4,31 @@
 \alias{combine_gex_da}
 \title{Combine Differential Expression Results Across Cell Types}
 \usage{
-combine_gex_da(rna_da, gene_id)
+combine_gex_da(rna, gene_id)
 }
 \arguments{
-\item{rna_da}{A named list of data frames. Each element corresponds to a cell type
-and contains differential expression results with genes as row names.}
+\item{rna}{List of data frames (or GRanges-like objects), each with differential expression results per cell type.
+Each must include:
+\describe{
+\item{\code{[gene_id]}}{Gene identifier column matching \code{gene_id} argument.}
+\item{\code{avg_log2FC}}{Average log2 fold-change.}
+\item{\code{p_val}}{Raw p-value.}
+\item{\code{p_val_adj}}{Adjusted p-value.}
+}
+Adds \code{cell_type} column if missing, using list names.}
 
-\item{gene_id}{A string indicating the name of the column in each data frame
-that contains gene identifiers (e.g., gene symbols).}
+\item{gene_id}{Column name for gene identifiers.}
 }
 \value{
-A single data frame combining all input differential expression results
-with added columns for gene ids and cell types.
+A single \code{data.frame} combining all results with columns:
+\itemize{
+\item \code{gene_id}: Renamed from the specified gene identifier column.
+\item \code{cell_type}: Derived from the list element names (or original column if present).
+\item All original differential expression metrics (\code{avg_log2FC}, \code{p_val},
+\code{p_val_adj}).
+}
 }
 \description{
-This function takes a list of differential expression data frames (from scRNA-seq)
-for multiple cell types and combines them into a single annotated data frame.
-Each data frame should contain gene-level statistics (e.g., log2FC, p-value).
+Merges differential expression results from multiple cell types into one data frame.
+Designed for scRNA-seq outputs where each cell type is analyzed separately.
 }
