@@ -2,73 +2,59 @@
 % Please edit documentation in R/SPICEY.R
 \name{SPICEY}
 \alias{SPICEY}
-\title{Run the full SPICEY pipeline for tissue specificity analysis}
+\title{SPICEY for tissue specificity analysis}
 \usage{
 SPICEY(
   atac = NULL,
   rna = NULL,
   gene_id = NULL,
-  annot_method = NULL,
-  links = NULL,
-  link_spicey_measures = FALSE,
-  coaccess_cutoff_override = 0.25,
-  filter_promoter_distal = TRUE,
-  filter_protein_coding = TRUE,
-  txdb = NULL,
-  keep_mito = FALSE,
-  annot_dbi = NULL,
-  add_tss_annotation = FALSE,
+  region_id = NULL,
+  annotation = NULL,
   verbose = TRUE
 )
 }
 \arguments{
-\item{atac}{A list of data frames (or \code{GRanges}-like objects).
-Each element corresponds to a cell type containing differential chromatin
-accessibility results with required columns:
+\item{atac}{Either a single \code{data.frame} or a named list of
+\code{data.frame}s or \code{GRanges} where each element corresponds
+to a cell type.  It should contain differential chromatin accessibility
+results with required columns:
 \describe{
-\item{seqnames}{Chromosome name of the regulatory region (e.g., "chr1").}
-\item{start}{Start coordinate of the peak.}
-\item{end}{End coordinate of the peak.}
+\item{region_id}{Unique identifier of the region. The name of this column
+should be provided in argument \code{region_id}.}
 \item{avg_log2FC}{Average log2 fold-change for accessibility in that cell type.}
 \item{p_val}{Raw p-value for the differential test.}
 \item{p_val_adj}{Adjusted p-value (e.g., FDR).}
-\item{cell_type}{Cell type or cluster name.}
+\item{cell_type}{Cell type or cluster label. Only necessary when input is
+a single \code{data.frame}. If input is a list, it will be generated
+from list names}.
+Note that the same region may appear multiple times across cell types.
 }}
 
-\item{rna}{A list of data frames (or \code{GRanges}-like objects).
-Each element corresponds to a cell type containing differential expression
-results, with required columns:
+\item{rna}{Either a single \code{data.frame} or a named list of
+\code{data.frame}s or \code{GRanges} where each element corresponds
+to a cell type. It should contain differential expression results,
+with required columns:
 \describe{
-\item{gene_id}{Identifier of the gene (e.g., gene symbol, Ensembl ID).}
+\item{gene_id}{Identifier of the gene (e.g., gene symbol, Ensembl ID).
+The name of this column should be provided in argument \code{gene_id}}
 \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
 \item{p_val}{Raw p-value for the differential test.}
 \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
-\item{cell_type}{Cell type or cluster label.}
+\item{cell_type}{Cell type or cluster label. Only necessary when input is
+a single \code{data.frame}. If input is a list, it will be generated
+from list names}.
 }
-Note that the same peak may appear multiple times across cell types.}
+Note that the same gene may appear multiple times across cell types.}
 
 \item{gene_id}{A character string specifying the column name in each list element
 that contains the gene identifiers.}
 
-\item{annot_method}{Optional annotation method: \code{"nearest"} or \code{"coaccessibility"}.}
+\item{region_id}{A character string specifying the column name in each list element
+that contains the accessible region identifiers.}
 
-\item{links}{\code{GInteractions} object with co-accessibility links (required if \code{annot_method = "coaccessibility"}).}
-
-\item{link_spicey_measures}{Logical; link RETSI and GETSI scores (default FALSE).}
-
-\item{coaccess_cutoff_override}{Numeric; cutoff for co-accessibility clustering (default 0.25).}
-
-\item{filter_promoter_distal}{Logical; filter to promoter-distal links (default TRUE).}
-
-\item{filter_protein_coding}{Logical; restrict to protein-coding genes (default TRUE).}
-
-\item{txdb}{\code{TxDb} object for genome annotation (required if annotation requested).}
-
-\item{keep_mito}{Logical; keep mitochondrial chromosomes (default FALSE).}
-
-\item{annot_dbi}{\code{AnnotationDbi} object for gene ID mapping (required if annotation requested).}
-
-\item{add_tss_annotation}{Logical; annotate regulatory elements overlapping TSS (default FALSE).}
+\item{annotation}{A data.frame linking \code{gene_id} to \code{region_id}. The should have
+the same names provided in the respective parameters. This can be provided
+by the user or generated using the function \code{\link{link_atac_to_genes}}.}
 
 \item{verbose}{Logical; print messages (default TRUE).}
 }
@@ -76,28 +62,25 @@ that contains the gene identifiers.}
 Depending on inputs, returns RETSI and/or GETSI data frames, optionally linked and annotated.
 }
 \description{
-Computes tissue-specificity scores from single-cell chromatin accessibility (RETSI)
-and/or gene expression (GETSI) data. Supports:
+Computes tissue-specificity scores from differential accessibility (RETSI)
+and/or gene expression (GETSI) data obtained from single cell experiments. Supports:
 \itemize{
-\item RETSI calculation from scATAC-seq data.
-\item GETSI calculation from scRNA-seq data.
-\item Optional annotation of regulatory elements to genes via \code{"nearest"} or \code{"coaccessibility"} methods.
-\item Optional integration of RETSI and GETSI scores by linking gene associations.
+\item RETSI calculation from differential accessibility data in different cell types/clusters (scATAC-seq).
+\item GETSI calculation from differential expression data in different cell types/clusters (scRNA-seq).
+\item Optional integration of RETSI and GETSI scores by linking gene associations (see \code{\link{link_atac_to_genes}}).
 }
 }
 \examples{
-data(atac); data(rna); data(cicero_links)
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+data(atac)
+retsi <- SPICEY(atac=atac, region_id="region_id")
+head(retsi)
 
-SPICEY(atac, rna, gene_id = "gene_id", annot_method = "nearest",
-       txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-       annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
-       link_spicey_measures = TRUE)
+data(rna)
+getsi <- SPICEY(atac=rna, region_id="gene_id")
+head(getsi)
 
-SPICEY(atac, rna, gene_id = "gene_id", annot_method = "coaccessibility",
-       links = cicero_links,
-       txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-       annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
-       link_spicey_measures = TRUE,
-       coaccess_cutoff_override = 0.25)
+both <-  SPICEY(rna = rna, gene_id = "gene_id",
+                atac=atac, region_id="region_id")
+lapply(both, head)
+TODO: Include example with annotation
 }

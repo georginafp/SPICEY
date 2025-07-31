@@ -1,3 +1,74 @@
+#' Link ATAC regions to putative target genes
+#' @param annot_method Optional annotation method: \code{"nearest"} or \code{"coaccessibility"}.
+#' @param links \code{GInteractions} object with co-accessibility links (required if \code{annot_method = "coaccessibility"}).
+#' @param link_spicey_measures Logical; link RETSI and GETSI scores (default FALSE).
+#' @param coaccess_cutoff_override Numeric; cutoff for co-accessibility clustering (default 0.25).
+#' @param filter_promoter_distal Logical; filter to promoter-distal links (default TRUE).
+#' @param filter_protein_coding Logical; restrict to protein-coding genes (default TRUE).
+#' @param keep_mito Logical; keep mitochondrial chromosomes (default FALSE).
+#' @param txdb \code{TxDb} object for genome annotation (required if annotation requested).
+#' @param annot_dbi \code{AnnotationDbi} object for gene ID mapping (required if annotation requested).
+#' @param add_tss_annotation Logical; annotate regulatory elements overlapping TSS (default FALSE).
+#' @export
+link_atac_to_genes <- function(granges=NULL, 
+                               gene_id=NULL,
+                               annot_method = NULL,
+                               links = NULL,
+                               link_spicey_measures = FALSE,
+                               coaccess_cutoff_override = 0.25,
+                               filter_promoter_distal = TRUE,
+                               filter_protein_coding = TRUE,
+                               txdb = NULL,
+                               keep_mito = FALSE,
+                               annot_dbi = NULL,
+                               add_tss_annotation = FALSE) {
+  
+  
+  if (is.null(txdb)) stop("Annotation requires a 'txdb' object.")
+  if (is.null(annot_dbi)) stop("Annotation requires an 'annot_dbi' object.")
+  if (is.null(retsi)) stop("ATAC data (RETSI) is required for region-to-gene annotation when 'annot_method' is specified.")
+  
+  retsi_annotated <- switch(
+    annot_method,
+    nearest = annotate_with_nearest(
+      retsi = retsi,
+      txdb = txdb,
+      keep_mito = keep_mito,
+      annot_dbi = annot_dbi,
+      protein_coding_only = filter_protein_coding,
+      verbose = verbose,
+      add_tss_annotation = add_tss_annotation
+    ),
+    coaccessibility = {
+      if (is.null(links)) stop("'links' must be provided for coaccessibility annotation.")
+      annotate_with_coaccessibility(
+        links = links,
+        retsi = retsi,
+        txdb = txdb,
+        keep_mito = keep_mito,
+        annot_dbi = annot_dbi,
+        protein_coding_only = filter_protein_coding,
+        verbose = verbose,
+        coaccess_cutoff_override = coaccess_cutoff_override,
+        filter_promoter_distal = filter_promoter_distal,
+        add_tss_annotation = add_tss_annotation
+      )
+    },
+    stop("Invalid 'annot_method'. Choose 'nearest' or 'coaccessibility'.")
+  )
+  
+  if (link_spicey_measures) {
+    if (is.null(getsi)) stop("RNA data must be provided to link RETSI and GETSI.")
+    combined <- link_spicey(
+      retsi_annotated = retsi_annotated,
+      getsi = getsi,
+      method = annot_method)
+    message("SPICEY pipeline successfully completed")
+    return(combined)
+  }
+}
+
+
 #' Annotate regulatory elements overlapping transcription start sites (TSS)
 #'
 #' Identifies regulatory elements that overlap precisely defined transcription
@@ -46,12 +117,6 @@ annotate_tss <- function(txdb, re, annot_dbi) {
   re <- re |> data.frame()
   return(re)
 }
-
-
-
-
-
-
 
 #' Annotate co-accessible links with CCAN membership
 #'

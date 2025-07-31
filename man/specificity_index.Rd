@@ -12,7 +12,7 @@ specificity_index(da, group_col)
 \item{avg_log2FC}{Average log2 fold-change of the feature (gene or region).}
 \item{p_val}{Raw p-value from the differential test.}
 \item{cell_type}{Cell type or cluster label.}
-\item{\code{[group_col]}}{Column containing the feautre identifier (e.g., gene_id or region)
+\item{\code{[group_col]}}{Column containing the feature identifier (e.g., gene_id or region)
 The \strong{name of this column must match the value passed to the \code{group_col} argument}}}}
 
 \item{group_col}{A string specifying the name of the column in \code{da} that
