@@ -62,27 +62,27 @@
 #'   method = "coaccessibility")
 #' @export
 #' @importFrom dplyr rename right_join select coalesce
-# link_spicey <- function(retsi_annotated,
-#                         getsi,
-#                         method = NULL) {
-#   if (is.null(method)) {
-#     stop("You must provide a value for 'method': either 'coaccessibility' or 'nearest'.")
-#   }
-#   method <- match.arg(method, choices = c("coaccessibility", "nearest"))
-#   message("Linking SPICEY measures using method: ", method)
-#   df <- retsi_annotated |> data.frame()
-#   if (method == "nearest") {
-#     df <- df |> dplyr::rename(gene_linked = nearestGeneSymbol)
-#   } else if (method == "coaccessibility") {
-#     df <- df |> dplyr::rename(gene_linked = gene_coacc)
-#   }
-#   result <- df |>
-#     dplyr::right_join(
-#       getsi |>
-#         data.frame() |>
-#         dplyr::select(gene_id, GETSI, cell_type, GETSI_entropy),
-#       by = c("gene_linked" = "gene_id", "cell_type")) |>
-#     dplyr::select(seqnames, start, end, everything())
-#   return(result)
-# }
+#' Link RETSI and GETSI
+#'
+#' @param retsi RETSI calculated from DAR.
+#' @param getsi GETSI calculated from DEG.
+#' @inheritParams SPICEY
+#' @return A \code{data.frame} combining RETSI and GETSI information
+link_spicey <- function(retsi = NULL,
+                        region_id = NULL,
+                        getsi = NULL,
+                        gene_id = NULL,
+                        annotation = NULL) {
+
+  #TODO: Check if this is working correctly!
+  links <- retsi |>
+    dplyr::inner_join(annotation |> dplyr::select(c(region_id,
+                                                    cell_type,
+                                                    gene_id)),
+                      by = c(region_id, "cell_type")) |>
+    dplyr::inner_join(getsi, by = c(gene_id, "cell_type"),
+                      suffix = c("_ATAC", "_RNA"))
+  return(links)
+}
+
 
