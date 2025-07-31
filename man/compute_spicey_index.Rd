@@ -4,63 +4,29 @@
 \alias{compute_spicey_index}
 \title{Compute cell type specificity scores from single-cell RNA and/or ATAC data}
 \usage{
-compute_spicey_index(rna = NULL, atac = NULL, gene_id = NULL)
+compute_spicey_index(diff = NULL, id = NULL)
 }
 \arguments{
-\item{rna}{A list of data frames (or \code{GRanges}-like objects).
-Each element corresponds to a cell type containing differential expression
-results, with required columns:
+\item{diff}{Single \code{data.frame} with differential results, with required columns:
 \describe{
-\item{gene_id}{Identifier of the gene (e.g., gene symbol, Ensembl ID).}
+\item{id}{Identifier of the gene/region (e.g., gene symbol, Ensembl ID).
+The name of this column should be provided in argument \code{id}}
 \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
 \item{p_val}{Raw p-value for the differential test.}
 \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
-\item{cell_type}{Cell type or cluster label.}}
-Note that the same peak may appear multiple times across cell types.}
-
-\item{atac}{A list of data frames (or \code{GRanges}-like objects).
-Each element corresponds to a cell type containing differential chromatin
-accessibility results with required columns:
-\describe{
-\item{seqnames}{Chromosome name of the regulatory region (e.g., "chr1").}
-\item{start}{Start coordinate of the peak.}
-\item{end}{End coordinate of the peak.}
-\item{avg_log2FC}{Average log2 fold-change for accessibility in that cell type.}
-\item{p_val}{Raw p-value for the differential test.}
-\item{p_val_adj}{Adjusted p-value (e.g., FDR).}
-\item{cell_type}{Cell type or cluster name.}}}
-
-\item{gene_id}{A character string specifying the column name in each list element
-that contains the gene identifiers.#'}
+\item{cell_type}{Cell type or cluster label.}.
+}}
 }
 \value{
-If only \code{rna} or \code{atac} is provided:
 A data frame with specificity scores for each feature:
 \describe{
-\item{GETSI or RETSI}{Specificity score (weighted log2FC).}
-\item{GETSI_entropy or RETSI_entropy}{Shannon entropy-based specificity measure.}
-\item{Other columns}{Coordinates (for ATAC), gene_id (for RNA), and cell_type.}}
-If both \code{rna} and \code{atac} are provided:
-A list with two elements: \code{getsi} and \code{retsi}, each as described above.
+\item{score (GETSI or RETSI)}{Specificity score (weighted log2FC).}
+\item{norm_entropy}{Shannon entropy-based specificity measure.}
 }
 \description{
 Computes:
 \itemize{
 \item GETSI (Gene Expression Tissue Specificity Index) from single-cell RNA-seq differential expression data.
 \item RETSI (Regulatory Element Tissue Specificity Index) from single-cell ATAC-seq differential accessibility data.}
-Either RNA or ATAC input must be provided; if both are given, both indices are computed.
-}
-\examples{
-# Load example data (included with the package)
-data(rna)
-data(atac)
-
-# Compute both GETSI and RETSI
-spicey_al <- compute_spicey_index(rna = rna, atac = atac, gene_id = "gene_id")
-
-# Compute GETSI only
-spicey_getsi <- compute_spicey_index(rna = rna, gene_id = "gene_id")
-
-# Compute RETSI only
-spicey_retsi <- compute_spicey_index(atac = atac)
+Either RNA or ATAC input must be provided.
 }

@@ -62,27 +62,27 @@
 #'   method = "coaccessibility")
 #' @export
 #' @importFrom dplyr rename right_join select coalesce
-link_spicey <- function(retsi_annotated,
-                        getsi,
-                        method = NULL) {
-  if (is.null(method)) {
-    stop("You must provide a value for 'method': either 'coaccessibility' or 'nearest'.")
-  }
-  method <- match.arg(method, choices = c("coaccessibility", "nearest"))
-  message("Linking SPICEY measures using method: ", method)
-  df <- retsi_annotated |> data.frame()
-  if (method == "nearest") {
-    df <- df |> dplyr::rename(gene_linked = nearestGeneSymbol)
-  } else if (method == "coaccessibility") {
-    df <- df |> dplyr::rename(gene_linked = gene_coacc)
-  }
-  result <- df |>
-    dplyr::right_join(
-      getsi |>
-        data.frame() |>
-        dplyr::select(gene_id, GETSI, cell_type, GETSI_entropy),
-      by = c("gene_linked" = "gene_id", "cell_type")) |>
-    dplyr::select(seqnames, start, end, everything())
-  return(result)
-}
+# link_spicey <- function(retsi_annotated,
+#                         getsi,
+#                         method = NULL) {
+#   if (is.null(method)) {
+#     stop("You must provide a value for 'method': either 'coaccessibility' or 'nearest'.")
+#   }
+#   method <- match.arg(method, choices = c("coaccessibility", "nearest"))
+#   message("Linking SPICEY measures using method: ", method)
+#   df <- retsi_annotated |> data.frame()
+#   if (method == "nearest") {
+#     df <- df |> dplyr::rename(gene_linked = nearestGeneSymbol)
+#   } else if (method == "coaccessibility") {
+#     df <- df |> dplyr::rename(gene_linked = gene_coacc)
+#   }
+#   result <- df |>
+#     dplyr::right_join(
+#       getsi |>
+#         data.frame() |>
+#         dplyr::select(gene_id, GETSI, cell_type, GETSI_entropy),
+#       by = c("gene_linked" = "gene_id", "cell_type")) |>
+#     dplyr::select(seqnames, start, end, everything())
+#   return(result)
+# }
 
