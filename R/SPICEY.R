@@ -41,7 +41,7 @@
 #'   that contains the gene identifiers.
 #' @param region_id A character string specifying the column name in each list element
 #'   that contains the accessible region identifiers.
-#' @param annotation A data.frame linking \code{gene_id} to \code{region_id}. The should have 
+#' @param annotation A data.frame linking \code{gene_id} to \code{region_id}. They should have 
 #'   the same names provided in the respective parameters. This can be provided 
 #'   by the user or generated using the function \code{\link{link_atac_to_genes}}.
 #' @param verbose Logical; print messages (default TRUE).
@@ -52,7 +52,7 @@
 #' head(retsi)
 #'
 #' data(rna)
-#' getsi <- SPICEY(atac=rna, region_id="gene_id")
+#' getsi <- SPICEY(rna=rna, gene_id="gene_id")
 #' head(getsi)
 #' 
 #' both <-  SPICEY(rna = rna, gene_id = "gene_id",
