@@ -85,7 +85,7 @@ SPICEY <- function(atac = NULL,
   
   # 1) Compute GETSI if RNA available
   if (!is.null(rna)) {
-    message("Computing GETSI & entropy...")
+    if(verbose) message("Computing GETSI & entropy...")
     rna <- .parse_input_diff(rna)
     getsi <- compute_spicey_index(diff = rna, id = gene_id) |>
       dplyr::rename(GETSI = score,
@@ -96,7 +96,7 @@ SPICEY <- function(atac = NULL,
   
   # 2) Compute RETSI if ATAC available
   if (!is.null(atac)) {
-    message("Computing RETSI & entropy...")
+    if(verbose) message("Computing RETSI & entropy...")
     atac <- .parse_input_diff(atac)
     retsi <- compute_spicey_index(atac, id = region_id) |>
       dplyr::rename(RETSI = score,
@@ -112,15 +112,15 @@ SPICEY <- function(atac = NULL,
   # calculated and data.frame if only one of them is). If not, link measures
   if(is.null(annotation) & length(results) > 1) {
     # Return list if both RETSI and GETSI calculated (but no annotation)
-    message("SPICEY pipeline successfully completed")
+    if(verbose) message("SPICEY pipeline successfully completed")
     return(results)
   } else if(is.null(annotation) & length(results) == 1) {
     # Return data.frame if only one of GETSI or RETSI were calculates
-    message("SPICEY pipeline successfully completed")
+    if(verbose) message("SPICEY pipeline successfully completed")
     return(results[[1]])
   } else {
     # If annotation is provided, linke RETSI and GETSI
-    message("Linking RETSI and GETSI using provided annotation...")
+    if(verbose) message("Linking RETSI and GETSI using provided annotation...")
     combined <- link_spicey(retsi = retsi,
                             region_id = region_id,
                             getsi = getsi,
@@ -129,7 +129,7 @@ SPICEY <- function(atac = NULL,
     # Return RE-gene links with RETSI and GETSI
     results$linked <- combined
     
-    message("SPICEY pipeline successfully completed")
+    if(verbose) message("SPICEY pipeline successfully completed")
     return(results)
   }
 }
