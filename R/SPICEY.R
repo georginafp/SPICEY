@@ -15,7 +15,6 @@
 #'     \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)
 #'          The name of this column should be provided in argument \code{gene_id}}
 #'     \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
-#'     \item{p_val}{Raw p-value for the differential test.}
 #'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 #'     \item{cell_type}{Cell type or cluster label. Only necessary when input is
 #'           a single \code{data.frame}. If input is a list, it will be generated
@@ -30,7 +29,6 @@
 #'     \item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800)
 #'     The name of this column should be provided in argument \code{region_id}.}
 #'     \item{avg_log2FC}{Average log2 fold-change for accessibility in that cell type.}
-#'     \item{p_val}{Raw p-value for the differential test.}
 #'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 #'     \item{cell_type}{Cell type or cluster label. Only necessary when input is
 #'           a single \code{data.frame}. If input is a list, it will be generated

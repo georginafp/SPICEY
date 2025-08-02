@@ -42,7 +42,6 @@ compute_spicey_index <- function(diff = NULL,
 #' @param da A data.frame containing differential results with at least the following columns:
 #'   \describe{
 #'     \item{avg_log2FC}{Average log2 fold-change of the feature (gene or region).}
-#'     \item{p_val}{Raw p-value from the differential test.}
 #'     \item{cell_type}{Cell type or cluster label.}
 #'     \item{\code{[group_col]}}{Column containing the feature identifier (e.g., gene_id or region)
 #'   The **name of this column must match the value passed to the `group_col` argument**}}
@@ -62,30 +61,17 @@ specificity_index <- function(da, group_col) {
   index <- da |>
     dplyr::mutate(
       avg_FC = 2^avg_log2FC,
-<<<<<<< HEAD
       p_val_adj = ifelse(p_val_adj == 0,
-                         min(p_val_adj[p_val_adj > 0], na.rm = TRUE),
-                         p_val_adj)#,
-      # p_val_adj = p.adjust(p_val, method = "fdr")
+                     min(p_val_adj[p_val_adj > 0], na.rm = TRUE),
+                     p_val_adj)#,
+      # p_val_adj = p.adjust(p_val, method = "fdr"),
     ) |>
     dplyr::group_by(cell_type) |>
     dplyr::mutate(weight = scales::rescale(-log10(p_val_adj), to = c(0, 1))) |>
     dplyr::group_by(.data[[group_col]]) |>
     dplyr::mutate(
-      max_FC = max(avg_FC, na.rm = TRUE)) |>
-=======
-      p_val = ifelse(p_val == 0,
-                     min(p_val[p_val > 0], na.rm = TRUE),
-                     p_val),
-      p_val_adj = p.adjust(p_val, method = "fdr"),
-    ) |>
-    dplyr::group_by(cell_type) |> 
-    dplyr::mutate(weight = scales::rescale(-log10(p_val_adj), to = c(0, 1))) |> 
-    dplyr::group_by(.data[[group_col]]) |>
-    dplyr::mutate(
       max_FC = max(avg_FC, na.rm = TRUE)
     ) |>
->>>>>>> a0112834272be5874e75c3dae847e9d1fb951e25
     dplyr::group_by(cell_type, .data[[group_col]]) |>
     dplyr::mutate(
       norm_FC = avg_FC / max_FC,
