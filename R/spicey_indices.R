@@ -62,6 +62,7 @@ specificity_index <- function(da, group_col) {
   index <- da |>
     dplyr::mutate(
       avg_FC = 2^avg_log2FC,
+<<<<<<< HEAD
       p_val_adj = ifelse(p_val_adj == 0,
                          min(p_val_adj[p_val_adj > 0], na.rm = TRUE),
                          p_val_adj)#,
@@ -72,6 +73,19 @@ specificity_index <- function(da, group_col) {
     dplyr::group_by(.data[[group_col]]) |>
     dplyr::mutate(
       max_FC = max(avg_FC, na.rm = TRUE)) |>
+=======
+      p_val = ifelse(p_val == 0,
+                     min(p_val[p_val > 0], na.rm = TRUE),
+                     p_val),
+      p_val_adj = p.adjust(p_val, method = "fdr"),
+    ) |>
+    dplyr::group_by(cell_type) |> 
+    dplyr::mutate(weight = scales::rescale(-log10(p_val_adj), to = c(0, 1))) |> 
+    dplyr::group_by(.data[[group_col]]) |>
+    dplyr::mutate(
+      max_FC = max(avg_FC, na.rm = TRUE)
+    ) |>
+>>>>>>> a0112834272be5874e75c3dae847e9d1fb951e25
     dplyr::group_by(cell_type, .data[[group_col]]) |>
     dplyr::mutate(
       norm_FC = avg_FC / max_FC,
