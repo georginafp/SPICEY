@@ -1,12 +1,8 @@
-#' Extract promoter regions with gene symbols
-#'
-#' Returns promoter regions from a TxDb object, annotated with gene symbols.
-#' @param txdb A TxDb object.
-#' @param annot_dbi An AnnotationDbi object (e.g., org.Hs.eg.db).
-#' @param upstream,downstream Number of bases upstream/downstream of TSS (default: 2000).
-#' @param protein_coding_only Logical. If TRUE, restrict to protein-coding genes.
-#' @return A GRanges object with gene symbols in the `gene_id` metadata column.
-#' @export
+#' Extract promoter regions annotated gene symbols from a TxDb and AnnotationDbi object
+#' @inheritParams annotate_with_coaccessibility
+#' @return A GRanges object with the chromosomes, start and end positions
+#' of defined specie promoter regions together with the official gene symbol
+#' stored in the `gene_id` metadata column.
 get_promoters <- function(txdb,
                           annot_dbi,
                           upstream,
@@ -38,23 +34,44 @@ get_promoters <- function(txdb,
 
 
 
-#' Annotate regulatory elements with nearest gene (by TSS or promoter)
+
+#' Annotates regulatory elements (e.g., ATAC-seq peaks) to the nearest gene
+#' based on distance to the transcription start site (TSS), using a \code{TxDb}
+#' reference and optional gene annotations from \code{org.*.db} packages.
+#' @inheritParams annotate_with_coaccessibility
+#' @return A \code{data.frame} of peaks annotated to its nearest gene, with columns:
+#'   \itemize{
+#'     \item \code{distanceToTSS}: distance to the nearest TSS
+#'     \item \code{nearestGeneSymbol}: Official gene symbol of the nearest gene (e.g., GAPDH)
+#'     \item \code{annotation}: \code{"Promoter"} or \code{"Distal"} based on distance
+#'   }
+#' @export
+#' @examples
+#' library(dplyr)
+#' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+#' library(org.Hs.eg.db)
 #'
-#' @param peaks GRanges or data.frame of regulatory elements.
-#' @param txdb TxDb object.
-#' @param annot_dbi AnnotationDbi object (e.g., org.Hs.eg.db).
-#' @param protein_coding_only Logical, whether to restrict to protein-coding genes.
-#' @param keep_mito Logical, whether to retain mitochondrial genes.
-#' @param verbose Logical, whether to display progress messages.
-#' @param add_tss_annotation Logical, if TRUE, use precise TSS instead of broader promoter region.
-#' @param upstream Integer, upstream window from TSS for promoter (only used if add_tss_annotation = FALSE).
-#' @param downstream Integer, downstream window from TSS for promoter (only used if add_tss_annotation = FALSE).
-#' @return A data.frame of input peaks annotated with nearest gene and distance to TSS.
+#' data(atac)
+#' data(rna)
+#' data(cicero_links)
+#' peaks <- .parse_input_diff(atac)
+#' peaks <- peaks %>% tidyr::separate(region_id,
+#'                 into = c("chr", "start", "end"), sep = "-",
+#'                 convert = TRUE,remove = FALSE) %>%
+#'                 GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+#'
+#' annotation_near <- annotate_with_nearest(peaks = peaks,
+#'                                          txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'                                          annot_dbi = org.Hs.eg.db,
+#'                                          protein_coding_only = TRUE,
+#'                                          verbose = TRUE,
+#'                                          add_tss_annotation = FALSE,
+#'                                          upstream = 2000,
+#'                                          downstream = 2000)
 annotate_with_nearest <- function(peaks,
                                   txdb,
                                   annot_dbi,
                                   protein_coding_only = TRUE,
-                                  keep_mito = FALSE,
                                   verbose = TRUE,
                                   add_tss_annotation = FALSE,
                                   upstream,
@@ -74,12 +91,12 @@ annotate_with_nearest <- function(peaks,
   ref_anno <- if (add_tss_annotation) {
     extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
-      protein_coding_only, keep_mito,
+      protein_coding_only,
       upstream = 0, downstream = 1, verbose)
   } else {
     extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
-      protein_coding_only, keep_mito,
+      protein_coding_only,
       upstream, downstream,verbose)
   }
 
@@ -105,27 +122,20 @@ annotate_with_nearest <- function(peaks,
 
 
 
-
-
-
-
-#' Extract gene-peak overlaps from promoter regions
+#' Overlap peaks with gene promoters to obtain gene annotations
 #'
-#' @param peaks A `GRanges` object with peaks (with region_id in metadata).
-#' @param txdb A transcript database (TxDb object).
-#' @param annot_dbi Annotation DB (e.g. `org.Hs.eg.db`).
-#' @param protein_coding_only Logical. Whether to restrict to protein-coding genes.
-#' @param keep_mito Logical. Whether to retain mitochondrial genes.
-#' @param upstream Integer. Bases upstream of TSS to include in promoter.
-#' @param downstream Integer. Bases downstream of TSS.
-#' @param verbose Logical. Print messages.
-#' @return A `data.frame` with `gene_id` and `peak` columns.
-#' @keywords internal
+#' Identifies overlaps between a set of peaks and promoter regions,
+#' optionally restricted to protein-coding genes.
+#' @inheritParams annotate_with_coaccessibility
+#' @return A \code{data.frame} with:
+#' \describe{
+#'   \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
+#'   \item{peak}{Unique identifier of the region (e.g., chr1-5000-5800}
+#' }
 extract_gene_peak_annotations <- function(peaks,
                                           txdb,
                                           annot_dbi,
                                           protein_coding_only = TRUE,
-                                          keep_mito = FALSE,
                                           upstream,
                                           downstream,
                                           verbose = FALSE) {
@@ -150,15 +160,22 @@ extract_gene_peak_annotations <- function(peaks,
 
 
 
-
-#' Annotate Cicero co-accessibility links with gene names
-#'
-#' @param links A data.frame with Cicero-style links (`Peak1`, `Peak2`, `coaccess`).
-#' @param gene_peak_anno A data.frame with columns `gene_id` and `peak`.
-#' @return A long-format data.frame with `peak`, `promoter_peak`, `coaccess`, and `gene_id`.
-#' @keywords internal
-annotate_links_with_genes <- function(links, gene_peak_anno) {
-  joined_links <- links |>
+#' Annotate Cicero co-accessibility links with genes
+#' Assigns gene annotations to Cicero co-accessibility links by
+#' matching peaks to promoter-associated genes.
+#' @inheritParams annotate_with_coaccessibility
+#' @param gene_peak_anno A \code{data.frame} returned by
+#' \code{extract_gene_peak_annotations()},
+#' with columns \code{gene_id} and \code{peak}.
+#' @return A \code{data.frame} with:
+#' \describe{
+#'   \item{peak}{Unique identifier of the distal peak (e.g., chr1-5000-5800}
+#'   \item{promoter_peak}{Unique identifier of the promoter-associated peak (e.g., chr1-5000-5800}
+#'   \item{coaccess}{Cicero co-accessibility score.}
+#'   \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
+#' }
+annotate_links_with_genes <- function(links_df, gene_peak_anno) {
+  joined_links <- links_df |>
     dplyr::left_join(gene_peak_anno, by = c("Peak1" = "peak")) |>
     dplyr::rename(gene_name1 = gene_id) |>
     dplyr::left_join(gene_peak_anno, by = c("Peak2" = "peak")) |>
@@ -190,35 +207,65 @@ annotate_links_with_genes <- function(links, gene_peak_anno) {
 
 
 #' Annotate peaks with co-accessible genes using Cicero links
-#'
 #' Links peaks to genes based on Cicero co-accessibility with promoters or TSSs.
-#'
-#' @param peaks A `GRanges` or `data.frame` of peaks with `region_id`.
-#' @param txdb A `TxDb` object with transcript annotations.
-#' @param links_df A `data.frame` with Cicero links (`Peak1`, `Peak2`, `coaccess`).
-#' @param annot_dbi Annotation DB (e.g. `org.Hs.eg.db`).
-#' @param protein_coding_only Logical. Keep only protein-coding genes.
-#' @param keep_mito Logical. Keep mitochondrial genes.
-#' @param verbose Logical. Verbose output.
-#' @param coaccess_cutoff_override Numeric. Minimum coaccessibility (default = 0.25).
-#' @param add_tss_annotation Logical. If TRUE, use ±1bp TSS instead of ±2kb promoter.
-#' @param upstream,downstream Integers for promoter definition (default = 2000).
-#' @return A `data.frame` of peaks annotated with `gene_id`.
+#' @param peaks A \code{GRanges} or \code{data.frame} of peaks with at least the following columns:
+#' \describe{
+#'   \item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}).}
+#'   \item{start}{Start coordinate of the peak.}
+#'   \item{end}{End coordinate of the peak.}
+#'   \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
+#' }
+#' @param links_df A \code{data.frame} with Cicero links. Must contain columns:
+#' \code{Peak1}, \code{Peak2}, and \code{coaccess}.
+#' @param protein_coding_only Logical; restrict to protein-coding genes (default TRUE).
+#' @param txdb \code{TxDb} object for genome annotation (required if annotation requested).
+#' @param annot_dbi \code{AnnotationDbi} object for gene ID mapping (required if annotation requested).
+#' @param add_tss_annotation Logical; annotate regulatory elements overlapping TSS (default FALSE).
+#' If TRUE, use +/- 1bp TSS instead of +/-2kb promoter.
+#' @param upstream Single integer value indicating the number of bases upstream
+#' from the TSS (transcription start sites) (default 2000kb).
+#' @param downstream Single integer values indicating the number of bases downstream
+#' from the TSS (transcription start sites) (default 2000kb).
+#' @return A \code{data.frame} with the original metadata columns from \code{peaks},
+#' along with an added \code{gene_id} column containing the symbol of the co-accessible gene.
+#' Peaks with no gene annotation will have \code{NA} in the \code{gene_id} field.
 #' @export
+#' @examples
+#' library(dplyr)
+#' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+#' library(org.Hs.eg.db)
+#'
+#' data(atac)
+#' data(rna)
+#' data(cicero_links)
+#' peaks <- .parse_input_diff(atac)
+#' peaks <- peaks %>% tidyr::separate(region_id,
+#'                 into = c("chr", "start", "end"), sep = "-",
+#'                 convert = TRUE,remove = FALSE) %>%
+#'                 GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+#'
+#' annotation_coacc <- annotate_with_coaccessibility(peaks = peaks,
+#'                                                   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'                                                   links_df=cicero_links,
+#'                                                   annot_dbi = org.Hs.eg.db,
+#'                                                   protein_coding_only = TRUE,
+#'                                                   verbose = TRUE,
+#'                                                   add_tss_annotation = FALSE,
+#'                                                   upstream = 2000,
+#'                                                   downstream = 2000)
+#' head(annotation_coacc)
 annotate_with_coaccessibility <- function(peaks,
                                           txdb,
                                           links_df,
                                           annot_dbi,
                                           protein_coding_only = TRUE,
-                                          keep_mito = FALSE,
                                           verbose = TRUE,
-                                          coaccess_cutoff_override = 0.25,
                                           add_tss_annotation = FALSE,
                                           upstream,
                                           downstream) {
 
   if (verbose) {
-    message("Annotating with co-accessibility (cutoff: ", coaccess_cutoff_override, ")...")
+    message("Annotating with co-accessibility")
   }
 
   if (inherits(peaks, "data.frame") && !inherits(peaks, "GRanges")) {
@@ -233,17 +280,16 @@ annotate_with_coaccessibility <- function(peaks,
   ref_anno <- if (add_tss_annotation) {
     extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
-      protein_coding_only, keep_mito,
+      protein_coding_only,
       upstream = 0, downstream = 1, verbose = FALSE)
   } else {
     extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
-      protein_coding_only, keep_mito,
+      protein_coding_only,
       upstream, downstream, verbose)
   }
 
-  links <- dplyr::filter(links_df, coaccess > coaccess_cutoff_override)
-  links_anno <- annotate_links_with_genes(links, ref_anno)
+  links_anno <- annotate_links_with_genes(links_df, ref_anno)
 
   result <- as.data.frame(peaks) |>
     dplyr::left_join(dplyr::select(links_anno, region_id = peak, gene_id),

@@ -1,85 +1,48 @@
 #' Link RETSI regions to GETSI scores using gene-based association methods
 #'
 #' This function connects regulatory regions scored with RETSI
-#' (Regulatory Element Tissue Specificity Index) to genes scored with
-#' GETSI (Gene Expression Tissue Specificity Index), based on either:
-#' \itemize{
-#'   \item \code{"nearest"} — links to the closest gene using the \code{nearestGeneSymbol} column.
-#'   \item \code{"coaccessibility"} — links based on co-accessibility networks using the \code{gene_coacc} column.}
-#' @param retsi_annotated A \code{GRanges} or \code{data.frame} of regulatory regions
-#' with computed RETSI scores. Must include at least:
-#'   \itemize{
-#'     \item \code{RETSI} — Regulatory Element Tissue Specificity Index score.
-#'     \item \code{RETSI_entropy} — Entropy-based specificity score for accessibility.
-#'     \item \code{nearestGeneSymbol} or \code{gene_coacc} — Gene name or ID used for linking
-#'       depending on \code{method}:
-#'       \itemize{
-#'         \item If \code{method = "nearest"}, uses \code{nearestGeneSymbol}.
-#'         \item If \code{method = "coaccessibility"}, uses \code{gene_coacc}}}
-#' @param getsi A \code{data.frame} containing GETSI results, with at least the following columns:
+#' @param retsi A data.frame containing RETSI scores for chromatin accessibility regions,
+#'   as returned by \code{compute_spicey_index()} using single-cell ATAC-seq differential accessibility data.
+#'   Must include at least the following columns:
 #'   \describe{
-#'     \item{\code{[gene_id]}}{Gene identifier column (e.g., gene symbol or Ensembl ID).
-#'     The identifier format must match the one used in the selected linking method.}
-#'     \item{\code{cell_type}}{Cell type or cluster name (used for merging).}
-#'     \item{\code{GETSI}}{Gene Expression Tissue Specificity Index score.}
-#'     \item{\code{GETSI_entropy}}{Entropy-based specificity score for expression.}}
-#' @param method Character string specifying the linking strategy:
-#'   \itemize{
-#'     \item \code{"nearest"} — link peaks to the nearest annotated gene.
-#'     \item \code{"coaccessibility"} — link peaks using co-accessibility associations.}
-#'   The gene identifiers in \code{getsi} must be consistent with those used in the selected method
-#'   (e.g., both should use gene symbols or both Ensembl IDs) to avoid mismatched links.
-#' @return A \code{data.frame} combining RETSI and GETSI information, including:
-#' \itemize{
-#'   \item Regulatory region coordinates (\code{seqnames}, \code{start}, \code{end}).
-#'   \item Cell type.
-#'   \item Linked gene (\code{gene_linked}).
-#'   \item RETSI and RETSI_entropy.
-#'   \item GETSI and GETSI_entropy.}
-#' @examples
-#' data(atac)
-#' data(rna)
-#' data(cicero_links)
-#' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-#' getsi <- compute_spicey_index(rna=rna, gene_id = "gene_id")
-#' retsi <- compute_spicey_index(atac=atac)
-#'
-#' retsi_gene_nearest <- annotate_with_nearest(retsi = retsi,
-#'                                             txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-#'                                             annot_dbi = org.Hs.eg.db::org.Hs.eg.db)
-#' spicey_nearest <- link_spicey(retsi_annotated = retsi_gene_nearest,
-#'                               getsi = getsi,
-#'                               method = "nearest")
-#'
-#' retsi_gene_coacc <- annotate_with_coaccessibility(links = cicero_links,
-#'                                                   retsi = retsi,
-#'                                                   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-#'                                                   annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
-#'                                                   coaccess_cutoff_override = 0.25)
-#' spicey_coacc <- link_spicey(
-#'   retsi_annotated = retsi_gene_coacc,
-#'   getsi = getsi,
-#'   method = "coaccessibility")
-#' @export
-#' @importFrom dplyr rename right_join select coalesce
-#' Link RETSI and GETSI
-#'
-#' @param retsi RETSI calculated from DAR.
-#' @param getsi GETSI calculated from DEG.
+#'     \item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800)}
+#'     \item{cell_type}{Cell type or cluster label.}
+#'     \item{RETSI}{RETSI value: cell-type specificity score}
+#'     \item{norm_entropy}{Normalized Shannon entropy of RETSI}
+#'   }
+#' @param getsi A data.frame containing GETSI scores for genes,
+#'   as returned by \code{compute_spicey_index()} using single-cell RNA-seq differential expression data.
+#'   Must include at least the following columns:
+#'   \describe{
+#'     \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
+#'     \item{cell_type}{Cell type or cluster label.}
+#'     \item{GETSI}{GETSI value: cell-type specificity score}
+#'     \item{norm_entropy}{Normalized Shannon entropy of GETSI}
+#'   }
 #' @inheritParams SPICEY
-#' @return A \code{data.frame} combining RETSI and GETSI information
+#' @return A \code{data.frame} where each row represents a regulatory element–gene pair
+#'   linked within a given cell type. The output includes:
+#'   \describe{
+#'     \item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800)}
+#'     \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
+#'     \item{cell_type}{Cell type or cluster in which the association is observed.}
+#'     \item{RETSI}{RETSI score: regulatory element specificity in this cell type.}
+#'     \item{RETSI_entropy}{Normalized shannon-entropy of RETSI (lower = more specific).}
+#'     \item{GETSI}{GETSI score: gene expression specificity in this cell type.}
+#'     \item{GETSI_entropy}{Normalized shannon-entropy of GETSI (lower = more specific).}
+#'     \item{...}{Any additional columns from the original \code{retsi} and \code{getsi} inputs, suffixed
+#'     with \code{_ATAC} and \code{_RNA} respectively (e.g., \code{avg_log2FC_ATAC}, \code{p_val_RNA}).}
+#'   }
 link_spicey <- function(retsi = NULL,
                         region_id = NULL,
                         getsi = NULL,
                         gene_id = NULL,
                         annotation = NULL) {
-
-  #TODO: Check if this is working correctly!
   links <- retsi |>
     dplyr::inner_join(annotation |> dplyr::select(c(region_id,
-                                                    cell_type,
+                                                    "cell_type",
                                                     gene_id)),
-                      by = c(region_id, "cell_type")) |>
+                      by = c(region_id)) |>
     dplyr::inner_join(getsi, by = c(gene_id, "cell_type"),
                       suffix = c("_ATAC", "_RNA"))
   return(links)

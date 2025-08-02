@@ -9,8 +9,10 @@ compute_spicey_index(diff = NULL, id = NULL)
 \arguments{
 \item{diff}{Single \code{data.frame} with differential results, with required columns:
 \describe{
-\item{id}{Identifier of the gene/region (e.g., gene symbol, Ensembl ID).
-The name of this column should be provided in argument \code{id}}
+\item{id}{Identifier for either genes or regions. Gene IDs must be
+official gene symbols, while region IDs should follow the usual genomic
+coordinate format such as \code{chr-start-end} or \code{chr:start-end}.
+The name of this column must match the \code{id} argument.}
 \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
 \item{p_val}{Raw p-value for the differential test.}
 \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}

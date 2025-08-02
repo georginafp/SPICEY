@@ -8,8 +8,10 @@
 #' @inheritParams SPICEY
 #' @param diff Single \code{data.frame} with differential results, with required columns:
 #'   \describe{
-#'     \item{id}{Identifier of the gene/region (e.g., gene symbol, Ensembl ID). 
-#'          The name of this column should be provided in argument \code{id}}
+#'     \item{id}{Identifier for either genes or regions. Gene IDs must be
+#'     official gene symbols, while region IDs should follow the usual genomic
+#'     coordinate format such as \code{chr-start-end} or \code{chr:start-end}.
+#'     The name of this column must match the \code{id} argument.}
 #'     \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
 #'     \item{p_val}{Raw p-value for the differential test.}
 #'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
@@ -23,11 +25,11 @@ compute_spicey_index <- function(diff = NULL,
                                  id = NULL) {
   index <- specificity_index(diff, group_col = id)
   entropy <- entropy_index(index, group_col = id)
-  
-  final <- index |> 
+
+  final <- index |>
     dplyr::left_join(entropy, by = id) |>
     dplyr::select(-c(avg_FC, max_FC, norm_FC, weight, entropy))
-  
+
   return(final)
 }
 
@@ -41,6 +43,7 @@ compute_spicey_index <- function(diff = NULL,
 #'   \describe{
 #'     \item{avg_log2FC}{Average log2 fold-change of the feature (gene or region).}
 #'     \item{p_val}{Raw p-value from the differential test.}
+#'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 #'     \item{cell_type}{Cell type or cluster label.}
 #'     \item{\code{[group_col]}}{Column containing the feature identifier (e.g., gene_id or region)
 #'   The **name of this column must match the value passed to the `group_col` argument**}}
@@ -49,6 +52,7 @@ compute_spicey_index <- function(diff = NULL,
 #' @return A data.frame identical to the input but with additional columns:
 #'   \describe{
 #'     \item{avg_FC}{Fold-change converted from log2 scale.}
+#'     \item{p_val}{Raw p-value from the differential test.}
 #'     \item{p_val_adj}{FDR-adjusted p-values computed across all entries.}
 #'     \item{max_FC}{Maximum fold-change observed within each feature group.}
 #'     \item{weight}{Normalized significance weight derived from adjusted p-values.}
@@ -59,8 +63,9 @@ specificity_index <- function(da, group_col) {
   stopifnot(group_col %in% colnames(da))
   index <- da |>
     dplyr::mutate(
-      avg_FC = 2^avg_log2FC,
-      p_val_adj = p.adjust(p_val, method = "fdr")) |>
+      avg_FC = 2^avg_log2FC#,
+      # p_val_adj = p.adjust(p_val, method = "fdr")
+      ) |>
     dplyr::group_by(.data[[group_col]]) |>
     dplyr::mutate(
       max_FC = max(avg_FC, na.rm = TRUE),
@@ -74,7 +79,7 @@ specificity_index <- function(da, group_col) {
       score = norm_FC * weight) |>
     dplyr::ungroup() |>
     data.frame()
-  
+
   return(index)
 }
 
@@ -113,6 +118,6 @@ entropy_index <- function(spec_df, group_col) {
       norm_entropy = 1 - exp(-entropy),
       .groups = "drop") |>
     data.frame()
-  
+
   return(spec_df)
 }

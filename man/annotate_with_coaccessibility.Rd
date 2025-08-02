@@ -2,78 +2,79 @@
 % Please edit documentation in R/annotate_re_genes.R
 \name{annotate_with_coaccessibility}
 \alias{annotate_with_coaccessibility}
-\title{Annotate regulatory regions to their gene targets using co-accessible links}
+\title{Annotate peaks with co-accessible genes using Cicero links
+Links peaks to genes based on Cicero co-accessibility with promoters or TSSs.}
 \usage{
 annotate_with_coaccessibility(
-  links,
-  retsi,
+  peaks,
   txdb,
+  links_df,
   annot_dbi,
   protein_coding_only = TRUE,
-  keep_mito = FALSE,
   verbose = TRUE,
-  coaccess_cutoff_override = 0.25,
-  filter_promoter_distal = TRUE,
-  add_tss_annotation = TRUE
+  add_tss_annotation = FALSE,
+  upstream,
+  downstream
 )
 }
 \arguments{
-\item{links}{A \code{GInteractions} object containing co-accessibility links.
-Must have metadata columns \code{CCAN1} and \code{CCAN2}
-representing CCAN IDs for each anchor in the interaction.}
+\item{peaks}{A \code{GRanges} or \code{data.frame} of peaks with at least the following columns:
+\describe{
+\item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}).}
+\item{start}{Start coordinate of the peak.}
+\item{end}{End coordinate of the peak.}
+\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
+}}
 
-\item{retsi}{A \code{GRanges} or \code{data.frame} of regulatory elements to annotate.
-If a \code{data.frame}, it must have columns sufficient to construct
-a \code{GRanges} object, including \code{seqnames}, \code{start}, and \code{end}.}
+\item{txdb}{\code{TxDb} object for genome annotation (required if annotation requested).}
 
-\item{txdb}{A \code{TxDb} object (from \pkg{GenomicFeatures}) representing genome annotation.
-Can be created using \code{GenomicFeatures::makeTxDbFromGFF()} or a prebuilt
-TxDb package such as \code{TxDb.Hsapiens.UCSC.hg38.knownGene}.}
+\item{links_df}{A \code{data.frame} with Cicero links. Must contain columns:
+\code{Peak1}, \code{Peak2}, and \code{coaccess}.}
 
-\item{annot_dbi}{An \code{AnnotationDbi} object (e.g., \pkg{org.Hs.eg.db})
-for mapping gene IDs to gene symbols and types.}
+\item{annot_dbi}{\code{AnnotationDbi} object for gene ID mapping (required if annotation requested).}
 
-\item{protein_coding_only}{Logical, default \code{TRUE}.
-If \code{TRUE}, restricts to protein-coding genes based on the \code{GENETYPE} annotation in \code{annot_dbi}.}
+\item{protein_coding_only}{Logical; restrict to protein-coding genes (default TRUE).}
 
-\item{keep_mito}{Logical, default \code{FALSE}. Whether to keep mitochondrial chromosomes.}
+\item{add_tss_annotation}{Logical; annotate regulatory elements overlapping TSS (default FALSE).
+If TRUE, use +/- 1bp TSS instead of +/-2kb promoter.}
 
-\item{verbose}{Logical, default \code{TRUE}. If \code{TRUE}, prints informative messages.}
+\item{upstream}{Single integer value indicating the number of bases upstream
+from the TSS (transcription start sites) (default 2000kb).}
 
-\item{coaccess_cutoff_override}{Numeric; co-accessibility score cutoff used
-for defining CCAN membership clusters. Default is \code{0.25}.}
-
-\item{filter_promoter_distal}{Logical, default \code{TRUE}.
-Whether to filter links to keep only those connecting promoter regions to distal elements.}
-
-\item{add_tss_annotation}{Logical, default \code{TRUE}.
-If \code{TRUE}, annotate REs that overlap TSS regions directly.}
+\item{downstream}{Single integer values indicating the number of bases downstream
+from the TSS (transcription start sites) (default 2000kb).}
 }
 \value{
-A \code{data.frame} of regulatory elements annotated with:
-\itemize{
-\item Distance to nearest TSS and classification as "Promoter" or "Distal".
-\item Putative target genes linked by co-accessibility.
-\item Optional direct TSS overlap and associated gene symbols.}
+A \code{data.frame} with the original metadata columns from \code{peaks},
+along with an added \code{gene_id} column containing the symbol of the co-accessible gene.
+Peaks with no gene annotation will have \code{NA} in the \code{gene_id} field.
 }
 \description{
-Annotate a set of regulatory elements with their putative target genes
-using co-accessibility links annotated with CCAN (co-accessibility network) metadata.
-The function extracts promoter regions from a given \code{TxDb} annotation,
-optionally filters for protein-coding genes, and annotates REs based on
-shared CCAN membership with promoters. Additionally, it computes the distance
-of each RE to the nearest TSS and can add direct TSS overlap annotations.
+Annotate peaks with co-accessible genes using Cicero links
+Links peaks to genes based on Cicero co-accessibility with promoters or TSSs.
 }
 \examples{
-data(cicero_links)
-data(atac)
+library(dplyr)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-retsi <- compute_spicey_index(atac=atac)
-# Annotate REs using co-accessibility links to predict gene targets
-retsi_gene_coacc <- annotate_with_coaccessibility(
-  links = cicero_links,
-  retsi = retsi,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-  annot_dbi = org.Hs.eg.db::org.Hs.eg.db,
-  coaccess_cutoff_override = 0.25)
+library(org.Hs.eg.db)
+
+data(atac)
+data(rna)
+data(cicero_links)
+peaks <- .parse_input_diff(atac)
+peaks <- peaks \%>\% tidyr::separate(region_id,
+                into = c("chr", "start", "end"), sep = "-",
+                convert = TRUE,remove = FALSE) \%>\%
+                GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+
+annotation_coacc <- annotate_with_coaccessibility(peaks = peaks,
+                                                  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+                                                  links_df=cicero_links,
+                                                  annot_dbi = org.Hs.eg.db,
+                                                  protein_coding_only = TRUE,
+                                                  verbose = TRUE,
+                                                  add_tss_annotation = FALSE,
+                                                  upstream = 2000,
+                                                  downstream = 2000)
+head(annotation_coacc)
 }

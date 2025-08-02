@@ -7,20 +7,23 @@
 \format{
 A data frame or \code{GRanges}-like object with the following required columns:
 \describe{
-\item{gene_id}{Gene identifier (e.g., official gene symbol or Ensembl ID)}
+\item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
 \item{avg_log2FC}{Average log2 fold-change of expression for the gene in the specific cell type}
 \item{p_val}{Raw or adjusted p-value from differential expression testing}
+\item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 \item{cell_type}{Cell type or cluster label associated with each measurement}
 }
 }
 \source{
-Simulated single-cell RNA-seq differential expression data used in SPICEY examples.
+Precomputed using \code{FindMarkers()} (Wilcoxon test, via Presto if available) on control samples
+from the Human Pancreas Analysis Program (HPAP), using paired snATAC-seq and scRNA-seq data
+from three non-diabetic human donors.
 }
 \usage{
 data(rna)
 }
 \description{
-A simulated example dataset representing single-cell RNA-seq
+A toy example dataset representing single-cell RNA-seq
 differential expression results.
 Each row corresponds to a gene tested across one or more cell types.
 The dataset is formatted as a list of \code{GRanges} objects or

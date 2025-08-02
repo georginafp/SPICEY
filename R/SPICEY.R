@@ -5,14 +5,14 @@
 #' \itemize{
 #'   \item RETSI calculation from differential accessibility data in different cell types/clusters (scATAC-seq).
 #'   \item GETSI calculation from differential expression data in different cell types/clusters (scRNA-seq).
-#'   \item Optional integration of RETSI and GETSI scores by linking gene associations (see \code{\link{link_atac_to_genes}}).
+#'   \item Optional integration of RETSI and GETSI scores by linking gene associations (see \code{\link{annotate_re_genes}}).
 #' }
 #' @param rna Either a single \code{data.frame} or a named list of
 #'   \code{data.frame}s or \code{GRanges} where each element corresponds
 #'   to a cell type. It should contain differential expression results,
 #'   with required columns:
 #'   \describe{
-#'     \item{gene_id}{Identifier of the gene (e.g., gene symbol, Ensembl ID).
+#'     \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)
 #'          The name of this column should be provided in argument \code{gene_id}}
 #'     \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
 #'     \item{p_val}{Raw p-value for the differential test.}
@@ -27,26 +27,39 @@
 #'   to a cell type.  It should contain differential chromatin accessibility
 #'   results with required columns:
 #'   \describe{
-#'     \item{region_id}{Unique identifier of the region. The name of this column
-#'           should be provided in argument \code{region_id}.}
+#'     \item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800)
+#'     The name of this column should be provided in argument \code{region_id}.}
 #'     \item{avg_log2FC}{Average log2 fold-change for accessibility in that cell type.}
 #'     \item{p_val}{Raw p-value for the differential test.}
-#'     \item{p_val_adj}{Adjusted p-value (e.g., FDR).}
+#'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 #'     \item{cell_type}{Cell type or cluster label. Only necessary when input is
 #'           a single \code{data.frame}. If input is a list, it will be generated
 #'           from list names}.
 #'   Note that the same region may appear multiple times across cell types.
 #'   }
 #' @param gene_id A character string specifying the column name in each list element
-#'   that contains the gene identifiers.
+#'   that contains the official gene symbol identifiers.
 #' @param region_id A character string specifying the column name in each list element
 #'   that contains the accessible region identifiers.
-#' @param annotation A data.frame linking \code{gene_id} to \code{region_id}. They should have
-#'   the same names provided in the respective parameters. This can be provided
-#'   by the user or generated using the function \code{\link{link_atac_to_genes}}.
+#' @param annotation A data.frame linking \code{gene_id} to \code{region_id}.
+#' They should have the same names provided in the respective parameters.
+#' This can be provided by the user or generated using the function \code{\link{link_spicey}}.
+#' It should contain at least the following columns:
+#' \describe{
+#'   \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).
+#'     The name of this column should match the \code{region_id} argument.}
+#'   \item{cell_type}{Cell type or cluster label.}
+#'   \item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH}).
+#'     The name of this column should match the \code{gene_id} argument.}
+#' }
 #' @param verbose Logical; print messages (default TRUE).
 #' @return Depending on inputs, returns RETSI and/or GETSI data frames, optionally linked and annotated.
 #' @examples
+#'
+#' library(dplyr)
+#' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+#' library(org.Hs.eg.db)
+#'
 #' data(atac)
 #' retsi <- SPICEY(atac=atac, region_id="region_id")
 #' head(retsi)
@@ -55,10 +68,50 @@
 #' getsi <- SPICEY(rna=rna, gene_id="gene_id")
 #' head(getsi)
 #'
-#' both <-  SPICEY(rna = rna, gene_id = "gene_id",
-#'                 atac=atac, region_id="region_id")
+#' both <-  SPICEY(rna = rna,
+#'                 gene_id = "gene_id",
+#'                 atac=atac,
+#'                 region_id="region_id")
 #' lapply(both, head)
-#' TODO: Include example with annotation
+#'
+#' data(cicero_links)
+#' peaks <- .parse_input_diff(atac)
+#' peaks <- peaks %>%
+#' tidyr::separate(region_id,
+#'                 into = c("chr", "start", "end"), sep = "-",
+#'                 convert = TRUE,remove = FALSE) %>%
+#'                 GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+#'
+#' annotation_coacc <- annotate_with_coaccessibility(peaks = peaks,
+#'                                                   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'                                                   links_df=cicero_links,
+#'                                                   annot_dbi = org.Hs.eg.db,
+#'                                                   protein_coding_only = TRUE,
+#'                                                   verbose = TRUE,
+#'                                                   add_tss_annotation = FALSE,
+#'                                                   upstream = 2000,
+#'                                                   downstream = 2000)
+#' spicey_coacc <- SPICEY(rna = rna,
+#'                        gene_id = "gene_id",
+#'                        atac=atac,
+#'                        region_id="region_id",
+#'                        annotation = annotation_coacc)
+#' lapply(spicey_coacc, head)
+#'
+#' annotation_near <- annotate_with_nearest(peaks = peaks,
+#'                                          txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'                                          annot_dbi = org.Hs.eg.db,
+#'                                          protein_coding_only = TRUE,
+#'                                          verbose = TRUE,
+#'                                          add_tss_annotation = FALSE,
+#'                                          upstream = 2000,
+#'                                          downstream = 2000)
+#' spicey_near <- SPICEY(rna = rna,
+#'                  gene_id = "gene_id",
+#'                  atac=atac,
+#'                  region_id="region_id",
+#'                  annotation = annotation_near)
+#' lapply(spicey_near, head)
 #' @export
 SPICEY <- function(atac = NULL,
                    rna = NULL,
@@ -78,10 +131,6 @@ SPICEY <- function(atac = NULL,
   if (!is.null(atac) && is.null(region_id)) {
     stop("'region_id' is required when ATAC data is supplied.")
   }
-
-  #CHANGE: Make SPICEY deal with whether the input is atac or rna. Input one at a
-  # time to compute_spicey_index --> For that function it does not matter whether
-  # the data is atac or RNA
 
   # 1) Compute GETSI if RNA available
   if (!is.null(rna)) {
@@ -132,4 +181,3 @@ SPICEY <- function(atac = NULL,
     return(results)
   }
 }
-

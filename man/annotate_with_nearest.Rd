@@ -2,62 +2,78 @@
 % Please edit documentation in R/annotate_re_genes.R
 \name{annotate_with_nearest}
 \alias{annotate_with_nearest}
-\title{Annotate regulatory regions to their gene targets using distance to the nearest transcription start site (TSS)}
+\title{Annotates regulatory elements (e.g., ATAC-seq peaks) to the nearest gene
+based on distance to the transcription start site (TSS), using a \code{TxDb}
+reference and optional gene annotations from \code{org.*.db} packages.}
 \usage{
 annotate_with_nearest(
-  retsi,
+  peaks,
   txdb,
   annot_dbi,
   protein_coding_only = TRUE,
-  keep_mito = FALSE,
   verbose = TRUE,
-  add_tss_annotation = FALSE
+  add_tss_annotation = FALSE,
+  upstream,
+  downstream
 )
 }
 \arguments{
-\item{retsi}{A \code{GRanges} or \code{data.frame} of regulatory elements to annotate.
-If a \code{data.frame}, it must have columns sufficient to construct
-a \code{GRanges} object, including \code{seqnames}, \code{start}, and \code{end}.}
+\item{peaks}{A \code{GRanges} or \code{data.frame} of peaks with at least the following columns:
+\describe{
+\item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}).}
+\item{start}{Start coordinate of the peak.}
+\item{end}{End coordinate of the peak.}
+\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
+}}
 
-\item{txdb}{A \code{TxDb} object (from \pkg{GenomicFeatures}) representing genome annotation.
-Can be created using \code{GenomicFeatures::makeTxDbFromGFF()} or a prebuilt
-TxDb package such as \code{TxDb.Hsapiens.UCSC.hg38.knownGene}.}
+\item{txdb}{\code{TxDb} object for genome annotation (required if annotation requested).}
 
-\item{annot_dbi}{An \code{AnnotationDbi} object (e.g., \pkg{org.Hs.eg.db})
-for mapping gene IDs to gene symbols and types.}
+\item{annot_dbi}{\code{AnnotationDbi} object for gene ID mapping (required if annotation requested).}
 
-\item{protein_coding_only}{Logical, default \code{TRUE}.
-If \code{TRUE}, restricts to protein-coding genes based on the \code{GENETYPE} annotation in \code{annot_dbi}.}
+\item{protein_coding_only}{Logical; restrict to protein-coding genes (default TRUE).}
 
-\item{keep_mito}{Logical, default \code{FALSE}. Whether to keep mitochondrial chromosomes.}
+\item{add_tss_annotation}{Logical; annotate regulatory elements overlapping TSS (default FALSE).
+If TRUE, use +/- 1bp TSS instead of +/-2kb promoter.}
 
-\item{verbose}{Logical, default \code{TRUE}. If \code{TRUE}, prints informative messages.}
+\item{upstream}{Single integer value indicating the number of bases upstream
+from the TSS (transcription start sites) (default 2000kb).}
 
-\item{add_tss_annotation}{Logical, default \code{TRUE}.
-If \code{TRUE}, annotate REs overlapping TSS directly.}
+\item{downstream}{Single integer values indicating the number of bases downstream
+from the TSS (transcription start sites) (default 2000kb).}
 }
 \value{
-A \code{data.frame} containing:
+A \code{data.frame} of peaks annotated to its nearest gene, with columns:
 \itemize{
-\item \code{distanceToTSS}: Distance to nearest TSS.
-\item \code{annotation}: "Promoter" (< 2kb) or "Distal".
-\item \code{nearestGeneSymbol}: Symbol of the nearest gene.
-\item Optional \code{in_TSS} and \code{TSS_gene} if \code{add_tss_annotation = TRUE}.
-\item Other original metadata columns.}
+\item \code{distanceToTSS}: distance to the nearest TSS
+\item \code{nearestGeneSymbol}: Official gene symbol of the nearest gene (e.g., GAPDH)
+\item \code{annotation}: \code{"Promoter"} or \code{"Distal"} based on distance
+}
 }
 \description{
-Annotate a set of regulatory elements with their putative target genes
-based on distance to the nearest TSS, classifying as "Promoter" (<2kb) or "Distal",
-and adding the nearest gene symbol using Biomart-annotated genes.
-Optionally, annotate direct overlap with TSS using 1-bp TSS coordinates.
+Annotates regulatory elements (e.g., ATAC-seq peaks) to the nearest gene
+based on distance to the transcription start site (TSS), using a \code{TxDb}
+reference and optional gene annotations from \code{org.*.db} packages.
 }
 \examples{
+library(dplyr)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
+
 data(atac)
-retsi <- compute_spicey_index(atac = atac)
-retsi_gene_nearest <- annotate_with_nearest(
-  retsi = retsi,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-  annot_dbi = org.Hs.eg.db)
+data(rna)
+data(cicero_links)
+peaks <- .parse_input_diff(atac)
+peaks <- peaks \%>\% tidyr::separate(region_id,
+                into = c("chr", "start", "end"), sep = "-",
+                convert = TRUE,remove = FALSE) \%>\%
+                GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+
+annotation_near <- annotate_with_nearest(peaks = peaks,
+                                         txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+                                         annot_dbi = org.Hs.eg.db,
+                                         protein_coding_only = TRUE,
+                                         verbose = TRUE,
+                                         add_tss_annotation = FALSE,
+                                         upstream = 2000,
+                                         downstream = 2000)
 }

@@ -7,19 +7,21 @@
 \format{
 A data frame with the following columns:
 \describe{
-\item{Peak1}{Genomic coordinate or peak identifier for the first peak in the pair}
-\item{Peak2}{Genomic coordinate or peak identifier for the second peak in the pair}
+\item{Peak1}{Genomic coordinate or peak identifier for the first peak in the pair (e.g., chr1-110209621-110211746)}
+\item{Peak2}{Genomic coordinate or peak identifier for the second peak in the pair (e.g., chr1-110209621-110211746)}
 \item{coaccess}{Co-accessibility score or correlation value quantifying the linkage}
 }
 }
 \source{
-Simulated Cicero co-accessibility results on example single-cell ATAC-seq data.
+Cicero co-accessibility links were computed from UMAP-reduced snATAC-seq data
+(HPAP, control donors) using \code{run_cicero()} with chromosome sizes from hg38.
+Input data matched the peaks in the provided ATAC dataset.
 }
 \usage{
 data(cicero_links)
 }
 \description{
-A simulated example dataset of co-accessibility links inferred
+A toy example dataset of co-accessibility links inferred
 from single-cell ATAC-seq data using tools such as Cicero or Signac's LinkPeaks().
 These links support integrative analysis by associating regulatory elements
 with putative target genes. The peaks referenced here must exactly match

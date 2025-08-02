@@ -7,22 +7,23 @@
 \format{
 A data frame or \code{GRanges}-like object with the following required columns:
 \describe{
-\item{seqnames}{Chromosome name (e.g., "chr1")}
-\item{start}{Start coordinate of the peak}
-\item{end}{End coordinate of the peak}
+\item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800)}
 \item{avg_log2FC}{Average log2 fold-change of accessibility for the peak in the specific cell type}
 \item{p_val}{Raw or adjusted p-value from differential accessibility testing}
+\item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 \item{cell_type}{Cell type or cluster label associated with each measurement}
 }
 }
 \source{
-Simulated single-cell ATAC-seq differential accessibility data used in SPICEY examples.
+Precomputed using \code{FindMarkers()} (Wilcoxon test, via Presto if available) on control samples
+from the Human Pancreas Analysis Program (HPAP), using paired snATAC-seq and snRNA-seq data
+from three non-diabetic human donors.
 }
 \usage{
 data(atac)
 }
 \description{
-A simulated example dataset representing single-cell ATAC-seq
+A toy example dataset representing single-cell ATAC-seq
 differential accessibility results.
 Each row corresponds to a chromatin accessibility peak tested for
 differential accessibility across one or more cell types.

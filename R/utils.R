@@ -8,12 +8,7 @@ utils::globalVariables(c(
 
 
 #' Get gene promoters with optional filtering for protein-coding genes
-#'
-#' @param txdb A TxDb object.
-#' @param annot_dbi AnnotationDbi object (e.g., org.Hs.eg.db).
-#' @param upstream Upstream window from TSS.
-#' @param downstream Downstream window from TSS.
-#' @param protein_coding_only Logical, whether to filter to protein-coding genes.
+#' @inheritParams annotate_with_coaccessibility
 #' @return GRanges of promoters annotated with gene symbol.
 get_promoters <- function(txdb,
                           annot_dbi,
@@ -51,37 +46,17 @@ get_promoters <- function(txdb,
 
 
 
-#' Convert GRanges to String Representation
-#'
-#' Converts a \code{GRanges} object into a character vector where each element
-#' represents a genomic range in the format "chr-start-end".
-#'
-#' @param gr A \code{GRanges} object.
-#'
-#' @return A character vector of genomic ranges in "chr-start-end" format.
-#'
-#' @examples
-#' library(GenomicRanges)
-#' gr <- GRanges(seqnames = c("chr1", "chr2"),
-#'               ranges = IRanges(start = c(100, 200), end = c(150, 250)))
-#' granges_to_string(gr)
-#' # [1] "chr1-100-150" "chr2-200-250"
-#'
-#' @export
-granges_to_string <- function(gr) {
-  if (!inherits(gr, "GRanges")) {
-    stop("Input must be a GRanges object")
-  }
-  string <- paste0(as.character(GenomicRanges::seqnames(gr)),
-                   "-", GenomicRanges::start(gr),
-                   "-", GenomicRanges::end(gr))
-  return(string)
-}
 
-
-
-
-#' Parse inputs from the different accepted types into data.frames
+#' Parses input data of various types (e.g., named lists of \code{GRanges}
+#' or \code{data.frame}, or a \code{GRangesList}) into a single tidy
+#' \code{data.frame}, with a \code{cell_type} column.
+#' @param input An object representing differential results, such as:
+#'   \itemize{
+#'     \item A named list of \code{GRanges} objects.
+#'     \item A named list of \code{data.frame}s.
+#'     \item A \code{GRangesList}.
+#'   }
+#' @return A \code{data.frame} combining all elements, with an added \code{cell_type} column indicating the source.
 #' @importFrom GenomicRanges mcols
 .parse_input_diff <- function(input) {
   if(is(input, "list")) {
@@ -100,6 +75,22 @@ granges_to_string <- function(gr) {
     input <- dplyr::bind_rows(lapply(input, function(x) data.frame(mcols(x))),
                               .id = "cell_type")
   }
-
   return(input)
+}
+
+
+
+
+#' Converts a \code{GRanges} object into a character vector of strings, where each element
+#' represents a genomic range in the format \code{"chr-start-end"}.
+#' @param gr A \code{GRanges} object.
+#' @return A character vector, each element representing a range in \code{"chr-start-end"} format.
+granges_to_string <- function(gr) {
+  if (!inherits(gr, "GRanges")) {
+    stop("Input must be a GRanges object")
+  }
+  string <- paste0(as.character(GenomicRanges::seqnames(gr)),
+                   "-", GenomicRanges::start(gr),
+                   "-", GenomicRanges::end(gr))
+  return(string)
 }
