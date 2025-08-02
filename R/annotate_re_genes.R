@@ -8,16 +8,17 @@ get_promoters <- function(txdb,
                           upstream,
                           downstream,
                           protein_coding_only = TRUE) {
-
   proms <- GenomicFeatures::promoters(GenomicFeatures::genes(txdb),
-                                      upstream = upstream,
-                                      downstream = downstream)
+    upstream = upstream,
+    downstream = downstream
+  )
   entrez_ids <- names(proms)
   gene_info <- AnnotationDbi::select(
     annot_dbi,
     keys = entrez_ids,
     columns = c("SYMBOL", "GENETYPE"),
-    keytype = "ENTREZID") |>
+    keytype = "ENTREZID"
+  ) |>
     filter(!duplicated(ENTREZID))
 
   if (protein_coding_only) {
@@ -42,32 +43,34 @@ get_promoters <- function(txdb,
 #' @return A \code{data.frame} of peaks annotated to its nearest gene, with columns:
 #'   \itemize{
 #'     \item \code{distanceToTSS}: distance to the nearest TSS
-#'     \item \code{nearestGeneSymbol}: Official gene symbol of the nearest gene (e.g., GAPDH)
-#'     \item \code{annotation}: \code{"Promoter"} or \code{"Distal"} based on distance
-#'   }
+#'     \item \code{gene_id}: Official gene symbol of the nearest gene (e.g., GAPDH)
+#'     \item \code{annotation}: \code{"Promoter"} or \code{"Distal"} based on distance}
 #' @export
 #' @examples
 #' library(dplyr)
 #' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 #' library(org.Hs.eg.db)
-#'
+#' library(SPICEY)
 #' data(atac)
 #' data(rna)
 #' data(cicero_links)
-#' peaks <- .parse_input_diff(atac)
-#' peaks <- peaks %>% tidyr::separate(region_id,
-#'                 into = c("chr", "start", "end"), sep = "-",
-#'                 convert = TRUE,remove = FALSE) %>%
-#'                 GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
-#'
-#' annotation_near <- annotate_with_nearest(peaks = peaks,
-#'                                          txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-#'                                          annot_dbi = org.Hs.eg.db,
-#'                                          protein_coding_only = TRUE,
-#'                                          verbose = TRUE,
-#'                                          add_tss_annotation = FALSE,
-#'                                          upstream = 2000,
-#'                                          downstream = 2000)
+#' peaks <- SPICEY:::.parse_input_diff(atac)
+#' peaks <- peaks %>%
+#'   tidyr::separate(region_id,
+#'     into = c("chr", "start", "end"), sep = "-",
+#'     convert = TRUE, remove = FALSE
+#'   ) %>%
+#'   GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+#' annotation_near <- annotate_with_nearest(
+#'   peaks = peaks,
+#'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'   annot_dbi = org.Hs.eg.db,
+#'   protein_coding_only = TRUE,
+#'   verbose = TRUE,
+#'   add_tss_annotation = FALSE,
+#'   upstream = 2000,
+#'   downstream = 2000
+#' )
 annotate_with_nearest <- function(peaks,
                                   txdb,
                                   annot_dbi,
@@ -76,46 +79,39 @@ annotate_with_nearest <- function(peaks,
                                   add_tss_annotation = FALSE,
                                   upstream,
                                   downstream) {
-
   if (verbose) message("Annotating regulatory elements to nearest gene...")
-
-  # Coerce to GRanges if needed
   if (inherits(peaks, "data.frame") && !inherits(peaks, "GRanges")) {
     peaks <- GenomicRanges::makeGRangesFromDataFrame(peaks, keep.extra.columns = TRUE)
   }
-
-  # Remove alternative contigs
   alt_chroms <- grep("_alt|random|fix|Un", seqlevels(peaks), value = TRUE)
   peaks <- GenomeInfoDb::keepSeqlevels(peaks, setdiff(seqlevels(peaks), alt_chroms), pruning.mode = "coarse")
-
   ref_anno <- if (add_tss_annotation) {
     extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
       protein_coding_only,
-      upstream = 0, downstream = 1, verbose)
+      upstream = 0, downstream = 1, verbose
+    )
   } else {
     extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
       protein_coding_only,
-      upstream, downstream,verbose)
+      upstream, downstream, verbose
+    )
   }
-
   ref_anno <- ref_anno |>
-    tidyr::separate(peak, into = c("chr", "start", "end"),
-                    sep = "-", convert = TRUE) |>
+    tidyr::separate(peak,
+      into = c("chr", "start", "end"),
+      sep = "-", convert = TRUE
+    ) |>
     dplyr::distinct() |>
     makeGRangesFromDataFrame(keep.extra.columns = TRUE)
-
-  # Find nearest gene
   nearest_hits <- GenomicRanges::distanceToNearest(peaks, ref_anno)
   dist <- rep(NA_integer_, length(peaks))
   genes <- rep(NA_character_, length(peaks))
   dist[queryHits(nearest_hits)] <- mcols(nearest_hits)$distance
   genes[queryHits(nearest_hits)] <- ref_anno$gene_id[subjectHits(nearest_hits)]
-
-  # Annotate
   peaks$distanceToTSS <- dist
-  peaks$nearestGeneSymbol <- genes
+  peaks$gene_id <- genes
   peaks$annotation <- ifelse(!is.na(dist) & abs(dist) <= 2000, "Promoter", "Distal")
   return(as.data.frame(peaks))
 }
@@ -130,8 +126,7 @@ annotate_with_nearest <- function(peaks,
 #' @return A \code{data.frame} with:
 #' \describe{
 #'   \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
-#'   \item{peak}{Unique identifier of the region (e.g., chr1-5000-5800}
-#' }
+#'   \item{peak}{Unique identifier of the region (e.g., chr1-5000-5800}}
 extract_gene_peak_annotations <- function(peaks,
                                           txdb,
                                           annot_dbi,
@@ -139,18 +134,19 @@ extract_gene_peak_annotations <- function(peaks,
                                           upstream,
                                           downstream,
                                           verbose = FALSE) {
+  proms <- get_promoters(
+    txdb = txdb,
+    annot_dbi = annot_dbi,
+    upstream = upstream,
+    downstream = downstream,
+    protein_coding_only = protein_coding_only
+  )
 
-  proms <- get_promoters(txdb = txdb,
-                         annot_dbi = annot_dbi,
-                         upstream = upstream,
-                         downstream = downstream,
-                         protein_coding_only = protein_coding_only)
-
-  # Overlap peaks with promoters
   ols <- GenomicRanges::findOverlaps(peaks, proms)
   gene_peak_df <- tibble::tibble(
     gene_id = mcols(proms)$gene_id[subjectHits(ols)],
-    peak = granges_to_string(peaks[queryHits(ols)])) |>
+    peak = granges_to_string(peaks[queryHits(ols)])
+  ) |>
     dplyr::distinct() |>
     data.frame()
 
@@ -172,8 +168,7 @@ extract_gene_peak_annotations <- function(peaks,
 #'   \item{peak}{Unique identifier of the distal peak (e.g., chr1-5000-5800}
 #'   \item{promoter_peak}{Unique identifier of the promoter-associated peak (e.g., chr1-5000-5800}
 #'   \item{coaccess}{Cicero co-accessibility score.}
-#'   \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
-#' }
+#'   \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}}
 annotate_links_with_genes <- function(links_df, gene_peak_anno) {
   joined_links <- links_df |>
     dplyr::left_join(gene_peak_anno, by = c("Peak1" = "peak")) |>
@@ -187,16 +182,17 @@ annotate_links_with_genes <- function(links_df, gene_peak_anno) {
       peak = Peak2,
       promoter_peak = Peak1,
       coaccess,
-      gene_id = gene_name1),
-
+      gene_id = gene_name1
+    ),
     dplyr::transmute(
       dplyr::filter(joined_links, !is.na(gene_name2)),
       peak = Peak1,
       promoter_peak = Peak2,
       coaccess,
-      gene_id = gene_name2)) |>
+      gene_id = gene_name2
+    )
+  ) |>
     dplyr::distinct()
-
   return(annot_links)
 }
 
@@ -213,8 +209,7 @@ annotate_links_with_genes <- function(links_df, gene_peak_anno) {
 #'   \item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}).}
 #'   \item{start}{Start coordinate of the peak.}
 #'   \item{end}{End coordinate of the peak.}
-#'   \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
-#' }
+#'   \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}}
 #' @param links_df A \code{data.frame} with Cicero links. Must contain columns:
 #' \code{Peak1}, \code{Peak2}, and \code{coaccess}.
 #' @param protein_coding_only Logical; restrict to protein-coding genes (default TRUE).
@@ -226,6 +221,7 @@ annotate_links_with_genes <- function(links_df, gene_peak_anno) {
 #' from the TSS (transcription start sites) (default 2000kb).
 #' @param downstream Single integer values indicating the number of bases downstream
 #' from the TSS (transcription start sites) (default 2000kb).
+#' @param verbose Logical; print messages (default TRUE).
 #' @return A \code{data.frame} with the original metadata columns from \code{peaks},
 #' along with an added \code{gene_id} column containing the symbol of the co-accessible gene.
 #' Peaks with no gene annotation will have \code{NA} in the \code{gene_id} field.
@@ -234,26 +230,28 @@ annotate_links_with_genes <- function(links_df, gene_peak_anno) {
 #' library(dplyr)
 #' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 #' library(org.Hs.eg.db)
-#'
+#' library(SPICEY)
 #' data(atac)
 #' data(rna)
 #' data(cicero_links)
-#' peaks <- .parse_input_diff(atac)
-#' peaks <- peaks %>% tidyr::separate(region_id,
-#'                 into = c("chr", "start", "end"), sep = "-",
-#'                 convert = TRUE,remove = FALSE) %>%
-#'                 GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
-#'
-#' annotation_coacc <- annotate_with_coaccessibility(peaks = peaks,
-#'                                                   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-#'                                                   links_df=cicero_links,
-#'                                                   annot_dbi = org.Hs.eg.db,
-#'                                                   protein_coding_only = TRUE,
-#'                                                   verbose = TRUE,
-#'                                                   add_tss_annotation = FALSE,
-#'                                                   upstream = 2000,
-#'                                                   downstream = 2000)
-#' head(annotation_coacc)
+#' peaks <- SPICEY:::.parse_input_diff(atac)
+#' peaks <- peaks %>%
+#'   tidyr::separate(region_id,
+#'     into = c("chr", "start", "end"), sep = "-",
+#'     convert = TRUE, remove = FALSE
+#'   ) %>%
+#'   GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+#' annotation_coacc <- annotate_with_coaccessibility(
+#'   peaks = peaks,
+#'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'   links_df = cicero_links,
+#'   annot_dbi = org.Hs.eg.db,
+#'   protein_coding_only = TRUE,
+#'   verbose = TRUE,
+#'   add_tss_annotation = FALSE,
+#'   upstream = 2000,
+#'   downstream = 2000
+#' )
 annotate_with_coaccessibility <- function(peaks,
                                           txdb,
                                           links_df,
@@ -263,40 +261,36 @@ annotate_with_coaccessibility <- function(peaks,
                                           add_tss_annotation = FALSE,
                                           upstream,
                                           downstream) {
-
   if (verbose) {
     message("Annotating with co-accessibility")
   }
-
   if (inherits(peaks, "data.frame") && !inherits(peaks, "GRanges")) {
     peaks <- GenomicRanges::makeGRangesFromDataFrame(peaks,
-                                                     keep.extra.columns = TRUE)
+      keep.extra.columns = TRUE
+    )
   }
-
   alt <- grep("_alt|random|fix|Un", seqlevels(peaks), value = TRUE)
   peaks <- GenomeInfoDb::keepSeqlevels(peaks, setdiff(seqlevels(peaks), alt),
-                                       pruning.mode = "coarse")
-
+    pruning.mode = "coarse"
+  )
   ref_anno <- if (add_tss_annotation) {
     extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
       protein_coding_only,
-      upstream = 0, downstream = 1, verbose = FALSE)
+      upstream = 0, downstream = 1, verbose = FALSE
+    )
   } else {
     extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
       protein_coding_only,
-      upstream, downstream, verbose)
+      upstream, downstream, verbose
+    )
   }
-
   links_anno <- annotate_links_with_genes(links_df, ref_anno)
-
   result <- as.data.frame(peaks) |>
     dplyr::left_join(dplyr::select(links_anno, region_id = peak, gene_id),
-                     by = "region_id") |>
+      by = "region_id"
+    ) |>
     dplyr::distinct()
-
   return(result)
 }
-
-

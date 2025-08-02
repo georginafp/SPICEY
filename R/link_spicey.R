@@ -39,13 +39,17 @@ link_spicey <- function(retsi = NULL,
                         gene_id = NULL,
                         annotation = NULL) {
   links <- retsi |>
-    dplyr::inner_join(annotation |> dplyr::select(c(region_id,
-                                                    "cell_type",
-                                                    gene_id)),
-                      by = c(region_id)) |>
-    dplyr::inner_join(getsi, by = c(gene_id, "cell_type"),
-                      suffix = c("_ATAC", "_RNA"))
+    dplyr::inner_join(
+      annotation |> dplyr::select(
+        region_id,
+        cell_type,
+        gene_id
+      ),
+      by = c(region_id, "cell_type")
+    ) |>
+    dplyr::inner_join(getsi,
+      by = c(gene_id, "cell_type"),
+      suffix = c("_ATAC", "_RNA")
+    )
   return(links)
 }
-
-

@@ -23,14 +23,15 @@ annotate_with_nearest(
 \item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}).}
 \item{start}{Start coordinate of the peak.}
 \item{end}{End coordinate of the peak.}
-\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
-}}
+\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}}}
 
 \item{txdb}{\code{TxDb} object for genome annotation (required if annotation requested).}
 
 \item{annot_dbi}{\code{AnnotationDbi} object for gene ID mapping (required if annotation requested).}
 
 \item{protein_coding_only}{Logical; restrict to protein-coding genes (default TRUE).}
+
+\item{verbose}{Logical; print messages (default TRUE).}
 
 \item{add_tss_annotation}{Logical; annotate regulatory elements overlapping TSS (default FALSE).
 If TRUE, use +/- 1bp TSS instead of +/-2kb promoter.}
@@ -45,9 +46,8 @@ from the TSS (transcription start sites) (default 2000kb).}
 A \code{data.frame} of peaks annotated to its nearest gene, with columns:
 \itemize{
 \item \code{distanceToTSS}: distance to the nearest TSS
-\item \code{nearestGeneSymbol}: Official gene symbol of the nearest gene (e.g., GAPDH)
-\item \code{annotation}: \code{"Promoter"} or \code{"Distal"} based on distance
-}
+\item \code{gene_id}: Official gene symbol of the nearest gene (e.g., GAPDH)
+\item \code{annotation}: \code{"Promoter"} or \code{"Distal"} based on distance}
 }
 \description{
 Annotates regulatory elements (e.g., ATAC-seq peaks) to the nearest gene
@@ -58,22 +58,25 @@ reference and optional gene annotations from \code{org.*.db} packages.
 library(dplyr)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
-
+library(SPICEY)
 data(atac)
 data(rna)
 data(cicero_links)
-peaks <- .parse_input_diff(atac)
-peaks <- peaks \%>\% tidyr::separate(region_id,
-                into = c("chr", "start", "end"), sep = "-",
-                convert = TRUE,remove = FALSE) \%>\%
-                GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
-
-annotation_near <- annotate_with_nearest(peaks = peaks,
-                                         txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-                                         annot_dbi = org.Hs.eg.db,
-                                         protein_coding_only = TRUE,
-                                         verbose = TRUE,
-                                         add_tss_annotation = FALSE,
-                                         upstream = 2000,
-                                         downstream = 2000)
+peaks <- SPICEY:::.parse_input_diff(atac)
+peaks <- peaks \%>\%
+  tidyr::separate(region_id,
+    into = c("chr", "start", "end"), sep = "-",
+    convert = TRUE, remove = FALSE
+  ) \%>\%
+  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+annotation_near <- annotate_with_nearest(
+  peaks = peaks,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+  annot_dbi = org.Hs.eg.db,
+  protein_coding_only = TRUE,
+  verbose = TRUE,
+  add_tss_annotation = FALSE,
+  upstream = 2000,
+  downstream = 2000
+)
 }

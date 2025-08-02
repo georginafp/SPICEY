@@ -27,15 +27,10 @@ Imports:
     GenomicRanges,
     GenomicFeatures,
     AnnotationDbi,
-    S4Vectors,
     dplyr,
     tidyr,
-    regioneR,
-    Signac,
     tibble,
-    InteractionSet,
     GenomeInfoDb,
-    ChIPseeker,
     scales
 Suggests:
     BiocStyle,

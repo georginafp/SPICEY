@@ -1,11 +1,8 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^Meta$
-^_pkgdown\.yml$
-^pkgdown$
-# ^doc$          # Commented out to avoid interfering with vignette output
-# ^docs$         # Commented out for same reason; keep if you use docs/ for pkgdown site
-^doc$
 ^docs$
-^\.github$
+^_pkgdown\.yml$
 ^\\.github$
+^\.github$
+^doc$
+^Meta$

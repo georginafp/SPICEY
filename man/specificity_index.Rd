@@ -10,8 +10,6 @@ specificity_index(da, group_col)
 \item{da}{A data.frame containing differential results with at least the following columns:
 \describe{
 \item{avg_log2FC}{Average log2 fold-change of the feature (gene or region).}
-\item{p_val}{Raw p-value from the differential test.}
-\item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 \item{cell_type}{Cell type or cluster label.}
 \item{\code{[group_col]}}{Column containing the feature identifier (e.g., gene_id or region)
 The \strong{name of this column must match the value passed to the \code{group_col} argument}}}}
@@ -23,7 +21,6 @@ identifies each feature, such as \code{gene_id} for genes or \code{region} for A
 A data.frame identical to the input but with additional columns:
 \describe{
 \item{avg_FC}{Fold-change converted from log2 scale.}
-\item{p_val}{Raw p-value from the differential test.}
 \item{p_val_adj}{FDR-adjusted p-values computed across all entries.}
 \item{max_FC}{Maximum fold-change observed within each feature group.}
 \item{weight}{Normalized significance weight derived from adjusted p-values.}

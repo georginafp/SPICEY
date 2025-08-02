@@ -11,16 +11,13 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-\
-
 ```{r setup, include = FALSE}
 
 library(dplyr)
 library(GenomicRanges)
-library(cicero)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
-
+library(SPICEY)
 
 knitr::opts_chunk$set(
     collapse = TRUE,
@@ -32,7 +29,6 @@ knitr::opts_chunk$set(
     out.width = "80%"
 )
 
-library(SPICEY)
 ```
 
 ```{r logo, echo=FALSE, eval=TRUE, out.width='10%'}
@@ -272,10 +268,6 @@ This method links each regulatory region to its closest gene TSS.
 
 ```{r re-gene-nearest, message=FALSE, warning=FALSE}
 
-library(dplyr)
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-library(org.Hs.eg.db)
-
 peaks <- SPICEY:::.parse_input_diff(atac)
 peaks <- peaks %>% tidyr::separate(region_id,
                 into = c("chr", "start", "end"), sep = "-",
@@ -323,10 +315,6 @@ This method connects regulatory regions to genes through co-accessibility intera
 
 ```{r re-gene-coaccessibility, message=FALSE, warning=FALSE}
 
-library(dplyr)
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-library(org.Hs.eg.db)
-
 peaks <- SPICEY:::.parse_input_diff(atac)
 peaks <- peaks %>% tidyr::separate(region_id,
                 into = c("chr", "start", "end"), sep = "-",
@@ -369,6 +357,7 @@ spicey_near <- SPICEY(rna = rna,
                       region_id="region_id",
                       annotation = annotation_near)
 
+
 # Using co-accessibility gene annotation data 
 spicey_coacc <- SPICEY(rna = rna,
                        gene_id = "gene_id",
@@ -394,8 +383,8 @@ When supplied with differential chromatin accessibility (ATAC) and/or gene expre
    - GETSI (Gene Expression Tissue Specificity Index) for RNA data
 
 2. (**Optional**) Annotates regulatory elements to target genes using either:
-   - Nearest gene transcription start site (TSS) ("nearest")
-   - Co-accessibility links ("coaccessibility"), e.g., derived from Cicero
+   - Nearest gene transcription start site (TSS) (e.g., +/- 2000bp around the TSS)
+   - Co-accessibility links (e.g., derived from Cicero)
 
 3. Builds tissue-specific regulatory networks by integrating RETSI and GETSI scores via the provided region-to-gene annotation.
 
@@ -419,7 +408,7 @@ The primary output is a `data.frame` or a list of `data.frames` representing gen
 | `GETSI`         | Gene Expression Tissue Specificity Index for linked genes, indicating expression specificity.   |
 | `GETSI_entropy` | Entropy-based specificity metric for gene expression, analogous to `RETSI_entropy`.             |
 
----
+
 
 ### Linked SPICEY Measures
 

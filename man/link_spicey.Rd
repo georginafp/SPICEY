@@ -48,8 +48,7 @@ It should contain at least the following columns:
 The name of this column should match the \code{region_id} argument.}
 \item{cell_type}{Cell type or cluster label.}
 \item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH}).
-The name of this column should match the \code{gene_id} argument.}
-}}
+The name of this column should match the \code{gene_id} argument.}}}
 }
 \value{
 A \code{data.frame} where each row represents a regulatory element–gene pair

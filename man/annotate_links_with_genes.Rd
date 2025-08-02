@@ -22,8 +22,7 @@ A \code{data.frame} with:
 \item{peak}{Unique identifier of the distal peak (e.g., chr1-5000-5800}
 \item{promoter_peak}{Unique identifier of the promoter-associated peak (e.g., chr1-5000-5800}
 \item{coaccess}{Cicero co-accessibility score.}
-\item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
-}
+\item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}}
 }
 \description{
 Annotate Cicero co-accessibility links with genes

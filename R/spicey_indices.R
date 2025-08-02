@@ -3,9 +3,10 @@
 #' Computes:
 #' \itemize{
 #'   \item GETSI (Gene Expression Tissue Specificity Index) from single-cell RNA-seq differential expression data.
-#'   \item RETSI (Regulatory Element Tissue Specificity Index) from single-cell ATAC-seq differential accessibility data.}
+#'   \item RETSI (Regulatory Element Tissue Specificity Index) from single-cell ATAC-seq differential accessibility data.
+#' }
 #' Either RNA or ATAC input must be provided.
-#' @inheritParams SPICEY
+#'
 #' @param diff Single \code{data.frame} with differential results, with required columns:
 #'   \describe{
 #'     \item{id}{Identifier for either genes or regions. Gene IDs must be
@@ -13,14 +14,17 @@
 #'     coordinate format such as \code{chr-start-end} or \code{chr:start-end}.
 #'     The name of this column must match the \code{id} argument.}
 #'     \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
-#'     \item{p_val}{Raw p-value for the differential test.}
 #'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
-#'     \item{cell_type}{Cell type or cluster label.}.
-#'     }
+#'     \item{cell_type}{Cell type or cluster label.}
+#'   }
+#' @param id A character string specifying the name of the column in `diff`
+#'   that contains the unique identifiers for features (e.g., genes or regions).
+#'   Must match a column name in `diff`, such as "gene_id" or "region_id".
 #' @return A data frame with specificity scores for each feature:
 #'   \describe{
 #'     \item{score (GETSI or RETSI)}{Specificity score (weighted log2FC).}
 #'     \item{norm_entropy}{Shannon entropy-based specificity measure.}
+#'   }
 compute_spicey_index <- function(diff = NULL,
                                  id = NULL) {
   index <- specificity_index(diff, group_col = id)
@@ -62,8 +66,9 @@ specificity_index <- function(da, group_col) {
     dplyr::mutate(
       avg_FC = 2^avg_log2FC,
       p_val_adj = ifelse(p_val_adj == 0,
-                     min(p_val_adj[p_val_adj > 0], na.rm = TRUE),
-                     p_val_adj)#,
+        min(p_val_adj[p_val_adj > 0], na.rm = TRUE),
+        p_val_adj
+      ) # ,
       # p_val_adj = p.adjust(p_val, method = "fdr"),
     ) |>
     dplyr::group_by(cell_type) |>
@@ -75,7 +80,8 @@ specificity_index <- function(da, group_col) {
     dplyr::group_by(cell_type, .data[[group_col]]) |>
     dplyr::mutate(
       norm_FC = avg_FC / max_FC,
-      score = norm_FC * weight) |>
+      score = norm_FC * weight
+    ) |>
     dplyr::ungroup() |>
     data.frame()
 
@@ -111,11 +117,13 @@ entropy_index <- function(spec_df, group_col) {
     dplyr::group_by(.data[[group_col]]) |>
     dplyr::mutate(
       prob = score / sum(score, na.rm = TRUE),
-      entropy_component = -prob * log2(prob)) |>
+      entropy_component = -prob * log2(prob)
+    ) |>
     dplyr::summarise(
       entropy = sum(entropy_component, na.rm = TRUE),
       norm_entropy = 1 - exp(-entropy),
-      .groups = "drop") |>
+      .groups = "drop"
+    ) |>
     data.frame()
 
   return(spec_df)

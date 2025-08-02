@@ -1,8 +1,10 @@
 utils::globalVariables(c(
-  "peak", "seqnames", "start", "end", "distanceToTSS", "annotation",
+  "region_id", "seqnames", "start", "end", "distanceToTSS", "annotation",
   "avg_FC", "max_FC", "norm_FC", "weight", "entropy", "score",
   "norm_entropy", ".data", "prob", "entropy_component", "name", "ENTREZID",
-  "GENETYPE", "nearestGeneSymbol", "gene_coacc", "gene_id", "GETSI",
+  "GENETYPE", "gene_id", "gene_coacc", "gene_id", "GETSI",
+  "Peak1", "Peak2", "coaccess", "gene_name1", "gene_name2",
+  "peak", "queryHits", "subjectHits", "seqlevels", "is", "makeGRangesFromDataFrame",
   "cell_type", "GETSI_entropy", "avg_log2FC", "p_val", "p_val_adj", "everything"
 ))
 
@@ -15,18 +17,19 @@ get_promoters <- function(txdb,
                           upstream = 2000,
                           downstream = 2000,
                           protein_coding_only = TRUE) {
-
   proms <- GenomicFeatures::promoters(
     GenomicFeatures::genes(txdb),
     upstream = upstream,
-    downstream = downstream)
+    downstream = downstream
+  )
 
   symbols <- AnnotationDbi::mapIds(
     annot_dbi,
     keys = names(proms),
     column = "SYMBOL",
     keytype = "ENTREZID",
-    multiVals = "first")
+    multiVals = "first"
+  )
 
   if (protein_coding_only) {
     gene_types <- AnnotationDbi::mapIds(
@@ -34,7 +37,8 @@ get_promoters <- function(txdb,
       keys = names(proms),
       column = "GENETYPE",
       keytype = "ENTREZID",
-      multiVals = "first")
+      multiVals = "first"
+    )
     keep <- which(gene_types == "protein-coding")
     proms <- proms[keep]
     symbols <- symbols[keep]
@@ -59,21 +63,24 @@ get_promoters <- function(txdb,
 #' @return A \code{data.frame} combining all elements, with an added \code{cell_type} column indicating the source.
 #' @importFrom GenomicRanges mcols
 .parse_input_diff <- function(input) {
-  if(is(input, "list")) {
-    if(is.null(names(input)))  stop("If your differential regions are in a list it should be named with cell types")
+  if (is(input, "list")) {
+    if (is.null(names(input))) stop("If your differential regions are in a list it should be named with cell types")
 
-    if(is(input[[1]], "GRanges")) {
+    if (is(input[[1]], "GRanges")) {
       input_df <- lapply(input, function(x) data.frame(mcols(x)))
 
       input <- dplyr::bind_rows(input,
-                                .id = "cell_type")
+        .id = "cell_type"
+      )
     } else if (is(input[[1]], "data.frame")) {
       input <- dplyr::bind_rows(input,
-                                .id = "cell_type")
+        .id = "cell_type"
+      )
     }
   } else if (is(input, "GRangesList")) {
     input <- dplyr::bind_rows(lapply(input, function(x) data.frame(mcols(x))),
-                              .id = "cell_type")
+      .id = "cell_type"
+    )
   }
   return(input)
 }
@@ -89,8 +96,10 @@ granges_to_string <- function(gr) {
   if (!inherits(gr, "GRanges")) {
     stop("Input must be a GRanges object")
   }
-  string <- paste0(as.character(GenomicRanges::seqnames(gr)),
-                   "-", GenomicRanges::start(gr),
-                   "-", GenomicRanges::end(gr))
+  string <- paste0(
+    as.character(GenomicRanges::seqnames(gr)),
+    "-", GenomicRanges::start(gr),
+    "-", GenomicRanges::end(gr)
+  )
   return(string)
 }

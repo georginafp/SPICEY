@@ -14,10 +14,13 @@ official gene symbols, while region IDs should follow the usual genomic
 coordinate format such as \code{chr-start-end} or \code{chr:start-end}.
 The name of this column must match the \code{id} argument.}
 \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
-\item{p_val}{Raw p-value for the differential test.}
 \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
-\item{cell_type}{Cell type or cluster label.}.
+\item{cell_type}{Cell type or cluster label.}
 }}
+
+\item{id}{A character string specifying the name of the column in \code{diff}
+that contains the unique identifiers for features (e.g., genes or regions).
+Must match a column name in \code{diff}, such as "gene_id" or "region_id".}
 }
 \value{
 A data frame with specificity scores for each feature:
@@ -25,10 +28,12 @@ A data frame with specificity scores for each feature:
 \item{score (GETSI or RETSI)}{Specificity score (weighted log2FC).}
 \item{norm_entropy}{Shannon entropy-based specificity measure.}
 }
+}
 \description{
 Computes:
 \itemize{
 \item GETSI (Gene Expression Tissue Specificity Index) from single-cell RNA-seq differential expression data.
-\item RETSI (Regulatory Element Tissue Specificity Index) from single-cell ATAC-seq differential accessibility data.}
+\item RETSI (Regulatory Element Tissue Specificity Index) from single-cell ATAC-seq differential accessibility data.
+}
 Either RNA or ATAC input must be provided.
 }

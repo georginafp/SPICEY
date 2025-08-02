@@ -20,8 +20,7 @@ extract_gene_peak_annotations(
 \item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}).}
 \item{start}{Start coordinate of the peak.}
 \item{end}{End coordinate of the peak.}
-\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
-}}
+\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}}}
 
 \item{txdb}{\code{TxDb} object for genome annotation (required if annotation requested).}
 
@@ -34,13 +33,14 @@ from the TSS (transcription start sites) (default 2000kb).}
 
 \item{downstream}{Single integer values indicating the number of bases downstream
 from the TSS (transcription start sites) (default 2000kb).}
+
+\item{verbose}{Logical; print messages (default TRUE).}
 }
 \value{
 A \code{data.frame} with:
 \describe{
 \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
-\item{peak}{Unique identifier of the region (e.g., chr1-5000-5800}
-}
+\item{peak}{Unique identifier of the region (e.g., chr1-5000-5800}}
 }
 \description{
 Identifies overlaps between a set of peaks and promoter regions,
