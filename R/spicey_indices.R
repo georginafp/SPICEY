@@ -43,7 +43,6 @@ compute_spicey_index <- function(diff = NULL,
 #'   \describe{
 #'     \item{avg_log2FC}{Average log2 fold-change of the feature (gene or region).}
 #'     \item{p_val}{Raw p-value from the differential test.}
-#'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 #'     \item{cell_type}{Cell type or cluster label.}
 #'     \item{\code{[group_col]}}{Column containing the feature identifier (e.g., gene_id or region)
 #'   The **name of this column must match the value passed to the `group_col` argument**}}
@@ -52,7 +51,6 @@ compute_spicey_index <- function(diff = NULL,
 #' @return A data.frame identical to the input but with additional columns:
 #'   \describe{
 #'     \item{avg_FC}{Fold-change converted from log2 scale.}
-#'     \item{p_val}{Raw p-value from the differential test.}
 #'     \item{p_val_adj}{FDR-adjusted p-values computed across all entries.}
 #'     \item{max_FC}{Maximum fold-change observed within each feature group.}
 #'     \item{weight}{Normalized significance weight derived from adjusted p-values.}
@@ -63,16 +61,17 @@ specificity_index <- function(da, group_col) {
   stopifnot(group_col %in% colnames(da))
   index <- da |>
     dplyr::mutate(
-      avg_FC = 2^avg_log2FC#,
-      # p_val_adj = p.adjust(p_val, method = "fdr")
-      ) |>
-    dplyr::group_by(.data[[group_col]]) |>
-    dplyr::mutate(
-      max_FC = max(avg_FC, na.rm = TRUE),
+      avg_FC = 2^avg_log2FC,
       p_val_adj = ifelse(p_val_adj == 0,
                          min(p_val_adj[p_val_adj > 0], na.rm = TRUE),
-                         p_val_adj),
-      weight = scales::rescale(-log10(p_val_adj), to = c(0, 1))) |>
+                         p_val_adj)#,
+      # p_val_adj = p.adjust(p_val, method = "fdr")
+    ) |>
+    dplyr::group_by(cell_type) |>
+    dplyr::mutate(weight = scales::rescale(-log10(p_val_adj), to = c(0, 1))) |>
+    dplyr::group_by(.data[[group_col]]) |>
+    dplyr::mutate(
+      max_FC = max(avg_FC, na.rm = TRUE)) |>
     dplyr::group_by(cell_type, .data[[group_col]]) |>
     dplyr::mutate(
       norm_FC = avg_FC / max_FC,
