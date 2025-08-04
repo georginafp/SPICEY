@@ -5,7 +5,8 @@ utils::globalVariables(c(
   "GENETYPE", "gene_id", "gene_coacc", "gene_id", "GETSI",
   "Peak1", "Peak2", "coaccess", "gene_name1", "gene_name2",
   "peak", "queryHits", "subjectHits", "seqlevels", "is", "makeGRangesFromDataFrame",
-  "cell_type", "GETSI_entropy", "avg_log2FC", "p_val", "p_val_adj", "everything"
+  "cell_type", "GETSI_entropy", "avg_log2FC", "p_val", "p_val_adj", "GETSI_z",
+  "RETSI", "RETSI_z", "combined_score", "max_cell_type", "max_score", "z_score","everything"
 ))
 
 
