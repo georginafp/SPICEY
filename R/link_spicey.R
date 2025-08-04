@@ -38,8 +38,8 @@ link_spicey <- function(retsi = NULL,
                         getsi = NULL,
                         gene_id = NULL,
                         annotation = NULL) {
-  keep_cols <- c("region_id", "cell_type", "gene_id",
-                 "distanceToTSS", "annotation")
+  keep_cols <- c("region_id", "cell_type", "gene_id", "distanceToTSS",
+                 "annotation", "TSS_gene", "in_TSS")
 
   links <- retsi |>
     dplyr::inner_join(
