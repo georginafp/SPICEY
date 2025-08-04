@@ -479,8 +479,6 @@ The `SPICEY` package provides a flexible function for visualizing gene-regulator
 
 These visualizations help uncover transcriptional and regulatory programs that are specific to individual cell types and can assist in identifying marker genes or highly specific regulatory programs.
 
-### How it works
-
 The `spicey_heatmap()` function performs the following steps:
 
 1. **Filters and scales the input**: Computes z-scores for the selected specificity index (`RETSI`, `GETSI`, or a combined SPICEY score).
@@ -507,7 +505,7 @@ To run `spicey_heatmap()`, the input must be a `data.frame` with the following c
 - `cell_type`: Cell type or cluster label (e.g., `"Acinar"`).
 - `GETSI` and/or `RETSI` score.
 
-### Function Arguments
+### Arguments
 
 - `df`: A `data.frame` containing the columns described above.
 - `top_n`: Number of top-ranked genes to retain per cell type (default: `5`).
@@ -515,17 +513,21 @@ To run `spicey_heatmap()`, the input must be a `data.frame` with the following c
 - `combined_zscore`: Logical. If `TRUE` and `spicey_measure = "SPICEY"`, computes a combined z-score across RETSI and GETSI (default: `FALSE`).
 
 
-```{r spicey-heatmap, message=FALSE, warning=FALSE, fig.width=4, fig.width=3}
-
+```{r spicey-heatmap-sep, message=FALSE, warning=FALSE, fig.width=4, fig.width=3}
 # RETSI and/or GETSI separately
 spicey_heatmap(spicey_coacc$linked, 
                spicey_measure = "RETSI")
 spicey_heatmap(spicey_coacc$linked, 
                spicey_measure = "GETSI")
+```
+
+```{r spicey-heatmap-pair, message=FALSE, warning=FALSE, fig.width=8, fig.width=6}
 spicey_heatmap(spicey_coacc$linked, 
                spicey_measure = "SPICEY", 
                combined_zscore = FALSE)
+```
 
+```{r spicey-heatmap-comb, message=FALSE, warning=FALSE, fig.width=4, fig.width=3}
 # SPICEY: combined average RETSI and GETSI scores 
 spicey_heatmap(spicey_coacc$linked, 
                spicey_measure = "SPICEY", 
