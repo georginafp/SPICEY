@@ -38,13 +38,13 @@ link_spicey <- function(retsi = NULL,
                         getsi = NULL,
                         gene_id = NULL,
                         annotation = NULL) {
-  drop_cols <- c("region_id", "cell_type", "gene_id",
+  keep_cols <- c("region_id", "cell_type", "gene_id",
                  "distanceToTSS", "annotation")
 
   links <- retsi |>
     dplyr::inner_join(
       annotation |>
-        dplyr::select(dplyr::any_of(drop_cols)),
+        dplyr::select(dplyr::any_of(keep_cols)),
       by = c(region_id, "cell_type")
     ) |>
     dplyr::inner_join(
