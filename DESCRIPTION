@@ -27,6 +27,7 @@ Imports:
     GenomicRanges,
     GenomicFeatures,
     AnnotationDbi,
+    S4Vectors,
     dplyr,
     tidyr,
     tibble,

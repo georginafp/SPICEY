@@ -85,26 +85,21 @@ annotate_with_nearest <- function(peaks,
   }
   alt_chroms <- grep("_alt|random|fix|Un", seqlevels(peaks), value = TRUE)
   peaks <- GenomeInfoDb::keepSeqlevels(peaks, setdiff(seqlevels(peaks), alt_chroms), pruning.mode = "coarse")
-  ref_anno <- if (add_tss_annotation) {
-    extract_gene_peak_annotations(
+
+  ref_anno <- extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
       protein_coding_only,
-      upstream = 0, downstream = 1, verbose
-    )
-  } else {
-    extract_gene_peak_annotations(
-      peaks, txdb, annot_dbi,
-      protein_coding_only,
-      upstream, downstream, verbose
-    )
-  }
+      upstream, downstream, verbose)
+
   ref_anno <- ref_anno |>
+    data.frame(row.names = NULL) |>
     tidyr::separate(peak,
       into = c("chr", "start", "end"),
       sep = "-", convert = TRUE
     ) |>
     dplyr::distinct() |>
     makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+
   nearest_hits <- GenomicRanges::distanceToNearest(peaks, ref_anno)
   dist <- rep(NA_integer_, length(peaks))
   genes <- rep(NA_character_, length(peaks))
@@ -113,8 +108,50 @@ annotate_with_nearest <- function(peaks,
   peaks$distanceToTSS <- dist
   peaks$gene_id <- genes
   peaks$annotation <- ifelse(!is.na(dist) & abs(dist) <= 2000, "Promoter", "Distal")
+
+  if (add_tss_annotation) {
+    peaks <- annotate_tss(peaks,
+                          txdb = txdb,
+                          annot_dbi = annot_dbi,
+                          protein_coding_only = protein_coding_only)
+  }
+
   return(as.data.frame(peaks))
 }
+
+
+
+
+#' Annotate regulatory elements overlapping transcription start sites (TSS)
+#'
+#' Identifies regulatory elements that overlap precisely defined transcription
+#' start sites (TSS) and assigns the corresponding gene symbols to these elements.
+#' @inheritParams annotate_with_coaccessibility
+#' @return A \code{data.frame} containing the input regulatory elements with added columns:
+#' \describe{
+#'   \item{\code{in_TSS}}{Logical indicating whether the element overlaps a TSS.}
+#'   \item{\code{TSS_gene}}{Gene symbol of the overlapping TSS, or \code{NA} if none.}}
+#' @importFrom GenomicRanges makeGRangesFromDataFrame promoters findOverlaps mcols
+#' @importFrom AnnotationDbi mapIds
+#' @importFrom S4Vectors queryHits subjectHits
+annotate_tss <- function(txdb, peaks, annot_dbi, protein_coding_only) {
+  proms <- get_promoters(
+    txdb = txdb,
+    annot_dbi = annot_dbi,
+    upstream = 0,
+    downstream = 1,
+    protein_coding_only = protein_coding_only
+  )
+  hits <- findOverlaps(peaks, proms)
+  GenomicRanges::mcols(peaks)$in_TSS <- FALSE
+  GenomicRanges::mcols(peaks)$TSS_gene <- NA_character_
+  GenomicRanges::mcols(peaks)$in_TSS[queryHits(hits)] <- TRUE
+  GenomicRanges::mcols(peaks)$TSS_gene[queryHits(hits)] <- GenomicRanges::mcols(proms)$gene_id[subjectHits(hits)]
+  peaks <- peaks |> data.frame()
+  return(peaks)
+}
+
+
 
 
 
@@ -273,24 +310,26 @@ annotate_with_coaccessibility <- function(peaks,
   peaks <- GenomeInfoDb::keepSeqlevels(peaks, setdiff(seqlevels(peaks), alt),
     pruning.mode = "coarse"
   )
-  ref_anno <- if (add_tss_annotation) {
-    extract_gene_peak_annotations(
-      peaks, txdb, annot_dbi,
-      protein_coding_only,
-      upstream = 0, downstream = 1, verbose = FALSE
-    )
-  } else {
-    extract_gene_peak_annotations(
+  ref_anno <- extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
       protein_coding_only,
       upstream, downstream, verbose
     )
-  }
+
   links_anno <- annotate_links_with_genes(links_df, ref_anno)
+
+  if (add_tss_annotation) {
+    peaks <- annotate_tss(peaks,
+                          txdb = txdb,
+                          annot_dbi = annot_dbi,
+                          protein_coding_only = protein_coding_only)
+  }
+
   result <- as.data.frame(peaks) |>
     dplyr::left_join(dplyr::select(links_anno, region_id = peak, gene_id),
       by = "region_id"
     ) |>
     dplyr::distinct()
+
   return(result)
 }

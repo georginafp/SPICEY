@@ -65,22 +65,28 @@ get_promoters <- function(txdb,
 .parse_input_diff <- function(input) {
   if (is(input, "list")) {
     if (is.null(names(input))) stop("If your differential regions are in a list it should be named with cell types")
-
     if (is(input[[1]], "GRanges")) {
-      input_df <- lapply(input, function(x) data.frame(mcols(x)))
+      input_df <- lapply(input, function(x) {
+        df <- data.frame(mcols(x))
+        if ("cell_type" %in% colnames(df)) {
+          df$cell_type <- NULL
+        }
+        df
+      })
+      input <- dplyr::bind_rows(input_df, .id = "cell_type")
 
-      input <- dplyr::bind_rows(input,
-        .id = "cell_type"
-      )
     } else if (is(input[[1]], "data.frame")) {
-      input <- dplyr::bind_rows(input,
-        .id = "cell_type"
-      )
+      input <- dplyr::bind_rows(input, .id = "cell_type")
     }
+
   } else if (is(input, "GRangesList")) {
-    input <- dplyr::bind_rows(lapply(input, function(x) data.frame(mcols(x))),
-      .id = "cell_type"
-    )
+    input <- dplyr::bind_rows(lapply(input, function(x) {
+      df <- data.frame(mcols(x))
+      if ("cell_type" %in% colnames(df)) {
+        df$cell_type <- NULL
+      }
+      df
+    }), .id = "cell_type")
   }
   return(input)
 }

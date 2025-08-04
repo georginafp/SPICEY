@@ -38,18 +38,21 @@ link_spicey <- function(retsi = NULL,
                         getsi = NULL,
                         gene_id = NULL,
                         annotation = NULL) {
+  drop_cols <- c("seqnames", "start", "end", "width", "strand",
+                 "p_val_adj", "p_val", "avg_log2FC")
+
   links <- retsi |>
     dplyr::inner_join(
-      annotation |> dplyr::select(
-        region_id,
-        cell_type,
-        gene_id
-      ),
+      annotation |>
+        dplyr::select(-dplyr::any_of(drop_cols)),
       by = c(region_id, "cell_type")
     ) |>
-    dplyr::inner_join(getsi,
+    dplyr::inner_join(
+      getsi,
       by = c(gene_id, "cell_type"),
       suffix = c("_ATAC", "_RNA")
     )
+
   return(links)
 }
+

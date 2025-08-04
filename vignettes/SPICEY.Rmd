@@ -53,8 +53,8 @@ Differential expression and accessibility analyses were conducted using `Seurat`
 
 SPICEY defines two complementary metrics to quantify cell-type specificity:
 
-- **RETSI** (Regulatory Element Tissue Specificity Index): Evaluates the specificity of regulatory elements (e.g., ATAC-seq peaks) across different cell types.
-- **GETSI** (Gene Expression Tissue Specificity Index): Evaluates the specificity of gene expression patterns across cell types.
+-   **RETSI** (Regulatory Element Tissue Specificity Index): Evaluates the specificity of regulatory elements (e.g., ATAC-seq peaks) across different cell types.
+-   **GETSI** (Gene Expression Tissue Specificity Index): Evaluates the specificity of gene expression patterns across cell types.
 
 Both RETSI and GETSI are calculated using a weighted specificity score for each feature (regulatory region or gene), reflecting the level of enrichment in each cell type. These specificity indices are computed as follows:
 
@@ -73,11 +73,10 @@ where:
 -   $\text{FC}_{i,x}$ is the log fold-change of feature $x$ in cell type $i$
 -   $w_{i,x}$ is the weight term, defined as the rescaled value of $-\log_{10}(\text{adjusted } p\text{-value})$ between 0 and 1
 
-
 SPICEY offers two strategies for linking regulatory elements to their putative target genes:
 
-1. **Nearest-gene assignment:** based on proximity to the closest transcription start site (TSS).
-2. **Co-accessibility-based linking:** leveraging correlations in chromatin accessibility (e.g., via Cicero).
+1.  **Nearest-gene assignment:** based on proximity to the closest transcription start site (TSS).
+2.  **Co-accessibility-based linking:** leveraging correlations in chromatin accessibility (e.g., via Cicero).
 
 These linking methods enable the integration of regulatory specificity (RETSI) and gene expression specificity (GETSI), facilitating the construction of detailed cell-type-specific regulatory networks from single-cell data.
 
@@ -87,13 +86,11 @@ These linking methods enable the integration of regulatory specificity (RETSI) a
 
 Beyond fold change–based metrics, SPICEY employs an entropy-based approach to measure the distributional skewness of feature activity across cell types using **Shannon entropy**.
 
-For each feature, activity or expression values are normalized into a probability distribution representing signal concentration across all \(N\) cell types. Lower entropy values indicate stronger cell-type specificity, whereas higher entropy suggests more uniform distribution. These entropy-based specificity indices are calculated as follows:
-
+For each feature, activity or expression values are normalized into a probability distribution representing signal concentration across all $N$ cell types. Lower entropy values indicate stronger cell-type specificity, whereas higher entropy suggests more uniform distribution. These entropy-based specificity indices are calculated as follows:
 
 $$
 H = - \sum_{i=1}^{N} p_i \log_2(p_i)
 $$
-
 
 $$
 H_{norm} = 1 - e^{H}
@@ -120,19 +117,19 @@ SPICEY requires preprocessed input files generated from differential analyses of
 
 ## Single-cell ATAC-seq Data
 
-- **Accepted Formats:**
+-   **Accepted Formats:**
 
-  - A **named list** of `GRanges` objects or `data.frame`s (convertible to `GRanges`), where each element contains differential accessibility results for a specific cell type.  
-  - A `GRangesList` with each element representing a distinct cell type.
+    -   A **named list** of `GRanges` objects or `data.frame`s (convertible to `GRanges`), where each element contains differential accessibility results for a specific cell type.\
+    -   A `GRangesList` with each element representing a distinct cell type.
 
-  All inputs must be **named** with cell type identifiers.
+    All inputs must be **named** with cell type identifiers.
 
-- **Required Columns (per element):**
+-   **Required Columns (per element):**
 
-  - `region_id` — Unique peak identifier matching the format in your ATAC data (e.g., `chr1-5000-5800` or `chr1:5000-5800`).
-  - `avg_log2FC` — Average log2 fold-change of accessibility in the given cell type.
-  - `p_val_adj` — Adjusted p-value from the differential test.
-  - `cell_type` — Cell type or cluster label for each measurement.
+    -   `region_id` — Unique peak identifier matching the format in your ATAC data (e.g., `chr1-5000-5800` or `chr1:5000-5800`).
+    -   `avg_log2FC` — Average log2 fold-change of accessibility in the given cell type.
+    -   `p_val_adj` — Adjusted p-value from the differential test.
+    -   `cell_type` — Cell type or cluster label for each measurement.
 
 Each peak should have multiple entries, one per cell type, allowing SPICEY to assess cell-type-specific accessibility patterns.
 
@@ -142,19 +139,19 @@ data("atac")
 
 ## Single-cell RNA-seq Data
 
-- **Accepted Formats:**
+-   **Accepted Formats:**
 
-  - A **named list** of `GRanges` objects or `data.frame`s (convertible to `GRanges`), with each element containing differential expression results for a specific cell type.  
-  - A `GRangesList`, where each element corresponds to a distinct cell type.
+    -   A **named list** of `GRanges` objects or `data.frame`s (convertible to `GRanges`), with each element containing differential expression results for a specific cell type.\
+    -   A `GRangesList`, where each element corresponds to a distinct cell type.
 
-  The list or `GRangesList` must be **named** with cell type identifiers.
+    The list or `GRangesList` must be **named** with cell type identifiers.
 
-- **Required Columns (per element):**
+-   **Required Columns (per element):**
 
-  - `gene_id` — Gene identifier column, consistent across all entries, using *official gene symbols* (e.g., `GAPDH`).
-  - `avg_log2FC` — Average log2 fold-change in expression for the gene within the specific cell type.
-  - `p_val_adj` — Adjusted p-value from the differential test.
-  - `cell_type` — Cell type or cluster label associated with the measurement.
+    -   `gene_id` — Gene identifier column, consistent across all entries, using *official gene symbols* (e.g., `GAPDH`).
+    -   `avg_log2FC` — Average log2 fold-change in expression for the gene within the specific cell type.
+    -   `p_val_adj` — Adjusted p-value from the differential test.
+    -   `cell_type` — Cell type or cluster label associated with the measurement.
 
 Each gene should have multiple entries—one per cell type—enabling SPICEY to evaluate expression specificity across cell populations.
 
@@ -164,17 +161,17 @@ data("rna")
 
 ## Co-accessibility Links (Optional for Region-to-Gene Linking)
 
-- **Purpose:**  
-  Link regulatory elements to putative target genes based on co-accessibility, typically derived from tools like `Cicero`. This input is required only when using the `annotation` parameter for RETSI/GETSI integration.
+-   **Purpose:**\
+    Link regulatory elements to putative target genes based on co-accessibility, typically derived from tools like `Cicero`. This input is required only when using the `annotation` parameter for RETSI/GETSI integration.
 
-- **Format:**  
-  A `data.frame` containing co-accessibility pairs and their scores.
+-   **Format:**\
+    A `data.frame` containing co-accessibility pairs and their scores.
 
-- **Required Columns:**
+-   **Required Columns:**
 
-  - `Peaks1` — Genomic coordinate or ID of the first peak in the pair.
-  - `Peaks2` — Genomic coordinate or ID of the second peak.
-  - `coaccess` — Co-accessibility score or correlation value between the paired peaks.
+    -   `Peaks1` — Genomic coordinate or ID of the first peak in the pair.
+    -   `Peaks2` — Genomic coordinate or ID of the second peak.
+    -   `coaccess` — Co-accessibility score or correlation value between the paired peaks.
 
 **Note:** Peak identifiers in `Peaks1` and `Peaks2` must exactly match those in the ATAC input, including coordinate formatting (e.g., `chr1:5000-6000` vs. `chr1-5000-6000`). Inconsistent formats will disrupt accurate annotation.
 
@@ -191,8 +188,8 @@ This section outlines how to execute SPICEY using preprocessed input files, as d
 
 To calculate the **Regulatory Element Tissue Specificity Index (RETSI)**, the following inputs are required:
 
-- **`atac`**: A named list of `GRanges` objects or `data.frame`s (convertible to `GRanges`), each representing differential accessibility results for a distinct cell type.
-- **`region_id`**: A character string specifying the column name containing region identifiers (e.g., `chr1-5000-5800`).
+-   **`atac`**: A named list of `GRanges` objects or `data.frame`s (convertible to `GRanges`), each representing differential accessibility results for a distinct cell type.
+-   **`region_id`**: A character string specifying the column name containing region identifiers (e.g., `chr1-5000-5800`).
 
 SPICEY returns a `data.frame` combining the input differential accessibility data with RETSI scores for each regulatory region.
 
@@ -207,8 +204,8 @@ head(retsi)
 
 To calculate the **Gene Expression Tissue Specificity Index (GETSI)**, the following inputs are required:
 
-- **`rna`**: A named list of `GRanges` objects or `data.frame`s (convertible to `GRanges`), each containing differential gene expression results for a specific cell type.
-- **`gene_id`**: A character string specifying the column name with gene identifiers (e.g., official gene symbols).
+-   **`rna`**: A named list of `GRanges` objects or `data.frame`s (convertible to `GRanges`), each containing differential gene expression results for a specific cell type.
+-   **`gene_id`**: A character string specifying the column name with gene identifiers (e.g., official gene symbols).
 
 SPICEY outputs a `data.frame` that integrates the input differential expression data with computed GETSI scores for each gene.
 
@@ -221,7 +218,7 @@ head(getsi)
 
 ## Computing SPICEY
 
-SPICEY offers an integrated approach to quantify tissue specificity at both the epigenetic and transcriptional levels by simultaneously computing Regulatory Element Tissue Specificity Indices (RETSI) and Gene Expression Tissue Specificity Indices (GETSI) from single-cell data. 
+SPICEY offers an integrated approach to quantify tissue specificity at both the epigenetic and transcriptional levels by simultaneously computing Regulatory Element Tissue Specificity Indices (RETSI) and Gene Expression Tissue Specificity Indices (GETSI) from single-cell data.
 
 By supplying both `atac` and `rna` inputs together to the `SPICEY()` function, the tool calculates RETSI and GETSI scores and returns a list with each specificity measure provided separately.
 
@@ -239,8 +236,8 @@ SPICEY facilitates the construction of tissue-specific regulatory networks by in
 
 To establish these links, regulatory regions must be annotated to target genes. SPICEY supports two annotation strategies:
 
-1. **Proximity-based annotation** — assigning regions to the nearest transcription start site (TSS).  
-2. **Co-accessibility-based annotation** — leveraging promoter–enhancer co-accessibility relationships derived from snATAC-seq data (e.g., via `Cicero`).
+1.  **Proximity-based annotation** — assigning regions to the nearest transcription start site (TSS).\
+2.  **Co-accessibility-based annotation** — leveraging promoter–enhancer co-accessibility relationships derived from snATAC-seq data (e.g., via `Cicero`).
 
 ### Annotating Regions to Putative Target Genes (Optional)
 
@@ -250,103 +247,145 @@ This method links each regulatory region to its closest gene TSS.
 
 ##### Required inputs:
 
-- `peaks`: A `GRanges` object or `data.frame` containing peaks to annotate, including these columns:
-  - `seqnames`: Chromosome name (e.g., chr1)
-  - `start`: Peak start coordinate
-  - `end`: Peak end coordinate
-  - `region_id`: Unique region identifier in genomic coordinate format (e.g., `chr1-5000-5800` or `chr1:5000-5800`)
-- `txdb`: A `TxDb` object for genome annotation (e.g., `TxDb.Hsapiens.UCSC.hg38.knownGene`).
-- `annot_dbi`: An `AnnotationDbi` object for gene metadata (e.g., `org.Hs.eg.db`).
-- `upstream`: Number of bases upstream from the TSS to consider (default: 2000).
-- `downstream`: Number of bases downstream from the TSS to consider (default: 2000).
+-   `peaks`: A `GRanges` object or `data.frame` containing peaks to annotate, including these columns:
+    -   `seqnames`: Chromosome name (e.g., chr1)
+    -   `start`: Peak start coordinate
+    -   `end`: Peak end coordinate
+    -   `region_id`: Unique region identifier in genomic coordinate format (e.g., `chr1-5000-5800` or `chr1:5000-5800`)
+-   `txdb`: A `TxDb` object for genome annotation (e.g., `TxDb.Hsapiens.UCSC.hg38.knownGene`).
+-   `annot_dbi`: An `AnnotationDbi` object for gene metadata (e.g., `org.Hs.eg.db`).
+-   `upstream`: Number of bases upstream from the TSS to consider (default: 2000).
+-   `downstream`: Number of bases downstream from the TSS to consider (default: 2000).
 
 ##### Optional parameters:
 
-- `protein_coding_only`: Limit annotations to protein-coding genes (default: `TRUE`).
-- `add_tss_annotation`: Annotate regulatory elements overlapping the TSS (default: `FALSE`). If enabled, uses ±1 bp around TSS instead of ±2000 bp.
-- `verbose`: Display progress messages (default: `TRUE`).
+-   `protein_coding_only`: Limit annotations to protein-coding genes (default: `TRUE`).
+-   `add_tss_annotation`: Annotate regulatory elements overlapping the TSS (default: `FALSE`). If enabled, uses ±1 bp around TSS instead of ±2000 bp.
+-   `verbose`: Display progress messages (default: `TRUE`).
 
 ```{r re-gene-nearest, message=FALSE, warning=FALSE}
 
 peaks <- SPICEY:::.parse_input_diff(atac)
-peaks <- peaks %>% tidyr::separate(region_id,
-                into = c("chr", "start", "end"), sep = "-",
-                convert = TRUE,remove = FALSE) %>%
-                GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+peaks <- peaks %>% tidyr::separate(
+  region_id,
+  into = c("chr", "start", "end"), sep = "-",
+  convert = TRUE,remove = FALSE) %>%
+  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
 
-annotation_near <- annotate_with_nearest(peaks = peaks,
-                                         txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-                                         annot_dbi = org.Hs.eg.db,
-                                         protein_coding_only = TRUE,
-                                         verbose = TRUE,
-                                         add_tss_annotation = FALSE,
-                                         upstream = 2000,
-                                         downstream = 2000)
+annotation_near <- annotate_with_nearest(
+  peaks = peaks,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+  annot_dbi = org.Hs.eg.db,
+  protein_coding_only = TRUE,
+  verbose = TRUE,
+  add_tss_annotation = FALSE,
+  upstream = 2000,
+  downstream = 2000)
+
 head(annotation_near)
 ```
 
 This function returns a data frame linking each regulatory region to its nearest gene based on genomic proximity.
 
-#### Annotate to Co-accessible Genes
+#### Annotate to co-accessible Genes
 
 This method connects regulatory regions to genes through co-accessibility interactions, which must be computed externally (e.g., using **Cicero**).
 
 ##### Required inputs:
 
-- `peaks`: A `GRanges` object or `data.frame` of peaks to annotate, including the following columns:
-  - `seqnames`: Chromosome name (e.g., chr1)
-  - `start`: Peak start coordinate
-  - `end`: Peak end coordinate
-  - `region_id`: Unique region identifier in genomic coordinate format (e.g., `chr1-5000-5800` or `chr1:5000-5800`)
-- `txdb`: A `TxDb` object for genome annotation (e.g., `TxDb.Hsapiens.UCSC.hg38.knownGene`).
-- `annot_dbi`: An `AnnotationDbi` object for gene metadata (e.g., `org.Hs.eg.db`).
-- `links_df`: A `data.frame` containing co-accessibility links or scores (e.g., from Cicero), with these required columns:
-  - `Peaks1`: Genomic coordinate or ID of the first peak in the pair
-  - `Peaks2`: Genomic coordinate or ID of the second peak linked by co-accessibility
-  - `coaccess`: Co-accessibility score or correlation value between peaks
-- `upstream`: Number of bases upstream from the TSS to consider (default: 2000).
-- `downstream`: Number of bases downstream from the TSS to consider (default: 2000).
+-   `peaks`: A `GRanges` object or `data.frame` of peaks to annotate, including the following columns:
+    -   `seqnames`: Chromosome name (e.g., chr1)
+    -   `start`: Peak start coordinate
+    -   `end`: Peak end coordinate
+    -   `region_id`: Unique region identifier in genomic coordinate format (e.g., `chr1-5000-5800` or `chr1:5000-5800`)
+-   `txdb`: A `TxDb` object for genome annotation (e.g., `TxDb.Hsapiens.UCSC.hg38.knownGene`).
+-   `annot_dbi`: An `AnnotationDbi` object for gene metadata (e.g., `org.Hs.eg.db`).
+-   `links_df`: A `data.frame` containing co-accessibility links or scores (e.g., from Cicero), with these required columns:
+    -   `Peaks1`: Genomic coordinate or ID of the first peak in the pair
+    -   `Peaks2`: Genomic coordinate or ID of the second peak linked by co-accessibility
+    -   `coaccess`: Co-accessibility score or correlation value between peaks
+-   `upstream`: Number of bases upstream from the TSS to consider (default: 2000).
+-   `downstream`: Number of bases downstream from the TSS to consider (default: 2000).
 
 ##### Optional parameters:
 
-- `protein_coding_only`: Limit annotations to protein-coding genes (default: `TRUE`).
-- `add_tss_annotation`: Annotate regulatory elements overlapping the TSS (default: `FALSE`). If enabled, uses ±1 bp around TSS instead of ±2000 bp.
-- `verbose`: Display progress messages (default: `TRUE`).
+-   `protein_coding_only`: Limit annotations to protein-coding genes (default: `TRUE`).
+-   `add_tss_annotation`: Annotate regulatory elements overlapping the TSS (default: `FALSE`). If enabled, uses ±1 bp around TSS instead of ±2000 bp.
+-   `verbose`: Display progress messages (default: `TRUE`).
 
 ```{r re-gene-coaccessibility, message=FALSE, warning=FALSE}
 
 peaks <- SPICEY:::.parse_input_diff(atac)
-peaks <- peaks %>% tidyr::separate(region_id,
-                into = c("chr", "start", "end"), sep = "-",
-                convert = TRUE,remove = FALSE) %>%
-                GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+peaks <- peaks %>% 
+  tidyr::separate(
+    region_id,
+    into = c("chr", "start", "end"), sep = "-",
+    convert = TRUE,remove = FALSE) %>%
+  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
 
-annotation_coacc <- annotate_with_coaccessibility(peaks = peaks,
-                                                  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-                                                  links_df=cicero_links,
-                                                  annot_dbi = org.Hs.eg.db,
-                                                  protein_coding_only = TRUE,
-                                                  verbose = TRUE,
-                                                  add_tss_annotation = FALSE,
-                                                  upstream = 2000,
-                                                  downstream = 2000)
+annotation_coacc <- annotate_with_coaccessibility(
+  peaks = peaks,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+  links_df=cicero_links,
+  annot_dbi = org.Hs.eg.db,
+  protein_coding_only = TRUE,
+  verbose = TRUE,
+  add_tss_annotation = FALSE,
+  upstream = 2000,
+  downstream = 2000)
+
 head(annotation_coacc)
 ```
 
 This function returns a data frame linking each regulatory region to its associated gene based on co-accessibility relationships.
 
-**Note:** This step is **optional**. Users can either generate these annotations using SPICEY’s built-in functions or supply a pre-computed `data.frame` of gene–region associations. When using pre-computed data to construct tissue-specific regulatory networks, the `data.frame` must include at minimum the following columns:
+#### Annotate to both
 
-- `region_id`: Unique identifier for each region, following standard genomic coordinate formats such as *chr-start-end* (e.g., `chr1-5000-5800`) or *chr:start-end* (e.g., `chr1:5000-5800`).
-- `gene_id`: Unique gene identifier using *official gene symbols* (e.g., `GAPDH`).
-- `cell_type`: Cell type or cluster label.
+Alternatively, users may wish to annotate regulatory regions using both proximity to transcription start sites (TSS) and co-accessibility information simultaneously. To accommodate this, one can use SPICEY functionalists to generate a merged annotation object, combining both distance-based and co-accessibility-based annotations for each region in a unified framework:
+
+```{r re-gene-near-coacc-merged, message=FALSE, warning=FALSE}
+
+annotation_merged <- annotate_with_coaccessibility(
+  peaks = annotation_near |> 
+    dplyr::rename(nearestGeneSymbol = gene_id) |>
+    makeGRangesFromDataFrame(keep.extra.columns = T),
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+  links_df=cicero_links,
+  annot_dbi = org.Hs.eg.db,
+  protein_coding_only = TRUE,
+  verbose = TRUE,
+  add_tss_annotation = FALSE,
+  upstream = 2000,
+  downstream = 2000)
+
+head(annotation_merged)
+```
+
+In this way, each regulatory region is annotated with two complementary layers of information:
+
+-   **Nearest-gene annotation**, which includes:
+
+1.  `distanceToTSS`: the distance from the region to the nearest transcription start site (TSS),
+2.  `nearestGeneSymbol`: the gene symbol of the closest gene,
+3.  `annotation`: the genomic context of the region (e.g., Promoter or Distal based on proximity to the TSS).
+
+-   **Co-accessibility-based annotation**, where the region is linked to its co-accessible gene (`gene_id`), as determined by Cicero-derived chromatin interaction networks (see relevant section for details).
+
+This merged approach provides a more comprehensive regulatory landscape by integrating both spatial proximity and functional chromatin interaction data.
+
+#### Using custom region-to-gene annotation
+
+The annotation step(s) are **optional**. Users can either generate these annotations using SPICEY’s built-in functions or supply a pre-computed `data.frame` of gene–region associations. When using pre-computed data to construct tissue-specific regulatory networks, the `data.frame` must include at minimum the following columns:
+
+-   `region_id`: Unique identifier for each region, following standard genomic coordinate formats such as *chr-start-end* (e.g., `chr1-5000-5800`) or *chr:start-end* (e.g., `chr1:5000-5800`).
+-   `gene_id`: Unique gene identifier using *official gene symbols* (e.g., `GAPDH`).
+-   `cell_type`: Cell type or cluster label.
 
 ### Integrating SPICEY measures to build tissue-specific networks
 
 With the annotation linking regulatory elements to their target genes (via TSS proximity or co-accessibility), SPICEY enables integration of RETSI and GETSI scores. This links each regulatory region’s cell type-specific RETSI score with its target gene’s corresponding GETSI score, facilitating the construction of detailed tissue-specific regulatory networks.
 
 This approach supports comprehensive analysis of regulatory mechanisms at both epigenetic and transcriptional levels.
-
 
 ```{r spicey_link_annot, message=FALSE, warning=FALSE}
 
@@ -365,8 +404,12 @@ spicey_coacc <- SPICEY(rna = rna,
                        region_id="region_id",
                        annotation = annotation_coacc)
 
-# head(spicey_near)
-# lapply(spicey_coacc, head)
+# Using both annotation data 
+spicey_both <- SPICEY(rna = rna,
+                      gene_id = "gene_id",
+                      atac=atac,
+                      region_id="region_id",
+                      annotation = annotation_merged)
 
 ```
 
@@ -378,15 +421,13 @@ SPICEY offers a comprehensive main function, `SPICEY()`, which streamlines the e
 
 When supplied with differential chromatin accessibility (ATAC) and/or gene expression (RNA) data from single-cell experiments, along with a chosen region-to-gene mapping method ("nearest" or "coaccessibility"), the `SPICEY()` function performs the following:
 
-1. Computes tissue specificity scores from single-cell data:
-   - RETSI (Regulatory Element Tissue Specificity Index) for ATAC data
-   - GETSI (Gene Expression Tissue Specificity Index) for RNA data
-
-2. (**Optional**) Annotates regulatory elements to target genes using either:
-   - Nearest gene transcription start site (TSS) (e.g., +/- 2000bp around the TSS)
-   - Co-accessibility links (e.g., derived from Cicero)
-
-3. Builds tissue-specific regulatory networks by integrating RETSI and GETSI scores via the provided region-to-gene annotation.
+1.  Computes tissue specificity scores from single-cell data:
+    -   RETSI (Regulatory Element Tissue Specificity Index) for ATAC data
+    -   GETSI (Gene Expression Tissue Specificity Index) for RNA data
+2.  (**Optional**) Annotates regulatory elements to target genes using either:
+    -   Nearest gene transcription start site (TSS) (e.g., +/- 2000bp around the TSS)
+    -   Co-accessibility links (e.g., derived from Cicero)
+3.  Builds tissue-specific regulatory networks by integrating RETSI and GETSI scores via the provided region-to-gene annotation.
 
 The output is a structured list containing all intermediate and final results, facilitating downstream analysis and reuse.
 
@@ -396,37 +437,35 @@ The primary output is a `data.frame` or a list of `data.frames` representing gen
 
 ### SPICEY Measures
 
-| Column          | Description                                                                                     |
-|-----------------|-------------------------------------------------------------------------------------------------|
-| `cell_type`     | Cell type exhibiting significant accessibility or expression (e.g., `"Acinar"`).                |
-| `p_val_adj`     | Adjusted p-value from differential testing, controlling for multiple comparisons.               |
-| `avg_log2FC`    | Average log2 fold-change of accessibility/expression in the specified cell type vs others.      |
-| `region_id`     | Genomic interval identifier (e.g., `"chr7:142748901-142749963"`).                               |
-| `RETSI`         | Regulatory Element Tissue Specificity Index; values near 1 indicate high cell-type specificity. |
-| `RETSI_entropy` | Entropy-based specificity metric; lower values indicate greater cell-type specificity.          |
-| `gene_id`       | Gene identifier using official gene symbols (e.g., `GAPDH`).                                    |
-| `GETSI`         | Gene Expression Tissue Specificity Index for linked genes, indicating expression specificity.   |
-| `GETSI_entropy` | Entropy-based specificity metric for gene expression, analogous to `RETSI_entropy`.             |
-
-
+| Column | Description |
+|---------------|---------------------------------------------------------|
+| `cell_type` | Cell type exhibiting significant accessibility or expression (e.g., `"Acinar"`). |
+| `p_val_adj` | Adjusted p-value from differential testing, controlling for multiple comparisons. |
+| `avg_log2FC` | Average log2 fold-change of accessibility/expression in the specified cell type vs others. |
+| `region_id` | Genomic interval identifier (e.g., `"chr7:142748901-142749963"`). |
+| `RETSI` | Regulatory Element Tissue Specificity Index; values near 1 indicate high cell-type specificity. |
+| `RETSI_entropy` | Entropy-based specificity metric; lower values indicate greater cell-type specificity. |
+| `gene_id` or `nearestGeneSymbol` | Gene identifier (official gene symbol). |
+| `GETSI` | Gene Expression Tissue Specificity Index for linked genes, indicating expression specificity. |
+| `GETSI_entropy` | Entropy-based specificity metric for gene expression, analogous to `RETSI_entropy`. |
 
 ### Linked SPICEY Measures
 
-| Column          | Description                                                                                     |
-|-----------------|-------------------------------------------------------------------------------------------------|
-| `cell_type`     | Cell type showing significant accessibility (e.g., `"Acinar"`).                                 |
-| `p_val_adj_ATAC`| Adjusted p-value from differential accessibility testing.                                       |
-| `avg_log2FC_ATAC`| Average log2 fold-change in accessibility for the cell type versus others.                     |
-| `region_id`     | Genomic interval identifier (e.g., `"chr7:142748901-142749963"`).                               |
-| `RETSI`         | Regulatory Element Tissue Specificity Index.                                                    |
-| `RETSI_entropy` | Entropy-based specificity measure for accessibility.                                            |
-| `gene_id`       | Gene identifier (official gene symbol).                                                         |
-| `p_val_adj_RNA` | Adjusted p-value from differential expression testing.                                          |
-| `avg_log2FC_RNA`| Average log2 fold-change in gene expression for the cell type versus others.                    |
-| `pct.1`         | Percentage of cells expressing the gene in the first group of the differential analysis.        |
-| `pct.2`         | Percentage of cells expressing the gene in the second group.                                    |
-| `GETSI`         | Gene Expression Tissue Specificity Index for linked genes.                                      |
-| `GETSI_entropy` | Entropy-based specificity metric for gene expression.                                           |
+| Column | Description |
+|---------------|---------------------------------------------------------|
+| `cell_type` | Cell type showing significant accessibility (e.g., `"Acinar"`). |
+| `p_val_adj_ATAC` | Adjusted p-value from differential accessibility testing. |
+| `avg_log2FC_ATAC` | Average log2 fold-change in accessibility for the cell type versus others. |
+| `region_id` | Genomic interval identifier (e.g., `"chr7:142748901-142749963"`). |
+| `RETSI` | Regulatory Element Tissue Specificity Index. |
+| `RETSI_entropy` | Entropy-based specificity measure for accessibility. |
+| `gene_id` or `nearestGeneSymbol` | Gene identifier (official gene symbol). |
+| `p_val_adj_RNA` | Adjusted p-value from differential expression testing. |
+| `avg_log2FC_RNA` | Average log2 fold-change in gene expression for the cell type versus others. |
+| `pct.1` | Percentage of cells expressing the gene in the first group of the differential analysis. |
+| `pct.2` | Percentage of cells expressing the gene in the second group. |
+| `GETSI` | Gene Expression Tissue Specificity Index for linked genes. |
+| `GETSI_entropy` | Entropy-based specificity metric for gene expression. |
 
 This annotated `data.frame` serves as a comprehensive resource combining genomic coordinates, cell type-specific regulatory activity, gene associations, and expression specificity—enabling advanced functional genomics analyses.
 
