@@ -40,47 +40,42 @@ annotate_with_nearest <- function(peaks,
   }
   alt_chroms <- grep("_alt|random|fix|Un", seqlevels(peaks), value = TRUE)
   peaks <- GenomeInfoDb::keepSeqlevels(peaks, setdiff(seqlevels(peaks), alt_chroms), pruning.mode = "coarse")
+  names(peaks) <- peaks$region_id
   
+  # Select peaks that overlap with gene promoters
   ref_anno <- extract_gene_peak_annotations(
     peaks, txdb, annot_dbi,
     protein_coding_only,
     upstream, downstream, verbose)
   
-  ref_anno <- ref_anno |>
-    data.frame(row.names = NULL) |>
-    tidyr::separate(peak,
-                    into = c("chr", "start", "end"),
-                    sep = "-", convert = TRUE
-    ) |>
-    dplyr::distinct() |>
-    makeGRangesFromDataFrame(keep.extra.columns = TRUE)
-  
+  # Annotate peaks to nearest promoters
   nearest_hits <- GenomicRanges::distanceToNearest(peaks, ref_anno)
-  dist <- rep(NA_integer_, length(peaks))
-  genes <- rep(NA_character_, length(peaks))
-  dist[queryHits(nearest_hits)] <- mcols(nearest_hits)$distance
-  genes[queryHits(nearest_hits)] <- ref_anno$gene_id[subjectHits(nearest_hits)]
-  peaks$distanceToTSS <- dist
-  peaks$gene_id <- genes
-  peaks$annotation <- ifelse(!is.na(dist) & abs(dist) <= 2000, "Promoter", "Distal")
+  annotation <- peaks
+  annotation$distanceToTSS <- NA
+  annotation$distanceToTSS[queryHits(nearest_hits)] <- mcols(nearest_hits)$distance
+  annotation$gene_id <- NA
+  annotation$gene_id[queryHits(nearest_hits)] <- ref_anno$gene_id[subjectHits(nearest_hits)]
+  annotation$annotation <- ifelse(annotation$region_id %in% unique(ref_anno$region_id), "Promoter", "Distal")
   
   if (add_tss_annotation) {
-    peaks <- annotate_tss(peaks,
+    annotation <- annotate_tss(annotation,
                           txdb = txdb,
                           annot_dbi = annot_dbi,
                           protein_coding_only = protein_coding_only)
   }
   
-  return(as.data.frame(peaks))
+  
+  annotation <- mcols(annotation) |> data.frame()
+  return(annotation)
 }
 
 #' Annotate peaks with co-accessible genes using Cicero links
 #' Links peaks to genes based on Cicero co-accessibility with promoters or TSSs.
 #' @param peaks A \code{GRanges} or \code{data.frame} of peaks with at least the following columns:
 #' \describe{
-#'   \item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}).}
-#'   \item{start}{Start coordinate of the peak.}
-#'   \item{end}{End coordinate of the peak.}
+#'   \item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}). Only for data.frames.}
+#'   \item{start}{Start coordinate of the peak. Only for data.frames.}
+#'   \item{end}{End coordinate of the peak. Only for data.frames.}
 #'   \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}}
 #' @param links_df A \code{data.frame} with Cicero links. Must contain columns:
 #' \code{Peak1}, \code{Peak2}, and \code{coaccess}.
@@ -138,13 +133,42 @@ annotate_with_coaccessibility <- function(peaks,
   peaks <- GenomeInfoDb::keepSeqlevels(peaks, setdiff(seqlevels(peaks), alt),
                                        pruning.mode = "coarse"
   )
+  names(peaks) <- peaks$region_id
+  
   ref_anno <- extract_gene_peak_annotations(
     peaks, txdb, annot_dbi,
     protein_coding_only,
     upstream, downstream, verbose
   )
+
+  # Convert ref_anno to data.frame
+  ref_anno <- GenomicRanges::mcols(ref_anno) |> data.frame()
   
-  links_anno <- annotate_links_with_genes(links_df, ref_anno)
+  # Annotate with coaccessibility  
+  joined_links <- links_df |>
+    dplyr::left_join(ref_anno, by = c("Peak1" = "region_id")) |>
+    dplyr::rename(gene_name1 = gene_id) |>
+    dplyr::left_join(ref_anno, by = c("Peak2" = "region_id")) |>
+    dplyr::rename(gene_name2 = gene_id)
+  
+  # Combine results for Peak1 and Peak2 from cicero
+  links_anno <- dplyr::bind_rows(
+    dplyr::transmute(
+      dplyr::filter(joined_links, !is.na(gene_name1)),
+      region_id = Peak2,
+      promoter_peak = Peak1,
+      coaccess,
+      gene_id = gene_name1
+    ),
+    dplyr::transmute(
+      dplyr::filter(joined_links, !is.na(gene_name2)),
+      region_id = Peak1,
+      promoter_peak = Peak2,
+      coaccess,
+      gene_id = gene_name2
+    )
+  ) |>
+    dplyr::distinct()
   
   if (add_tss_annotation) {
     peaks <- annotate_tss(peaks,
@@ -153,13 +177,11 @@ annotate_with_coaccessibility <- function(peaks,
                           protein_coding_only = protein_coding_only)
   }
   
-  result <- as.data.frame(GenomicRanges::mcols(peaks)) |>
-    dplyr::left_join(dplyr::select(links_anno, region_id = peak, gene_id),
-                     by = "region_id"
-    ) |>
-    dplyr::distinct()
+
+  annotation <- annotation |> 
+    dplyr::select(region_id, gene_id)
   
-  return(result)
+  return(annotation)
 }
 
 #' Extract promoter regions annotated gene symbols from a TxDb and AnnotationDbi object
@@ -230,10 +252,11 @@ annotate_tss <- function(txdb, peaks, annot_dbi, protein_coding_only) {
 #' Identifies overlaps between a set of peaks and promoter regions,
 #' optionally restricted to protein-coding genes.
 #' @inheritParams annotate_with_coaccessibility
-#' @return A \code{data.frame} with:
+#' @return A \code{GRanges with} with:
 #' \describe{
+#'   \item{seqnames, start, end}{Coordinates of the peak that overlaps with a gene promoter.}
+#'   \item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800}}
 #'   \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
-#'   \item{peak}{Unique identifier of the region (e.g., chr1-5000-5800}}
 extract_gene_peak_annotations <- function(peaks,
                                           txdb,
                                           annot_dbi,
@@ -250,52 +273,9 @@ extract_gene_peak_annotations <- function(peaks,
   )
 
   ols <- GenomicRanges::findOverlaps(peaks, proms)
-  gene_peak_df <- tibble::tibble(
-    gene_id = mcols(proms)$gene_id[subjectHits(ols)],
-    peak = granges_to_string(peaks[queryHits(ols)])
-  ) |>
-    dplyr::distinct() |>
-    data.frame()
-
-  return(gene_peak_df)
-}
-
-#' Annotate Cicero co-accessibility links with genes
-#' Assigns gene annotations to Cicero co-accessibility links by
-#' matching peaks to promoter-associated genes.
-#' @inheritParams annotate_with_coaccessibility
-#' @param gene_peak_anno A \code{data.frame} returned by
-#' \code{extract_gene_peak_annotations()},
-#' with columns \code{gene_id} and \code{peak}.
-#' @return A \code{data.frame} with:
-#' \describe{
-#'   \item{peak}{Unique identifier of the distal peak (e.g., chr1-5000-5800}
-#'   \item{promoter_peak}{Unique identifier of the promoter-associated peak (e.g., chr1-5000-5800}
-#'   \item{coaccess}{Cicero co-accessibility score.}
-#'   \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}}
-annotate_links_with_genes <- function(links_df, gene_peak_anno) {
-  joined_links <- links_df |>
-    dplyr::left_join(gene_peak_anno, by = c("Peak1" = "peak")) |>
-    dplyr::rename(gene_name1 = gene_id) |>
-    dplyr::left_join(gene_peak_anno, by = c("Peak2" = "peak")) |>
-    dplyr::rename(gene_name2 = gene_id)
-
-  annot_links <- dplyr::bind_rows(
-    dplyr::transmute(
-      dplyr::filter(joined_links, !is.na(gene_name1)),
-      peak = Peak2,
-      promoter_peak = Peak1,
-      coaccess,
-      gene_id = gene_name1
-    ),
-    dplyr::transmute(
-      dplyr::filter(joined_links, !is.na(gene_name2)),
-      peak = Peak1,
-      promoter_peak = Peak2,
-      coaccess,
-      gene_id = gene_name2
-    )
-  ) |>
-    dplyr::distinct()
-  return(annot_links)
+  
+  promoter_peaks <- peaks[queryHits(ols)]
+  promoter_peaks$gene_id <- proms$gene_id[subjectHits(ols)]
+  
+  return(promoter_peaks)
 }
