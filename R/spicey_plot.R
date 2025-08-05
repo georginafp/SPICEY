@@ -19,7 +19,7 @@ prepare_heatmap_data <- function(df, score_col, top_n) {
 
   top_genes <- df_filtered |>
     dplyr::group_by(cell_type) |>
-    dplyr::arrange(desc(z_score)) |>
+    dplyr::arrange(dplyr::desc(z_score)) |>
     dplyr::distinct(cell_type, gene_id, .keep_all = TRUE) |>
     dplyr::slice_head(n = top_n) |>
     dplyr::ungroup() |>
@@ -60,7 +60,7 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
     max_cell_type = colnames(wide_mat)[apply(wide_mat, 1, which.max)],
     max_score = apply(wide_mat, 1, max)
   ) |>
-    dplyr::arrange(max_cell_type, desc(max_score))
+    dplyr::arrange(max_cell_type, dplyr::desc(max_score))
 
   df_z$gene_id <- factor(df_z$gene_id, levels = gene_order_df$gene_id)
   
@@ -144,7 +144,7 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
 #' )
 #' 
 #' # Make plots
-#' retsi <- retsi |>  left_join(annotation_coacc, by=c("region_id"))
+#' retsi <- spicey_coacc$RETSI |>  dplyr::left_join(annotation_coacc, by=c("region_id"))
 #' spicey_heatmap(retsi, spicey_measure = "RETSI")
 #' 
 #' spicey_heatmap(spicey_coacc$GETSI, spicey_measure = "GETSI")
@@ -190,7 +190,7 @@ spicey_heatmap <- function(df,
       )
     top_genes <- df_combined |>
       dplyr::group_by(cell_type) |>
-      dplyr::arrange(desc(combined_score)) |>
+      dplyr::arrange(dplyr::desc(combined_score)) |>
       dplyr::distinct(cell_type, gene_id, .keep_all = TRUE) |>
       dplyr::slice_head(n = top_n) |>
       dplyr::ungroup() |>

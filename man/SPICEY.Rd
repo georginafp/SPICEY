@@ -4,14 +4,7 @@
 \alias{SPICEY}
 \title{SPICEY for tissue specificity analysis}
 \usage{
-SPICEY(
-  atac = NULL,
-  rna = NULL,
-  gene_id = NULL,
-  region_id = NULL,
-  annotation = NULL,
-  verbose = TRUE
-)
+SPICEY(atac = NULL, rna = NULL, annotation = NULL, verbose = TRUE)
 }
 \arguments{
 \item{atac}{Either a single \code{data.frame} or a named list of
@@ -19,8 +12,7 @@ SPICEY(
 to a cell type.  It should contain differential chromatin accessibility
 results with required columns:
 \describe{
-\item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800)
-The name of this column should be provided in argument \code{region_id}.}
+\item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800).}
 \item{avg_log2FC}{Average log2 fold-change for accessibility in that cell type.}
 \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 \item{cell_type}{Cell type or cluster label. Only necessary when input is
@@ -33,19 +25,12 @@ Note that the same region may appear multiple times across cell types.}}
 to a cell type. It should contain differential expression results,
 with required columns:
 \describe{
-\item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)
-The name of this column should be provided in argument \code{gene_id}}
+\item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH).}
 \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
 \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 \item{cell_type}{Cell type or cluster label. Only necessary when input is
 a single \code{data.frame}. If input is a list, it will be generated from list names}}
 Note that the same gene may appear multiple times across cell types.}
-
-\item{gene_id}{A character string specifying the column name in each list element
-that contains the official gene symbol identifiers.}
-
-\item{region_id}{A character string specifying the column name in each list element
-that contains the accessible region identifiers.}
 
 \item{annotation}{A data.frame linking \code{gene_id} to \code{region_id}.
 They should have the same names provided in the respective parameters.
@@ -73,28 +58,45 @@ and/or gene expression (GETSI) data obtained from single cell experiments. Suppo
 (see \code{\link{annotate_with_nearest}} or \code{\link{annotate_with_coaccessibility}})}
 }
 \examples{
-library(dplyr)
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-library(org.Hs.eg.db)
-library(SPICEY)
 data(rna)
 data(atac)
-data(cicero_links)
-retsi <- SPICEY(atac = atac, region_id = "region_id")
-getsi <- SPICEY(rna = rna, gene_id = "gene_id")
+
+# Calculate RETSI only
+retsi <- SPICEY(atac = atac)
+
+# Calculate GETSI only
+getsi <- SPICEY(rna = rna)
+
+# Calculate both
 both <- SPICEY(
   rna = rna,
-  gene_id = "gene_id",
-  atac = atac,
-  region_id = "region_id"
+  atac = atac
 )
-peaks <- SPICEY:::.parse_input_diff(atac)
-peaks <- peaks \%>\%
-  tidyr::separate(region_id,
-    into = c("chr", "start", "end"), sep = "-",
-    convert = TRUE, remove = FALSE
-  ) \%>\%
-  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+
+# Integrate RETSI and GETSI with nearest gene
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Hs.eg.db)
+peaks <- unique(unlist(atac)[,c("region_id")])
+
+annotation_near <- annotate_with_nearest(
+  peaks = peaks,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+  annot_dbi = org.Hs.eg.db,
+  protein_coding_only = TRUE,
+  verbose = TRUE,
+  add_tss_annotation = FALSE,
+  upstream = 2000,
+  downstream = 2000
+)
+spicey_near <- SPICEY(
+  rna = rna,
+  atac = atac,
+  annotation = annotation_near
+)
+
+# Integrate RETSI and GETSI with coaccessibility
+data(cicero_links)
+
 annotation_coacc <- annotate_with_coaccessibility(
   peaks = peaks,
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
@@ -108,26 +110,7 @@ annotation_coacc <- annotate_with_coaccessibility(
 )
 spicey_coacc <- SPICEY(
   rna = rna,
-  gene_id = "gene_id",
   atac = atac,
-  region_id = "region_id",
   annotation = annotation_coacc
-)
-annotation_near <- annotate_with_nearest(
-  peaks = peaks,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-  annot_dbi = org.Hs.eg.db,
-  protein_coding_only = TRUE,
-  verbose = TRUE,
-  add_tss_annotation = FALSE,
-  upstream = 2000,
-  downstream = 2000
-)
-spicey_near <- SPICEY(
-  rna = rna,
-  gene_id = "gene_id",
-  atac = atac,
-  region_id = "region_id",
-  annotation = annotation_near
 )
 }

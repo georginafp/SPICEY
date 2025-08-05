@@ -12,7 +12,7 @@
 #'   to a cell type. It should contain differential expression results,
 #'   with required columns:
 #'   \describe{
-#'     \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH).}}
+#'     \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH).}
 #'     \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
 #'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 #'     \item{cell_type}{Cell type or cluster label. Only necessary when input is
@@ -143,8 +143,7 @@ SPICEY <- function(atac = NULL,
   } else {
     if (verbose) message("Linking RETSI and GETSI using provided annotation...")
     combined <- link_spicey(
-      retsi = retsi, region_id = region_id, getsi = getsi,
-      gene_id = gene_id, annotation = annotation)
+      retsi = retsi, getsi = getsi, annotation = annotation)
     results$linked <- combined
     if (verbose) message("SPICEY pipeline successfully completed")
     return(results)

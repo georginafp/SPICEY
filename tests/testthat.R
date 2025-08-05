@@ -8,7 +8,5 @@
 
 library(testthat)
 library(SPICEY)
-library(cicero)
-library(GenomicRanges)
 
 test_check("SPICEY")

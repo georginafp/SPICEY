@@ -20,9 +20,9 @@ annotate_with_nearest(
 \arguments{
 \item{peaks}{A \code{GRanges} or \code{data.frame} of peaks with at least the following columns:
 \describe{
-\item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}).}
-\item{start}{Start coordinate of the peak.}
-\item{end}{End coordinate of the peak.}
+\item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}). Only for data.frames.}
+\item{start}{Start coordinate of the peak. Only for data.frames.}
+\item{end}{End coordinate of the peak. Only for data.frames.}
 \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}}}
 
 \item{txdb}{\code{TxDb} object for genome annotation (required if annotation requested).}
@@ -34,7 +34,7 @@ annotate_with_nearest(
 \item{verbose}{Logical; print messages (default TRUE).}
 
 \item{add_tss_annotation}{Logical; annotate regulatory elements overlapping TSS (default FALSE).
-If TRUE, use +/- 1bp TSS instead of +/-2kb promoter.}
+If TRUE, use +/- 1bp TSS.}
 
 \item{upstream}{Single integer value indicating the number of bases upstream
 from the TSS (transcription start sites) (default 2000kb).}
@@ -58,17 +58,10 @@ reference and optional gene annotations from \code{org.*.db} packages.
 library(dplyr)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
-library(SPICEY)
+
 data(atac)
-data(rna)
-data(cicero_links)
-peaks <- SPICEY:::.parse_input_diff(atac)
-peaks <- peaks \%>\%
-  tidyr::separate(region_id,
-    into = c("chr", "start", "end"), sep = "-",
-    convert = TRUE, remove = FALSE
-  ) \%>\%
-  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+peaks <- unique(unlist(atac)[,c("region_id")])
+
 annotation_near <- annotate_with_nearest(
   peaks = peaks,
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,

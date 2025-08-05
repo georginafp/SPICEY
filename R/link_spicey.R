@@ -34,9 +34,7 @@
 #'     with \code{_ATAC} and \code{_RNA} respectively (e.g., \code{avg_log2FC_ATAC}, \code{p_val_RNA}).}
 #'   }
 link_spicey <- function(retsi = NULL,
-                        region_id = NULL,
                         getsi = NULL,
-                        gene_id = NULL,
                         annotation = NULL) {
   keep_cols <- c("region_id", "cell_type", "gene_id", "distanceToTSS",
                  "annotation", "TSS_gene", "in_TSS")

@@ -52,9 +52,9 @@ annotate_with_nearest <- function(peaks,
   nearest_hits <- GenomicRanges::distanceToNearest(peaks, ref_anno)
   annotation <- peaks
   annotation$distanceToTSS <- NA
-  annotation$distanceToTSS[queryHits(nearest_hits)] <- mcols(nearest_hits)$distance
+  annotation$distanceToTSS[S4Vectors::queryHits(nearest_hits)] <- GenomicRanges::mcols(nearest_hits)$distance
   annotation$gene_id <- NA
-  annotation$gene_id[queryHits(nearest_hits)] <- ref_anno$gene_id[subjectHits(nearest_hits)]
+  annotation$gene_id[S4Vectors::queryHits(nearest_hits)] <- ref_anno$gene_id[S4Vectors::subjectHits(nearest_hits)]
   annotation$annotation <- ifelse(annotation$region_id %in% unique(ref_anno$region_id), "Promoter", "Distal")
   
   if (add_tss_annotation) {
@@ -66,7 +66,7 @@ annotate_with_nearest <- function(peaks,
     annotation$in_TSS <- ifelse(annotation$region_id %in% tss$region_id, TRUE, FALSE)
   }
   
-  annotation <- mcols(annotation) |> data.frame()
+  annotation <- GenomicRanges::mcols(annotation) |> data.frame()
   return(annotation)
 }
 
@@ -208,7 +208,7 @@ get_promoters <- function(txdb,
     columns = c("SYMBOL", "GENETYPE"),
     keytype = "ENTREZID"
   ) |>
-    filter(!duplicated(ENTREZID))
+    dplyr::filter(!duplicated(ENTREZID))
 
   if (protein_coding_only) {
     gene_info <- gene_info[gene_info$GENETYPE == "protein-coding", ]
@@ -216,7 +216,7 @@ get_promoters <- function(txdb,
 
   keep_ids <- gene_info$ENTREZID
   proms <- proms[entrez_ids %in% keep_ids]
-  mcols(proms)$gene_id <- gene_info$SYMBOL[match(names(proms), gene_info$ENTREZID)]
+  GenomicRanges::mcols(proms)$gene_id <- gene_info$SYMBOL[match(names(proms), gene_info$ENTREZID)]
 
   return(proms)
 }
@@ -248,8 +248,8 @@ extract_gene_peak_annotations <- function(peaks,
 
   ols <- GenomicRanges::findOverlaps(peaks, proms)
   
-  promoter_peaks <- peaks[queryHits(ols)]
-  promoter_peaks$gene_id <- proms$gene_id[subjectHits(ols)]
+  promoter_peaks <- peaks[S4Vectors::queryHits(ols)]
+  promoter_peaks$gene_id <- proms$gene_id[S4Vectors::subjectHits(ols)]
   
   return(promoter_peaks)
 }

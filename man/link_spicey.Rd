@@ -4,13 +4,7 @@
 \alias{link_spicey}
 \title{Link RETSI regions to GETSI scores using gene-based association methods}
 \usage{
-link_spicey(
-  retsi = NULL,
-  region_id = NULL,
-  getsi = NULL,
-  gene_id = NULL,
-  annotation = NULL
-)
+link_spicey(retsi = NULL, getsi = NULL, annotation = NULL)
 }
 \arguments{
 \item{retsi}{A data.frame containing RETSI scores for chromatin accessibility regions,
@@ -23,9 +17,6 @@ Must include at least the following columns:
 \item{norm_entropy}{Normalized Shannon entropy of RETSI}
 }}
 
-\item{region_id}{A character string specifying the column name in each list element
-that contains the accessible region identifiers.}
-
 \item{getsi}{A data.frame containing GETSI scores for genes,
 as returned by \code{compute_spicey_index()} using single-cell RNA-seq differential expression data.
 Must include at least the following columns:
@@ -35,9 +26,6 @@ Must include at least the following columns:
 \item{GETSI}{GETSI value: cell-type specificity score}
 \item{norm_entropy}{Normalized Shannon entropy of GETSI}
 }}
-
-\item{gene_id}{A character string specifying the column name in each list element
-that contains the official gene symbol identifiers.}
 
 \item{annotation}{A data.frame linking \code{gene_id} to \code{region_id}.
 They should have the same names provided in the respective parameters.
