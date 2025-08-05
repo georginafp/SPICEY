@@ -45,11 +45,11 @@ link_spicey <- function(retsi = NULL,
     dplyr::inner_join(
       annotation |>
         dplyr::select(dplyr::any_of(keep_cols)),
-      by = c(region_id)
+      by = c("region_id")
     ) |>
     dplyr::inner_join(
       getsi,
-      by = c(gene_id, cell_type),
+      by = c("gene_id", "cell_type"),
       suffix = c("_ATAC", "_RNA")
     )
 
