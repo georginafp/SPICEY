@@ -114,28 +114,15 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
 #'   If \code{FALSE}, two heatmaps are produced side by side (RETSI and GETSI).
 #' @return A \code{ggplot2} object, or a \code{patchwork} layout if two heatmaps are returned.
 #' @examples
-#' library(dplyr)
 #' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 #' library(org.Hs.eg.db)
-#' library(SPICEY)
+#' 
 #' data(rna)
 #' data(atac)
 #' data(cicero_links)
-#' retsi <- SPICEY(atac = atac, region_id = "region_id")
-#' getsi <- SPICEY(rna = rna, gene_id = "gene_id")
-#' both <- SPICEY(
-#'   rna = rna,
-#'   gene_id = "gene_id",
-#'   atac = atac,
-#'   region_id = "region_id"
-#' )
-#' peaks <- SPICEY:::.parse_input_diff(atac)
-#' peaks <- peaks %>%
-#'   tidyr::separate(region_id,
-#'     into = c("chr", "start", "end"), sep = "-",
-#'     convert = TRUE, remove = FALSE
-#'   ) %>%
-#'   GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+#' 
+#' # Obtain annotatin with coaccessibility
+#' peaks <- unique(unlist(atac)[,c("region_id")])
 #' annotation_coacc <- annotate_with_coaccessibility(
 #'   peaks = peaks,
 #'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
@@ -147,6 +134,8 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
 #'   upstream = 2000,
 #'   downstream = 2000
 #' )
+#' 
+#' # Obtain linked SPICEY measures
 #' spicey_coacc <- SPICEY(
 #'   rna = rna,
 #'   gene_id = "gene_id",
@@ -154,6 +143,8 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
 #'   region_id = "region_id",
 #'   annotation = annotation_coacc
 #' )
+#' 
+#' # Make plots
 #' spicey_heatmap(spicey_coacc$linked, spicey_measure = "RETSI")
 #' spicey_heatmap(spicey_coacc$linked, spicey_measure = "GETSI")
 #' spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = FALSE)

@@ -50,17 +50,10 @@ get_promoters <- function(txdb,
 #' library(dplyr)
 #' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 #' library(org.Hs.eg.db)
-#' library(SPICEY)
+#' 
 #' data(atac)
-#' data(rna)
-#' data(cicero_links)
-#' peaks <- SPICEY:::.parse_input_diff(atac)
-#' peaks <- peaks %>%
-#'   tidyr::separate(region_id,
-#'     into = c("chr", "start", "end"), sep = "-",
-#'     convert = TRUE, remove = FALSE
-#'   ) %>%
-#'   GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+#' peaks <- unique(unlist(atac)[,c("region_id")])
+#' 
 #' annotation_near <- annotate_with_nearest(
 #'   peaks = peaks,
 #'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
