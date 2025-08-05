@@ -12,13 +12,6 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
-
-library(dplyr)
-library(GenomicRanges)
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-library(org.Hs.eg.db)
-library(SPICEY)
-
 knitr::opts_chunk$set(
     collapse = TRUE,
     comment = "#>",
@@ -28,7 +21,6 @@ knitr::opts_chunk$set(
     fig.align = "center",
     out.width = "80%"
 )
-
 ```
 
 ```{r logo, echo=FALSE, eval=TRUE, out.width='10%'}
@@ -113,6 +105,11 @@ devtools::install_github("georginafp/SPICEY")
 
 # Input Requirements
 
+```{r load-spicey}
+library(SPICEY)
+```
+
+
 SPICEY requires preprocessed input files generated from differential analyses of single-cell omics data, specifically chromatin accessibility (ATAC-seq) and/or gene expression (RNA-seq). These inputs are **not included** in the package and must be prepared externally. Below is a detailed overview of the required input formats and metadata.
 
 ## Single-cell ATAC-seq Data
@@ -183,6 +180,15 @@ head(cicero_links)
 # Example: Step-by-Step SPICEY Workflow
 
 This section outlines how to execute SPICEY using preprocessed input files, as detailed previously.
+
+```{r load-packages}
+# Load necessary packages
+library(dplyr)
+library(GenomicRanges)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Hs.eg.db)
+```
+
 
 ## Computing RETSI
 
