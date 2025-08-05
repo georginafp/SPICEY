@@ -364,9 +364,8 @@ This merged approach provides a more comprehensive regulatory landscape by integ
 
 The annotation step(s) are **optional**. Users can either generate these annotations using SPICEY’s built-in functions or supply a pre-computed `data.frame` of gene–region associations. When using pre-computed data to construct tissue-specific regulatory networks, the `data.frame` must include at minimum the following columns:
 
--   `region_id`: Unique identifier for each region, following standard genomic coordinate formats such as *chr-start-end* (e.g., `chr1-5000-5800`) or *chr:start-end* (e.g., `chr1:5000-5800`).
--   `gene_id`: Unique gene identifier using *official gene symbols* (e.g., `GAPDH`).
--   `cell_type`: Cell type or cluster label.
+-   `region_id`: Unique identifier for each region, ideally following standard genomic coordinate formats such as *chr-start-end* (e.g., `chr1-5000-5800`) or *chr:start-end* (e.g., `chr1:5000-5800`). It should be the same being provided to `SPICEY` as `region_id`.
+-   `gene_id`: Unique gene identifier. It should be the same being provided to `SPICEY` as `gene_id`.
 
 ### Integrating SPICEY measures to build tissue-specific networks
 
