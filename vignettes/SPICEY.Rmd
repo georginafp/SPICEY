@@ -399,12 +399,6 @@ spicey_near <- SPICEY(rna = rna,
 spicey_coacc <- SPICEY(rna = rna,
                        atac=atac,
                        annotation = annotation_coacc)
-
-# Using both annotation data 
-spicey_both <- SPICEY(rna = rna,
-                      atac=atac,
-                      annotation = annotation_merged)
-
 ```
 
 This function returns a list containing separately computed RETSI and GETSI scores, along with an additional element that links these measures based on the selected region-to-gene annotation method.
