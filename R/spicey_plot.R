@@ -11,24 +11,25 @@
 #' @return A data frame with columns: \code{gene_id}, \code{cell_type}, and \code{z_score}.
 #'   Each row corresponds to a gene-cell-type pair, with averaged z-score values across duplicates.
 #' @seealso \code{\link{plot_heatmap}}, \code{\link{spicey_heatmap}}
-#' @import dplyr
 prepare_heatmap_data <- function(df, score_col, top_n) {
   df_filtered <- df |>
-    filter(!is.na(gene_id), !is.na(.data[[score_col]])) |>
-    mutate(z_score = scale(.data[[score_col]])[, 1])
+    dplyr::filter(!is.na(gene_id), !is.na(.data[[score_col]])) |>
+    dplyr::mutate(z_score = scale(.data[[score_col]])[, 1])
 
   top_genes <- df_filtered |>
-    group_by(cell_type) |>
-    arrange(desc(z_score)) |>
-    distinct(cell_type, gene_id, .keep_all = TRUE) |>
-    slice_head(n = top_n) |>
-    ungroup() |>
-    pull(gene_id)
+    dplyr::group_by(cell_type) |>
+    dplyr::arrange(desc(z_score)) |>
+    dplyr::distinct(cell_type, gene_id, .keep_all = TRUE) |>
+    dplyr::slice_head(n = top_n) |>
+    dplyr::ungroup() |>
+    dplyr::pull(gene_id)
+  
+  final <- df_filtered |>
+    dplyr::filter(gene_id %in% top_genes) |>
+    dplyr::group_by(gene_id, cell_type) |>
+    dplyr::summarise(z_score = mean(z_score), .groups = "drop")
 
-  return(df_filtered |>
-           filter(gene_id %in% top_genes) |>
-           group_by(gene_id, cell_type) |>
-           summarise(z_score = mean(z_score), .groups = "drop"))
+  return(final)
 }
 
 
@@ -47,15 +48,11 @@ prepare_heatmap_data <- function(df, score_col, top_n) {
 #' @param title_text Character. Title of the heatmap.
 #' @param fill_label Character. Legend label for the color scale.
 #' @return A \code{ggplot2} object representing the heatmap.
-#' @importFrom textshape column_to_rownames
-#' @importFrom tidyr pivot_wider
-#' @import ggplot2
-#' @import dplyr
 #' @seealso \code{\link{prepare_heatmap_data}}, \code{\link{spicey_heatmap}}
 plot_heatmap <- function(df_z, title_text, fill_label) {
   wide_mat <- df_z |>
-    pivot_wider(names_from = cell_type, values_from = z_score, values_fill = 0) |>
-    column_to_rownames("gene_id") |>
+    tidyr::pivot_wider(names_from = cell_type, values_from = z_score, values_fill = 0) |>
+    tibble::column_to_rownames(var="gene_id") |>
     as.matrix()
 
   gene_order_df <- data.frame(
@@ -63,27 +60,29 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
     max_cell_type = colnames(wide_mat)[apply(wide_mat, 1, which.max)],
     max_score = apply(wide_mat, 1, max)
   ) |>
-    arrange(max_cell_type, desc(max_score))
+    dplyr::arrange(max_cell_type, desc(max_score))
 
   df_z$gene_id <- factor(df_z$gene_id, levels = gene_order_df$gene_id)
-
-  return(ggplot(df_z, aes(x = cell_type, y = gene_id, fill = z_score)) +
-    geom_tile(color = "grey80", width = 0.95) +
-    scale_x_discrete(expand = c(0, 0)) +
-    scale_y_discrete(expand = c(0, 0)) +
-    coord_fixed(ratio = 0.5) +
-    scale_fill_gradientn(
+  
+  plot <- ggplot2::ggplot(df_z, ggplot2::aes(x = cell_type, y = gene_id, fill = z_score)) +
+    ggplot2::geom_tile(color = "grey80", width = 0.95) +
+    ggplot2::scale_x_discrete(expand = c(0, 0)) +
+    ggplot2:: scale_y_discrete(expand = c(0, 0)) +
+    ggplot2::coord_fixed(ratio = 0.5) +
+    ggplot2::scale_fill_gradientn(
       colours = c("white", "#E18C80", "#B86357", "#723D36", "#4F2A25"),
       name = fill_label,
       na.value = "grey90"
     ) +
-    theme_gray(base_size = 7) +
-    guides(fill = guide_colourbar(barwidth = 0.5, barheight = 4)) +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1),
-      panel.grid = element_blank()
+    ggplot2::theme_gray(base_size = 7) +
+    ggplot2::guides(fill = ggplot2::guide_colourbar(barwidth = 0.5, barheight = 4)) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1),
+      panel.grid = ggplot2::element_blank()
     ) +
-    labs(x = "Cell type", y = "Gene", title = title_text))
+    ggplot2::labs(x = "Cell type", y = "Gene", title = title_text)
+
+  return(plot)
 }
 
 
@@ -145,22 +144,25 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
 #' )
 #' 
 #' # Make plots
-#' spicey_heatmap(spicey_coacc$linked, spicey_measure = "RETSI")
-#' spicey_heatmap(spicey_coacc$linked, spicey_measure = "GETSI")
+#' spicey_heatmap(spicey_coacc$RETSI, spicey_measure = "RETSI")
+#' spicey_heatmap(spicey_coacc$GETSI, spicey_measure = "GETSI")
 #' spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = FALSE)
 #' spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = TRUE)
 #' @seealso \code{\link{SPICEY}}, \code{\link{prepare_heatmap_data}}, \code{\link{plot_heatmap}}
 #' @export
-#' @import dplyr
 #' @importFrom cowplot plot_grid
 spicey_heatmap <- function(df,
                            top_n = 5,
                            spicey_measure = c("RETSI", "GETSI", "SPICEY"),
                            combined_zscore = FALSE) {
+  
   spicey_measure <- match.arg(spicey_measure)
-  if (!all(c("gene_id", "cell_type") %in% colnames(df))) {
-    stop("Input data must contain 'gene_id' and 'cell_type'.")
-  }
+  # TODO: Fix this check. If users only calculate RETSI they won't have gene_id
+  # and this will fail. Also, if their gene_id is named something else (we are 
+  # allowing this in SPICEY() it will also fail)
+  # if (!all(c("gene_id", "cell_type") %in% colnames(df))) {
+  #   stop("Input data must contain 'gene_id' and 'cell_type'.")
+  # }
   has_RETSI <- "RETSI" %in% colnames(df)
   has_GETSI <- "GETSI" %in% colnames(df)
   if (spicey_measure == "RETSI" && !has_RETSI) stop("Missing RETSI column.")
@@ -171,34 +173,40 @@ spicey_heatmap <- function(df,
   if (combined_zscore && spicey_measure != "SPICEY") {
     stop("combined_zscore = TRUE is only valid with spicey_measure = 'SPICEY'")
   }
+  
+  
   if (spicey_measure %in% c("RETSI", "GETSI")) {
     df_z <- prepare_heatmap_data(df, spicey_measure, top_n)
-    return(plot_heatmap(df_z, spicey_measure, paste0(spicey_measure, "\nz-score")))
-  }
-  if (combined_zscore) {
+    
+    final_plot <- plot_heatmap(df_z, spicey_measure, paste0(spicey_measure, "\nz-score"))
+  } else if (spicey_measure == "SPICEY" & combined_zscore) {
     df_combined <- df |>
-      filter(!is.na(gene_id), !is.na(RETSI), !is.na(GETSI)) |>
-      mutate(
+      dplyr::filter(!is.na(gene_id), !is.na(RETSI), !is.na(GETSI)) |>
+      dplyr::mutate(
         GETSI_z = scale(GETSI)[, 1],
         RETSI_z = scale(RETSI)[, 1],
         combined_score = (RETSI_z + GETSI_z) / 2
       )
     top_genes <- df_combined |>
-      group_by(cell_type) |>
-      arrange(desc(combined_score)) |>
-      distinct(cell_type, gene_id, .keep_all = TRUE) |>
-      slice_head(n = top_n) |>
-      ungroup() |>
-      pull(gene_id)
+      dplyr::group_by(cell_type) |>
+      dplyr::arrange(desc(combined_score)) |>
+      dplyr::distinct(cell_type, gene_id, .keep_all = TRUE) |>
+      dplyr::slice_head(n = top_n) |>
+      dplyr::ungroup() |>
+      dplyr::pull(gene_id)
     heatmap_df <- df_combined |>
-      filter(gene_id %in% top_genes) |>
-      group_by(gene_id, cell_type) |>
-      summarise(z_score = mean(combined_score), .groups = "drop")
-    return(plot_heatmap(heatmap_df, "SPICEY", "SPICEY\nz-score"))
-  } else {
+      dplyr::filter(gene_id %in% top_genes) |>
+      dplyr::group_by(gene_id, cell_type) |>
+      dplyr::summarise(z_score = mean(combined_score), .groups = "drop")
+    
+    final_plot <- plot_heatmap(heatmap_df, "SPICEY", "SPICEY\nz-score")
+  } else if (spicey_measure == "SPICEY" & !combined_zscore) {
     df_z1 <- prepare_heatmap_data(df, "RETSI", top_n)
     df_z2 <- prepare_heatmap_data(df, "GETSI", top_n)
-    return(plot_grid(plot_heatmap(df_z1, "RETSI", "RETSI\nz-score"),
-                     plot_heatmap(df_z2, "GETSI", "GETSI\nz-score"), nrow = 1))
+    
+    final_plot <- cowplot::plot_grid(plot_heatmap(df_z1, "RETSI", "RETSI\nz-score"),
+                            plot_heatmap(df_z2, "GETSI", "GETSI\nz-score"), nrow = 1)
   }
+  
+  return(final_plot)
 }

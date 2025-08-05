@@ -507,9 +507,9 @@ To run `spicey_heatmap()`, the input must be a `data.frame` with the following c
 
 ```{r spicey-heatmap-sep, message=FALSE, warning=FALSE, fig.width=4, fig.width=3}
 # RETSI and/or GETSI separately
-spicey_heatmap(spicey_coacc$linked, 
+spicey_heatmap(spicey_coacc$RETSI, 
                spicey_measure = "RETSI")
-spicey_heatmap(spicey_coacc$linked, 
+spicey_heatmap(spicey_coacc$GETSI, 
                spicey_measure = "GETSI")
 ```
 
