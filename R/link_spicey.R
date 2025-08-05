@@ -49,7 +49,7 @@ link_spicey <- function(retsi = NULL,
     ) |>
     dplyr::inner_join(
       getsi,
-      by = c(gene_id),
+      by = c(gene_id, cell_type),
       suffix = c("_ATAC", "_RNA")
     )
 
