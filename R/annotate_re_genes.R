@@ -264,20 +264,13 @@ annotate_links_with_genes <- function(links_df, gene_peak_anno) {
 #' Peaks with no gene annotation will have \code{NA} in the \code{gene_id} field.
 #' @export
 #' @examples
-#' library(dplyr)
 #' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 #' library(org.Hs.eg.db)
-#' library(SPICEY)
+#' 
 #' data(atac)
-#' data(rna)
 #' data(cicero_links)
-#' peaks <- SPICEY:::.parse_input_diff(atac)
-#' peaks <- peaks %>%
-#'   tidyr::separate(region_id,
-#'     into = c("chr", "start", "end"), sep = "-",
-#'     convert = TRUE, remove = FALSE
-#'   ) %>%
-#'   GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+#' 
+#' peaks <- unique(unlist(atac)[,c("region_id")])
 #' annotation_coacc <- annotate_with_coaccessibility(
 #'   peaks = peaks,
 #'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,

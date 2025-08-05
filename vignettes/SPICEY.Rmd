@@ -264,13 +264,7 @@ This method links each regulatory region to its closest gene TSS.
 -   `verbose`: Display progress messages (default: `TRUE`).
 
 ```{r re-gene-nearest, message=FALSE, warning=FALSE}
-
-peaks <- SPICEY:::.parse_input_diff(atac)
-peaks <- peaks %>% tidyr::separate(
-  region_id,
-  into = c("chr", "start", "end"), sep = "-",
-  convert = TRUE,remove = FALSE) %>%
-  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+peaks <- unique(unlist(atac)[,c("region_id")])
 
 annotation_near <- annotate_with_nearest(
   peaks = peaks,
@@ -314,14 +308,7 @@ This method connects regulatory regions to genes through co-accessibility intera
 -   `verbose`: Display progress messages (default: `TRUE`).
 
 ```{r re-gene-coaccessibility, message=FALSE, warning=FALSE}
-
-peaks <- SPICEY:::.parse_input_diff(atac)
-peaks <- peaks %>% 
-  tidyr::separate(
-    region_id,
-    into = c("chr", "start", "end"), sep = "-",
-    convert = TRUE,remove = FALSE) %>%
-  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+peaks <- unique(unlist(atac)[,c("region_id")])
 
 annotation_coacc <- annotate_with_coaccessibility(
   peaks = peaks,

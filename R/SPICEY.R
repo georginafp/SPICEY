@@ -49,28 +49,49 @@
 #' @param verbose Logical; print messages (default TRUE).
 #' @return Depending on inputs, returns RETSI and/or GETSI data frames, optionally linked and annotated.
 #' @examples
-#' library(dplyr)
-#' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-#' library(org.Hs.eg.db)
-#' library(SPICEY)
 #' data(rna)
 #' data(atac)
-#' data(cicero_links)
+#' 
+#' # Calculate RETSI only
 #' retsi <- SPICEY(atac = atac, region_id = "region_id")
+#' 
+#' # Calculate GETSI only
 #' getsi <- SPICEY(rna = rna, gene_id = "gene_id")
+#' 
+#' # Calculate both
 #' both <- SPICEY(
 #'   rna = rna,
 #'   gene_id = "gene_id",
 #'   atac = atac,
 #'   region_id = "region_id"
 #' )
-#' peaks <- SPICEY:::.parse_input_diff(atac)
-#' peaks <- peaks %>%
-#'   tidyr::separate(region_id,
-#'     into = c("chr", "start", "end"), sep = "-",
-#'     convert = TRUE, remove = FALSE
-#'   ) %>%
-#'   GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+#' 
+#' # Integrate RETSI and GETSI with nearest gene
+#' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+#' library(org.Hs.eg.db)
+#' peaks <- unique(unlist(atac)[,c("region_id")])
+#'
+#' annotation_near <- annotate_with_nearest(
+#'   peaks = peaks,
+#'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'   annot_dbi = org.Hs.eg.db,
+#'   protein_coding_only = TRUE,
+#'   verbose = TRUE,
+#'   add_tss_annotation = FALSE,
+#'   upstream = 2000,
+#'   downstream = 2000
+#' )
+#' spicey_near <- SPICEY(
+#'   rna = rna,
+#'   gene_id = "gene_id",
+#'   atac = atac,
+#'   region_id = "region_id",
+#'   annotation = annotation_near
+#' )
+#' 
+#' # Integrate RETSI and GETSI with coaccessibility
+#' data(cicero_links)
+#' 
 #' annotation_coacc <- annotate_with_coaccessibility(
 #'   peaks = peaks,
 #'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
@@ -89,23 +110,7 @@
 #'   region_id = "region_id",
 #'   annotation = annotation_coacc
 #' )
-#' annotation_near <- annotate_with_nearest(
-#'   peaks = peaks,
-#'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-#'   annot_dbi = org.Hs.eg.db,
-#'   protein_coding_only = TRUE,
-#'   verbose = TRUE,
-#'   add_tss_annotation = FALSE,
-#'   upstream = 2000,
-#'   downstream = 2000
-#' )
-#' spicey_near <- SPICEY(
-#'   rna = rna,
-#'   gene_id = "gene_id",
-#'   atac = atac,
-#'   region_id = "region_id",
-#'   annotation = annotation_near
-#' )
+
 #' @export
 SPICEY <- function(atac = NULL,
                    rna = NULL,
