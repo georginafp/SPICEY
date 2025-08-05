@@ -311,7 +311,7 @@ annotate_with_coaccessibility <- function(peaks,
                           protein_coding_only = protein_coding_only)
   }
 
-  result <- as.data.frame(peaks) |>
+  result <- as.data.frame(GenomicRanges::mcols(peaks)) |>
     dplyr::left_join(dplyr::select(links_anno, region_id = peak, gene_id),
       by = "region_id"
     ) |>
