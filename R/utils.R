@@ -49,9 +49,6 @@ get_promoters <- function(txdb,
   return(proms)
 }
 
-
-
-
 #' Parses input data of various types (e.g., named lists of \code{GRanges}
 #' or \code{data.frame}, or a \code{GRangesList}) into a single tidy
 #' \code{data.frame}, with a \code{cell_type} column.
@@ -90,23 +87,4 @@ get_promoters <- function(txdb,
     }), .id = "cell_type")
   }
   return(input)
-}
-
-
-
-
-#' Converts a \code{GRanges} object into a character vector of strings, where each element
-#' represents a genomic range in the format \code{"chr-start-end"}.
-#' @param gr A \code{GRanges} object.
-#' @return A character vector, each element representing a range in \code{"chr-start-end"} format.
-granges_to_string <- function(gr) {
-  if (!inherits(gr, "GRanges")) {
-    stop("Input must be a GRanges object")
-  }
-  string <- paste0(
-    as.character(GenomicRanges::seqnames(gr)),
-    "-", GenomicRanges::start(gr),
-    "-", GenomicRanges::end(gr)
-  )
-  return(string)
 }
