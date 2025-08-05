@@ -58,12 +58,13 @@ annotate_with_nearest <- function(peaks,
   annotation$annotation <- ifelse(annotation$region_id %in% unique(ref_anno$region_id), "Promoter", "Distal")
   
   if (add_tss_annotation) {
-    annotation <- annotate_tss(annotation,
-                          txdb = txdb,
-                          annot_dbi = annot_dbi,
-                          protein_coding_only = protein_coding_only)
+    tss <- extract_gene_peak_annotations(
+      peaks, txdb, annot_dbi,
+      protein_coding_only,
+      upstream=0, downstream=1, verbose)
+    
+    annotation$in_TSS <- ifelse(annotation$region_id %in% tss$region_id, TRUE, FALSE)
   }
-  
   
   annotation <- mcols(annotation) |> data.frame()
   return(annotation)
@@ -83,7 +84,7 @@ annotate_with_nearest <- function(peaks,
 #' @param txdb \code{TxDb} object for genome annotation (required if annotation requested).
 #' @param annot_dbi \code{AnnotationDbi} object for gene ID mapping (required if annotation requested).
 #' @param add_tss_annotation Logical; annotate regulatory elements overlapping TSS (default FALSE).
-#' If TRUE, use +/- 1bp TSS instead of +/-2kb promoter.
+#' If TRUE, use +/- 1bp TSS.
 #' @param upstream Single integer value indicating the number of bases upstream
 #' from the TSS (transcription start sites) (default 2000kb).
 #' @param downstream Single integer values indicating the number of bases downstream
@@ -171,10 +172,13 @@ annotate_with_coaccessibility <- function(peaks,
     dplyr::distinct()
   
   if (add_tss_annotation) {
-    peaks <- annotate_tss(peaks,
-                          txdb = txdb,
-                          annot_dbi = annot_dbi,
-                          protein_coding_only = protein_coding_only)
+    tss <- extract_gene_peak_annotations(
+      peaks, txdb, annot_dbi,
+      protein_coding_only,
+      upstream=0, downstream=1, verbose)
+    
+    annotation$in_TSS <- ifelse(annotation$region_id %in% tss$region_id, TRUE, FALSE)
+    
   }
   
 
@@ -216,35 +220,6 @@ get_promoters <- function(txdb,
   mcols(proms)$gene_id <- gene_info$SYMBOL[match(names(proms), gene_info$ENTREZID)]
 
   return(proms)
-}
-
-#' Annotate regulatory elements overlapping transcription start sites (TSS)
-#'
-#' Identifies regulatory elements that overlap precisely defined transcription
-#' start sites (TSS) and assigns the corresponding gene symbols to these elements.
-#' @inheritParams annotate_with_coaccessibility
-#' @return A \code{data.frame} containing the input regulatory elements with added columns:
-#' \describe{
-#'   \item{\code{in_TSS}}{Logical indicating whether the element overlaps a TSS.}
-#'   \item{\code{TSS_gene}}{Gene symbol of the overlapping TSS, or \code{NA} if none.}}
-#' @importFrom GenomicRanges makeGRangesFromDataFrame promoters findOverlaps mcols
-#' @importFrom AnnotationDbi mapIds
-#' @importFrom S4Vectors queryHits subjectHits
-annotate_tss <- function(txdb, peaks, annot_dbi, protein_coding_only) {
-  proms <- get_promoters(
-    txdb = txdb,
-    annot_dbi = annot_dbi,
-    upstream = 0,
-    downstream = 1,
-    protein_coding_only = protein_coding_only
-  )
-  hits <- findOverlaps(peaks, proms)
-  GenomicRanges::mcols(peaks)$in_TSS <- FALSE
-  GenomicRanges::mcols(peaks)$TSS_gene <- NA_character_
-  GenomicRanges::mcols(peaks)$in_TSS[queryHits(hits)] <- TRUE
-  GenomicRanges::mcols(peaks)$TSS_gene[queryHits(hits)] <- GenomicRanges::mcols(proms)$gene_id[subjectHits(hits)]
-  peaks <- peaks |> data.frame()
-  return(peaks)
 }
 
 #' Overlap peaks with gene promoters to obtain gene annotations
