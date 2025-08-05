@@ -177,18 +177,49 @@ data("cicero_links")
 head(cicero_links)
 ```
 
-# Example: Step-by-Step SPICEY Workflow
+# Quick example
 
-This section outlines how to execute SPICEY using preprocessed input files, as detailed previously.
-
-```{r load-packages}
+```{r quick-example, fig.width=5, fig.width=4}
 # Load necessary packages
 library(dplyr)
 library(GenomicRanges)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
+library(SPICEY)
+
+# Annotate peaks to genes with coaccessibility
+peaks <- unique(unlist(atac)[,c("region_id")])
+annotation_coacc <- annotate_with_coaccessibility(
+   peaks = peaks,
+   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+   links_df = cicero_links,
+   annot_dbi = org.Hs.eg.db,
+   protein_coding_only = TRUE,
+   verbose = TRUE,
+   add_tss_annotation = FALSE,
+   upstream = 2000,
+   downstream = 2000
+)
+
+# Calculate SPICEY measures and link them with coaccessibility
+spicey_coacc <- SPICEY(
+  rna = rna,
+  gene_id = "gene_id",
+  atac = atac,
+  region_id = "region_id",
+  annotation = annotation_coacc
+)
+
+# Plot results
+spicey_heatmap(spicey_coacc$linked, 
+               spicey_measure = "SPICEY",
+               combined_zscore = TRUE)
 ```
 
+
+# Example: Step-by-Step SPICEY Workflow
+
+This section outlines how to execute SPICEY using preprocessed input files, as detailed previously.
 
 ## Computing RETSI
 
