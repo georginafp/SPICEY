@@ -187,6 +187,10 @@ library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
 library(SPICEY)
 
+data(atac)
+data(rna)
+data(cicero_links)
+
 # Annotate peaks to genes with coaccessibility
 peaks <- unique(unlist(atac)[,c("region_id")])
 annotation_coacc <- annotate_with_coaccessibility(
@@ -356,40 +360,6 @@ head(annotation_coacc)
 ```
 
 This function returns a data frame linking each regulatory region to its associated gene based on co-accessibility relationships.
-
-#### Annotate to both
-
-Alternatively, users may wish to annotate regulatory regions using both proximity to transcription start sites (TSS) and co-accessibility information simultaneously. To accommodate this, one can use SPICEY functionalists to generate a merged annotation object, combining both distance-based and co-accessibility-based annotations for each region in a unified framework:
-
-```{r re-gene-near-coacc-merged, message=FALSE, warning=FALSE}
-
-annotation_merged <- annotate_with_coaccessibility(
-  peaks = annotation_near |> 
-    dplyr::rename(nearestGeneSymbol = gene_id) |>
-    makeGRangesFromDataFrame(keep.extra.columns = T),
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-  links_df=cicero_links,
-  annot_dbi = org.Hs.eg.db,
-  protein_coding_only = TRUE,
-  verbose = TRUE,
-  add_tss_annotation = FALSE,
-  upstream = 2000,
-  downstream = 2000)
-
-head(annotation_merged)
-```
-
-In this way, each regulatory region is annotated with two complementary layers of information:
-
--   **Nearest-gene annotation**, which includes:
-
-1.  `distanceToTSS`: the distance from the region to the nearest transcription start site (TSS),
-2.  `nearestGeneSymbol`: the gene symbol of the closest gene,
-3.  `annotation`: the genomic context of the region (e.g., Promoter or Distal based on proximity to the TSS).
-
--   **Co-accessibility-based annotation**, where the region is linked to its co-accessible gene (`gene_id`), as determined by Cicero-derived chromatin interaction networks (see relevant section for details).
-
-This merged approach provides a more comprehensive regulatory landscape by integrating both spatial proximity and functional chromatin interaction data.
 
 #### Using custom region-to-gene annotation
 
