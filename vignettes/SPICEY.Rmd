@@ -535,13 +535,11 @@ To run `spicey_heatmap()`, the input must be a `data.frame` with the following c
 spicey_heatmap(spicey_coacc$GETSI, 
                spicey_measure = "GETSI")
 
-# Join with coaccessibility or nearest to show gene_id in the plots
-#TODO: Check that this works
+# If only RETSI is calculated (only ATAC data available), join with coaccessibility or nearest gene annotation to show gene_id in the plots
 retsi <- spicey_coacc$RETSI
 retsi <- retsi |>  left_join(annotation_near, by=c("region_id"))
 spicey_heatmap(retsi, 
                spicey_measure = "RETSI")
-
 ```
 
 ```{r spicey-heatmap-pair, message=FALSE, warning=FALSE, fig.width=8, fig.width=6}

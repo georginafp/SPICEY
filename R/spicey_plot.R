@@ -98,7 +98,9 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
 #' heatmaps are produced for RETSI and GETSI, respectively.
 #' @param df A data frame with at least the following columns:
 #'   \describe{
-#'     \item{\code{gene_id}}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
+#'     \item{\code{gene_id}}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH). 
+#'     If you only have ATAC data, link to nearest gene (\code{\link{annotate_with_nearest}})
+#'     or using coaccessibility (\code{\link{annotate_with_coaccessibility}}).}
 #'     \item{\code{cell_type}}{Cell type or cluster label (e.g., Acinar)}
 #'     \item{\code{RETSI}}{Numeric. RETSI specificity scores (optional unless used).}
 #'     \item{\code{GETSI}}{Numeric. GETSI specificity scores (optional unless used).}}
@@ -117,7 +119,7 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
 #' library(org.Hs.eg.db)
 #' 
 #' data(rna)
-#' data(atac)
+#' data(atac)<
 #' data(cicero_links)
 #' 
 #' # Obtain annotatin with coaccessibility
@@ -142,10 +144,13 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
 #' )
 #' 
 #' # Make plots
-#' #TODO: Combine with coaccessibility to add gene_id to RETSI
-#' #spicey_heatmap(spicey_coacc$RETSI, spicey_measure = "RETSI")
+#' retsi <- retsi |>  left_join(annotation_coacc, by=c("region_id"))
+#' spicey_heatmap(retsi, spicey_measure = "RETSI")
+#' 
 #' spicey_heatmap(spicey_coacc$GETSI, spicey_measure = "GETSI")
+#' 
 #' spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = FALSE)
+#' 
 #' spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = TRUE)
 #' @seealso \code{\link{SPICEY}}, \code{\link{prepare_heatmap_data}}, \code{\link{plot_heatmap}}
 #' @export
