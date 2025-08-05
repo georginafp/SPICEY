@@ -63,7 +63,10 @@ annotate_with_nearest <- function(peaks,
       protein_coding_only,
       upstream=0, downstream=1, verbose)
     
-    annotation$in_TSS <- ifelse(annotation$region_id %in% tss$region_id, TRUE, FALSE)
+    annotation <- annotation |> 
+      mutate(in_TSS = ifelse(region_id %in% tss$region_id, TRUE, FALSE)) |> 
+      left_join(tss |> data.frame() |> dplyr::select(region_id, TSS_gene = gene_id),
+                by = c("region_id"))
   }
   
   annotation <- GenomicRanges::mcols(annotation) |> data.frame()
@@ -180,7 +183,10 @@ annotate_with_coaccessibility <- function(peaks,
       protein_coding_only,
       upstream=0, downstream=1, verbose)
     
-    annotation$in_TSS <- ifelse(annotation$region_id %in% tss$region_id, TRUE, FALSE)
+    annotation <- annotation |> 
+      mutate(in_TSS = ifelse(region_id %in% tss$region_id, TRUE, FALSE)) |> 
+      left_join(tss |> data.frame() |> dplyr::select(region_id, TSS_gene = gene_id),
+                by = c("region_id"))
     
   }
 
