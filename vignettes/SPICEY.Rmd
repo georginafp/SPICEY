@@ -179,6 +179,20 @@ head(cicero_links)
 
 # Quick example
 
+SPICEY offers a comprehensive main function, `SPICEY()`, which streamlines the entire workflow into a single, reproducible process. It also includes optional helper functions for region-to-gene annotation using different strategies: `annotate_with_coaccessibility()` and `annotate_with_nearest()`.
+
+When supplied with differential chromatin accessibility (ATAC) and/or gene expression (RNA) data from single-cell experiments, along with a chosen region-to-gene mapping method ("nearest" or "coaccessibility"), the `SPICEY()` function performs the following:
+
+1.  Computes tissue specificity scores from single-cell data:
+    -   RETSI (Regulatory Element Tissue Specificity Index) for ATAC data
+    -   GETSI (Gene Expression Tissue Specificity Index) for RNA data
+2.  (**Optional**) Annotates regulatory elements to target genes using either:
+    -   Nearest gene transcription start site (TSS) (e.g., +/- 2000bp around the TSS)
+    -   Co-accessibility links (e.g., derived from Cicero)
+3.  Builds tissue-specific regulatory networks by integrating RETSI and GETSI scores via the provided region-to-gene annotation.
+
+The output is a structured list containing all intermediate and final results, facilitating downstream analysis and reuse.
+
 ```{r quick-example, fig.width=5, fig.width=4}
 # Load necessary packages
 library(dplyr)
@@ -274,7 +288,7 @@ To establish these links, regulatory regions must be annotated to target genes. 
 1.  **Proximity-based annotation** — assigning regions to the nearest transcription start site (TSS).\
 2.  **Co-accessibility-based annotation** — leveraging promoter–enhancer co-accessibility relationships derived from snATAC-seq data (e.g., via `Cicero`).
 
-### Annotating Regions to Putative Target Genes (Optional)
+## Annotating Regions to Putative Target Genes (Optional)
 
 #### Nearest Gene Annotation
 
@@ -375,48 +389,25 @@ With the annotation linking regulatory elements to their target genes (via TSS p
 This approach supports comprehensive analysis of regulatory mechanisms at both epigenetic and transcriptional levels.
 
 ```{r spicey_link_annot, message=FALSE, warning=FALSE}
-
 # Using nearest gene annotation data 
 spicey_near <- SPICEY(rna = rna,
-                      gene_id = "gene_id",
                       atac=atac,
-                      region_id="region_id",
                       annotation = annotation_near)
 
 
 # Using co-accessibility gene annotation data 
 spicey_coacc <- SPICEY(rna = rna,
-                       gene_id = "gene_id",
                        atac=atac,
-                       region_id="region_id",
                        annotation = annotation_coacc)
 
 # Using both annotation data 
 spicey_both <- SPICEY(rna = rna,
-                      gene_id = "gene_id",
                       atac=atac,
-                      region_id="region_id",
                       annotation = annotation_merged)
 
 ```
 
 This function returns a list containing separately computed RETSI and GETSI scores, along with an additional element that links these measures based on the selected region-to-gene annotation method.
-
-# Summary
-
-SPICEY offers a comprehensive main function, `SPICEY()`, which streamlines the entire workflow into a single, reproducible process. It also includes optional helper functions for region-to-gene annotation using different strategies: `annotate_with_coaccessibility()` and `annotate_with_nearest()`.
-
-When supplied with differential chromatin accessibility (ATAC) and/or gene expression (RNA) data from single-cell experiments, along with a chosen region-to-gene mapping method ("nearest" or "coaccessibility"), the `SPICEY()` function performs the following:
-
-1.  Computes tissue specificity scores from single-cell data:
-    -   RETSI (Regulatory Element Tissue Specificity Index) for ATAC data
-    -   GETSI (Gene Expression Tissue Specificity Index) for RNA data
-2.  (**Optional**) Annotates regulatory elements to target genes using either:
-    -   Nearest gene transcription start site (TSS) (e.g., +/- 2000bp around the TSS)
-    -   Co-accessibility links (e.g., derived from Cicero)
-3.  Builds tissue-specific regulatory networks by integrating RETSI and GETSI scores via the provided region-to-gene annotation.
-
-The output is a structured list containing all intermediate and final results, facilitating downstream analysis and reuse.
 
 # Output Description
 
