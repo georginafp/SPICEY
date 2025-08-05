@@ -9,46 +9,6 @@ utils::globalVariables(c(
   "RETSI", "RETSI_z", "combined_score", "max_cell_type", "max_score", "z_score","everything"
 ))
 
-
-#' Get gene promoters with optional filtering for protein-coding genes
-#' @inheritParams annotate_with_coaccessibility
-#' @return GRanges of promoters annotated with gene symbol.
-get_promoters <- function(txdb,
-                          annot_dbi,
-                          upstream = 2000,
-                          downstream = 2000,
-                          protein_coding_only = TRUE) {
-  proms <- GenomicFeatures::promoters(
-    GenomicFeatures::genes(txdb),
-    upstream = upstream,
-    downstream = downstream
-  )
-
-  symbols <- AnnotationDbi::mapIds(
-    annot_dbi,
-    keys = names(proms),
-    column = "SYMBOL",
-    keytype = "ENTREZID",
-    multiVals = "first"
-  )
-
-  if (protein_coding_only) {
-    gene_types <- AnnotationDbi::mapIds(
-      annot_dbi,
-      keys = names(proms),
-      column = "GENETYPE",
-      keytype = "ENTREZID",
-      multiVals = "first"
-    )
-    keep <- which(gene_types == "protein-coding")
-    proms <- proms[keep]
-    symbols <- symbols[keep]
-  }
-
-  proms$gene_id <- symbols
-  return(proms)
-}
-
 #' Parses input data of various types (e.g., named lists of \code{GRanges}
 #' or \code{data.frame}, or a \code{GRangesList}) into a single tidy
 #' \code{data.frame}, with a \code{cell_type} column.
