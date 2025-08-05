@@ -171,6 +171,9 @@ annotate_with_coaccessibility <- function(peaks,
   ) |>
     dplyr::distinct()
   
+  annotation <- links_anno |> 
+    dplyr::select(region_id, gene_id)
+  
   if (add_tss_annotation) {
     tss <- extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
@@ -180,11 +183,7 @@ annotate_with_coaccessibility <- function(peaks,
     annotation$in_TSS <- ifelse(annotation$region_id %in% tss$region_id, TRUE, FALSE)
     
   }
-  
 
-  annotation <- annotation |> 
-    dplyr::select(region_id, gene_id)
-  
   return(annotation)
 }
 
