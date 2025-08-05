@@ -13,8 +13,7 @@
 #' @seealso \code{\link{plot_heatmap}}, \code{\link{spicey_heatmap}}
 prepare_heatmap_data <- function(df, score_col, top_n) {
   df_filtered <- df |>
-    #TODO: Again, what if only RETSI? What if gene_id is named differently?
-    dplyr::filter(#!is.na(gene_id), 
+    dplyr::filter(!is.na(gene_id), 
                   !is.na(.data[[score_col]])) |>
     dplyr::mutate(z_score = scale(.data[[score_col]])[, 1])
 
@@ -33,7 +32,6 @@ prepare_heatmap_data <- function(df, score_col, top_n) {
 
   return(final)
 }
-
 
 
 
@@ -139,14 +137,13 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
 #' # Obtain linked SPICEY measures
 #' spicey_coacc <- SPICEY(
 #'   rna = rna,
-#'   gene_id = "gene_id",
 #'   atac = atac,
-#'   region_id = "region_id",
 #'   annotation = annotation_coacc
 #' )
 #' 
 #' # Make plots
-#' spicey_heatmap(spicey_coacc$RETSI, spicey_measure = "RETSI")
+#' #TODO: Combine with coaccessibility to add gene_id to RETSI
+#' #spicey_heatmap(spicey_coacc$RETSI, spicey_measure = "RETSI")
 #' spicey_heatmap(spicey_coacc$GETSI, spicey_measure = "GETSI")
 #' spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = FALSE)
 #' spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = TRUE)
@@ -159,12 +156,9 @@ spicey_heatmap <- function(df,
                            combined_zscore = FALSE) {
   
   spicey_measure <- match.arg(spicey_measure)
-  # TODO: Fix this check. If users only calculate RETSI they won't have gene_id
-  # and this will fail. Also, if their gene_id is named something else (we are 
-  # allowing this in SPICEY() it will also fail)
-  # if (!all(c("gene_id", "cell_type") %in% colnames(df))) {
-  #   stop("Input data must contain 'gene_id' and 'cell_type'.")
-  # }
+  if (!all(c("gene_id", "cell_type") %in% colnames(df))) {
+    stop("Input data must contain 'gene_id' and 'cell_type'.")
+  }
   has_RETSI <- "RETSI" %in% colnames(df)
   has_GETSI <- "GETSI" %in% colnames(df)
   if (spicey_measure == "RETSI" && !has_RETSI) stop("Missing RETSI column.")
@@ -183,8 +177,6 @@ spicey_heatmap <- function(df,
     final_plot <- plot_heatmap(df_z, spicey_measure, paste0(spicey_measure, "\nz-score"))
   } else if (spicey_measure == "SPICEY" & combined_zscore) {
     df_combined <- df |>
-      #TODO: Same here! what if they only have either RETSI or GETSI? What if their
-      # gene ID is named something else?
       dplyr::filter(!is.na(gene_id), !is.na(RETSI), !is.na(GETSI)) |>
       dplyr::mutate(
         GETSI_z = scale(GETSI)[, 1],

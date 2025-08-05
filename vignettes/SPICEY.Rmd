@@ -204,9 +204,7 @@ annotation_coacc <- annotate_with_coaccessibility(
 # Calculate SPICEY measures and link them with coaccessibility
 spicey_coacc <- SPICEY(
   rna = rna,
-  gene_id = "gene_id",
   atac = atac,
-  region_id = "region_id",
   annotation = annotation_coacc
 )
 
@@ -226,14 +224,13 @@ This section outlines how to execute SPICEY using preprocessed input files, as d
 To calculate the **Regulatory Element Tissue Specificity Index (RETSI)**, the following inputs are required:
 
 -   **`atac`**: A named list of `GRanges` objects or `data.frame`s (convertible to `GRanges`), each representing differential accessibility results for a distinct cell type.
--   **`region_id`**: A character string specifying the column name containing region identifiers (e.g., `chr1-5000-5800`).
 
 SPICEY returns a `data.frame` combining the input differential accessibility data with RETSI scores for each regulatory region.
 
 **Note:** Confirm that your inputs comply with the format outlined in the *Input Requirements* section prior to execution.
 
 ```{r retsi, message=FALSE, warning=FALSE}
-retsi <- SPICEY(atac=atac, region_id = "region_id")
+retsi <- SPICEY(atac=atac)
 head(retsi)
 ```
 
@@ -242,14 +239,13 @@ head(retsi)
 To calculate the **Gene Expression Tissue Specificity Index (GETSI)**, the following inputs are required:
 
 -   **`rna`**: A named list of `GRanges` objects or `data.frame`s (convertible to `GRanges`), each containing differential gene expression results for a specific cell type.
--   **`gene_id`**: A character string specifying the column name with gene identifiers (e.g., official gene symbols).
 
 SPICEY outputs a `data.frame` that integrates the input differential expression data with computed GETSI scores for each gene.
 
 **Note:** Verify that your inputs adhere to the format described in the *Input Requirements* section before execution.
 
 ```{r getsi, message=FALSE, warning=FALSE}
-getsi <- SPICEY(rna=rna, gene_id = "gene_id")
+getsi <- SPICEY(rna=rna)
 head(getsi)
 ```
 
@@ -261,9 +257,7 @@ By supplying both `atac` and `rna` inputs together to the `SPICEY()` function, t
 
 ```{r spicey, message=FALSE, warning=FALSE}
 spicey <- SPICEY(atac=atac, 
-                region_id = "region_id", 
-                rna=rna,
-                gene_id = "gene_id")
+                rna=rna)
 lapply(spicey, head)
 ```
 
@@ -538,10 +532,16 @@ To run `spicey_heatmap()`, the input must be a `data.frame` with the following c
 
 ```{r spicey-heatmap-sep, message=FALSE, warning=FALSE, fig.width=4, fig.width=3}
 # RETSI and/or GETSI separately
-spicey_heatmap(spicey_coacc$RETSI, 
-               spicey_measure = "RETSI")
 spicey_heatmap(spicey_coacc$GETSI, 
                spicey_measure = "GETSI")
+
+# Join with coaccessibility or nearest to show gene_id in the plots
+#TODO: Check that this works
+retsi <- spicey_coacc$RETSI
+retsi <- retsi |>  left_join(annotation_near, by=c("region_id"))
+spicey_heatmap(retsi, 
+               spicey_measure = "RETSI")
+
 ```
 
 ```{r spicey-heatmap-pair, message=FALSE, warning=FALSE, fig.width=8, fig.width=6}
