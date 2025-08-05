@@ -13,7 +13,9 @@
 #' @seealso \code{\link{plot_heatmap}}, \code{\link{spicey_heatmap}}
 prepare_heatmap_data <- function(df, score_col, top_n) {
   df_filtered <- df |>
-    dplyr::filter(!is.na(gene_id), !is.na(.data[[score_col]])) |>
+    #TODO: Again, what if only RETSI? What if gene_id is named differently?
+    dplyr::filter(#!is.na(gene_id), 
+                  !is.na(.data[[score_col]])) |>
     dplyr::mutate(z_score = scale(.data[[score_col]])[, 1])
 
   top_genes <- df_filtered |>
@@ -181,6 +183,8 @@ spicey_heatmap <- function(df,
     final_plot <- plot_heatmap(df_z, spicey_measure, paste0(spicey_measure, "\nz-score"))
   } else if (spicey_measure == "SPICEY" & combined_zscore) {
     df_combined <- df |>
+      #TODO: Same here! what if they only have either RETSI or GETSI? What if their
+      # gene ID is named something else?
       dplyr::filter(!is.na(gene_id), !is.na(RETSI), !is.na(GETSI)) |>
       dplyr::mutate(
         GETSI_z = scale(GETSI)[, 1],
