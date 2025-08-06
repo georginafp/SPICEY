@@ -438,7 +438,7 @@ The primary output is a `data.frame` or a list of `data.frames` representing gen
 ### SPICEY Measures
 
 | Column | Description |
-|---------------|---------------------------------------------------------|
+|----|----|
 | `cell_type` | Cell type exhibiting significant accessibility or expression (e.g., `"Acinar"`). |
 | `p_val_adj` | Adjusted p-value from differential testing, controlling for multiple comparisons. |
 | `avg_log2FC` | Average log2 fold-change of accessibility/expression in the specified cell type vs others. |
@@ -452,7 +452,7 @@ The primary output is a `data.frame` or a list of `data.frames` representing gen
 ### Linked SPICEY Measures
 
 | Column | Description |
-|---------------|---------------------------------------------------------|
+|----|----|
 | `cell_type` | Cell type showing significant accessibility (e.g., `"Acinar"`). |
 | `p_val_adj_ATAC` | Adjusted p-value from differential accessibility testing. |
 | `avg_log2FC_ATAC` | Average log2 fold-change in accessibility for the cell type versus others. |
@@ -473,45 +473,43 @@ This annotated `data.frame` serves as a comprehensive resource combining genomic
 
 The `SPICEY` package provides a flexible function for visualizing gene-regulatory-level specificity across cell types using the `spicey_heatmap()` function. This function supports visualizing:
 
-- **RETSI**
-- **GETSI**
-- **SPICEY**, which is the combined score of both RETSI and GETSI.
+-   **RETSI**
+-   **GETSI**
+-   **SPICEY**, which is the combined score of both RETSI and GETSI.
 
 These visualizations help uncover transcriptional and regulatory programs that are specific to individual cell types and can assist in identifying marker genes or highly specific regulatory programs.
 
 The `spicey_heatmap()` function performs the following steps:
 
-1. **Filters and scales the input**: Computes z-scores for the selected specificity index (`RETSI`, `GETSI`, or a combined SPICEY score).
-2. **Selects top genes**: For each cell type, identifies the top `n` genes based on their z-score ranks.
-3. **Generates a heatmap**: Creates a gene-by-cell-type heatmap. Genes are ordered by their highest-scoring cell type and their z-score magnitude.
+1.  **Filters and scales the input**: Computes z-scores for the selected specificity index (`RETSI`, `GETSI`, or a combined SPICEY score).
+2.  **Selects top genes**: For each cell type, identifies the top `n` genes based on their z-score ranks.
+3.  **Generates a heatmap**: Creates a gene-by-cell-type heatmap. Genes are ordered by their highest-scoring cell type and their z-score magnitude.
 
 Depending on the `spicey_measure` and `combined_zscore` arguments, the function adapts the output:
 
-- **Single-modality visualization:**
-  - `spicey_measure = "RETSI"`: Plots z-scored RETSI values, where RETSI reflects cell-type-specific accessibility of regulatory regions linked to genes.
-  - `spicey_measure = "GETSI"`: Plots z-scored GETSI values based on gene expression.
-
-- **Dual-modality (SPICEY) visualization:**
-  - `spicey_measure = "SPICEY"` and `combined_zscore = FALSE`: Displays two separate heatmaps -one for RETSI, one for GETSI - enabling side-by-side comparison.
-  - `spicey_measure = "SPICEY"` and `combined_zscore = TRUE`: RETSI and GETSI are independently z-scored and averaged per gene-cell-type pair. A single unified heatmap is generated to highlight shared specificity across both data types.
+-   **Single-modality visualization:**
+    -   `spicey_measure = "RETSI"`: Plots z-scored RETSI values, where RETSI reflects cell-type-specific accessibility of regulatory regions linked to genes.
+    -   `spicey_measure = "GETSI"`: Plots z-scored GETSI values based on gene expression.
+-   **Dual-modality (SPICEY) visualization:**
+    -   `spicey_measure = "SPICEY"` and `combined_zscore = FALSE`: Displays two separate heatmaps -one for RETSI, one for GETSI - enabling side-by-side comparison.
+    -   `spicey_measure = "SPICEY"` and `combined_zscore = TRUE`: RETSI and GETSI are independently z-scored and averaged per gene-cell-type pair. A single unified heatmap is generated to highlight shared specificity across both data types.
 
 ### Required inputs:
 
 To run `spicey_heatmap()`, the input must be a `data.frame` with the following columns:
 
-- `gene_id`:  
-   - For **RETSI**: The gene annotated to the given regulatory region (e.g., from co-accessibility or distance to the nearest TSS).
-   - For **GETSI**: The expressed gene for which expression specificity is measured.
-- `cell_type`: Cell type or cluster label (e.g., `"Acinar"`).
-- `GETSI` and/or `RETSI` score.
+-   `gene_id`:
+    -   For **RETSI**: The gene annotated to the given regulatory region (e.g., from co-accessibility or distance to the nearest TSS).
+    -   For **GETSI**: The expressed gene for which expression specificity is measured.
+-   `cell_type`: Cell type or cluster label (e.g., `"Acinar"`).
+-   `GETSI` and/or `RETSI` score.
 
 ### Arguments
 
-- `df`: A `data.frame` containing the columns described above.
-- `top_n`: Number of top-ranked genes to retain per cell type (default: `5`).
-- `spicey_measure`: Score type to visualize. Must be one of `"RETSI"`, `"GETSI"`, or `"SPICEY"`.
-- `combined_zscore`: Logical. If `TRUE` and `spicey_measure = "SPICEY"`, computes a combined z-score across RETSI and GETSI (default: `FALSE`).
-
+-   `df`: A `data.frame` containing the columns described above.
+-   `top_n`: Number of top-ranked genes to retain per cell type (default: `5`).
+-   `spicey_measure`: Score type to visualize. Must be one of `"RETSI"`, `"GETSI"`, or `"SPICEY"`.
+-   `combined_zscore`: Logical. If `TRUE` and `spicey_measure = "SPICEY"`, computes a combined z-score across RETSI and GETSI (default: `FALSE`).
 
 ```{r spicey-heatmap-sep, message=FALSE, warning=FALSE, fig.width=4, fig.width=3}
 # RETSI and/or GETSI separately
@@ -532,12 +530,9 @@ spicey_heatmap(spicey_coacc$linked,
 spicey_heatmap(spicey_coacc$linked, 
                spicey_measure = "SPICEY", 
                combined_zscore = TRUE)
-
 ```
 
 # References
-
-
 
 # SessionInfo
 
