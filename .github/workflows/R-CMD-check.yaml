@@ -25,17 +25,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libcurl4-openssl-dev libxml2-dev libssl-dev
 
-      - name: Install Bioconductor and CRAN dependencies
-        run: |
-          install.packages("BiocManager")
-          BiocManager::install(c("BiocStyle", "knitr", "rmarkdown"), ask = FALSE)
-          BiocManager::install(dependencies = TRUE, ask = FALSE)
-        shell: Rscript {0}
-
-      - name: Install package dependencies
+      - name: Install R dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: BiocStyle, knitr, rmarkdown
+          extra-packages: rcmdcheck, BiocStyle, knitr, rmarkdown
           needs: check
 
       - name: Check package
