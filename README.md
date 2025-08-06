@@ -1,4 +1,4 @@
-# SPICEY <img src="man/figures/SPICEY_LOGO_WHITE_BKGRND.svg" width="200px" height="200px" align="right" style="padding-left:10px;background-color:white;"/>
+# SPICEY <img src="man/figures/SPICEY_LOGO_BKGRND.svg" width="200px" height="200px" align="right" style="padding-left:10px;background-color:white;"/>
 
 <!-- badges: start -->
 
