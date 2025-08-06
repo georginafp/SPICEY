@@ -9,9 +9,9 @@ plot_heatmap(df_z, title_text, fill_label)
 \arguments{
 \item{df_z}{A data frame with z-scored values. Must contain:
 \describe{
-\item{\code{gene_id}}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
-\item{\code{cell_type}}{Cell type or cluster label (e.g., Acinar)}
-\item{\code{z_score}}{Numeric. Z-scored values of the specificity score (e.g., RETSI_z, GETSI_z)}}}
+\item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})}.
+\item{\code{cell_type}}{Cell type or cluster label (e.g., \code{Acinar})}
+\item{\code{z_score}}{Numeric. Z-scored values of the specificity score (e.g., \code{RETSI_z}, \code{GETSI_z})}}}
 
 \item{title_text}{Character. Title of the heatmap.}
 

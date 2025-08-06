@@ -10,7 +10,7 @@ specificity_index(da, group_col)
 \item{da}{A data.frame containing differential results with at least the following columns:
 \describe{
 \item{avg_log2FC}{Average log2 fold-change of the feature (gene or region).}
-\item{cell_type}{Cell type or cluster label.}
+\item{cell_type}{Cell type or cluster label. (e.g., \code{Acinar})}
 \item{\code{[group_col]}}{Column containing the feature identifier (e.g., gene_id or region)
 The \strong{name of this column must match the value passed to the \code{group_col} argument}}}}
 
@@ -21,7 +21,6 @@ identifies each feature, such as \code{gene_id} for genes or \code{region} for A
 A data.frame identical to the input but with additional columns:
 \describe{
 \item{avg_FC}{Fold-change converted from log2 scale.}
-\item{p_val_adj}{FDR-adjusted p-values computed across all entries.}
 \item{max_FC}{Maximum fold-change observed within each feature group.}
 \item{weight}{Normalized significance weight derived from adjusted p-values.}
 \item{norm_FC}{Fold-change normalized by maximum fold-change in the group.}
@@ -29,7 +28,7 @@ A data.frame identical to the input but with additional columns:
 }
 \description{
 This function computes a specificity index for different features
-(e.g., genes or regions) based on differential expression or accessibility data.
+(e.g., genes or regions) based on differential expression/accessibility data.
 It rescales fold-change values and weights them by significance
 to quantify how specific a feature's activity is to a particular cell type.
 }

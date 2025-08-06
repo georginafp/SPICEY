@@ -29,10 +29,10 @@ extract_gene_peak_annotations(
 \item{protein_coding_only}{Logical; restrict to protein-coding genes (default TRUE).}
 
 \item{upstream}{Single integer value indicating the number of bases upstream
-from the TSS (transcription start sites) (default 2000kb).}
+from the TSS (transcription start sites) (default \code{"2000kb"}).}
 
 \item{downstream}{Single integer values indicating the number of bases downstream
-from the TSS (transcription start sites) (default 2000kb).}
+from the TSS (transcription start sites) (default \code{"2000kb"}).}
 
 \item{verbose}{Logical; print messages (default TRUE).}
 }
@@ -40,8 +40,8 @@ from the TSS (transcription start sites) (default 2000kb).}
 A \code{GRanges with} with:
 \describe{
 \item{seqnames, start, end}{Coordinates of the peak that overlaps with a gene promoter.}
-\item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800}}
-\item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
+\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
+\item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})
 }
 \description{
 Identifies overlaps between a set of peaks and promoter regions,

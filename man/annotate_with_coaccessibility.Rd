@@ -2,8 +2,7 @@
 % Please edit documentation in R/annotate_re_genes.R
 \name{annotate_with_coaccessibility}
 \alias{annotate_with_coaccessibility}
-\title{Annotate peaks with co-accessible genes using Cicero links
-Links peaks to genes based on Cicero co-accessibility with promoters or TSSs.}
+\title{Annotate peaks with co-accessible genes using Cicero links}
 \usage{
 annotate_with_coaccessibility(
   peaks,
@@ -40,10 +39,10 @@ annotate_with_coaccessibility(
 If TRUE, use +/- 1bp TSS.}
 
 \item{upstream}{Single integer value indicating the number of bases upstream
-from the TSS (transcription start sites) (default 2000kb).}
+from the TSS (transcription start sites) (default \code{"2000kb"}).}
 
 \item{downstream}{Single integer values indicating the number of bases downstream
-from the TSS (transcription start sites) (default 2000kb).}
+from the TSS (transcription start sites) (default \code{"2000kb"}).}
 }
 \value{
 A \code{data.frame} with the original metadata columns from \code{peaks},
@@ -51,7 +50,6 @@ along with an added \code{gene_id} column containing the symbol of the co-access
 Peaks with no gene annotation will have \code{NA} in the \code{gene_id} field.
 }
 \description{
-Annotate peaks with co-accessible genes using Cicero links
 Links peaks to genes based on Cicero co-accessibility with promoters or TSSs.
 }
 \examples{

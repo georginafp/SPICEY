@@ -1,21 +1,22 @@
 #' Annotates regulatory elements (e.g., ATAC-seq peaks) to the nearest gene
+#'
 #' based on distance to the transcription start site (TSS), using a \code{TxDb}
-#' reference and optional gene annotations from \code{org.*.db} packages.
+#' reference and gene annotations from \code{org.*.db} packages.
 #' @inheritParams annotate_with_coaccessibility
 #' @return A \code{data.frame} of peaks annotated to its nearest gene, with columns:
 #'   \itemize{
 #'     \item \code{distanceToTSS}: distance to the nearest TSS
-#'     \item \code{gene_id}: Official gene symbol of the nearest gene (e.g., GAPDH)
+#'     \item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})
 #'     \item \code{annotation}: \code{"Promoter"} or \code{"Distal"} based on distance}
 #' @export
 #' @examples
 #' library(dplyr)
 #' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 #' library(org.Hs.eg.db)
-#' 
+#'
 #' data(atac)
 #' peaks <- unique(unlist(atac)[,c("region_id")])
-#' 
+#'
 #' annotation_near <- annotate_with_nearest(
 #'   peaks = peaks,
 #'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
@@ -41,13 +42,13 @@ annotate_with_nearest <- function(peaks,
   alt_chroms <- grep("_alt|random|fix|Un", seqlevels(peaks), value = TRUE)
   peaks <- GenomeInfoDb::keepSeqlevels(peaks, setdiff(seqlevels(peaks), alt_chroms), pruning.mode = "coarse")
   names(peaks) <- peaks$region_id
-  
+
   # Select peaks that overlap with gene promoters
   ref_anno <- extract_gene_peak_annotations(
     peaks, txdb, annot_dbi,
     protein_coding_only,
     upstream, downstream, verbose)
-  
+
   # Annotate peaks to nearest promoters
   nearest_hits <- GenomicRanges::distanceToNearest(peaks, ref_anno)
   annotation <- peaks
@@ -56,24 +57,25 @@ annotate_with_nearest <- function(peaks,
   annotation$gene_id <- NA
   annotation$gene_id[S4Vectors::queryHits(nearest_hits)] <- ref_anno$gene_id[S4Vectors::subjectHits(nearest_hits)]
   annotation$annotation <- ifelse(annotation$region_id %in% unique(ref_anno$region_id), "Promoter", "Distal")
-  
+
   if (add_tss_annotation) {
     tss <- extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
       protein_coding_only,
       upstream=0, downstream=1, verbose)
-    
-    annotation <- annotation |> 
-      mutate(in_TSS = ifelse(region_id %in% tss$region_id, TRUE, FALSE)) |> 
+
+    annotation <- annotation |>
+      mutate(in_TSS = ifelse(region_id %in% tss$region_id, TRUE, FALSE)) |>
       left_join(tss |> data.frame() |> dplyr::select(region_id, TSS_gene = gene_id),
                 by = c("region_id"))
   }
-  
+
   annotation <- GenomicRanges::mcols(annotation) |> data.frame()
   return(annotation)
 }
 
 #' Annotate peaks with co-accessible genes using Cicero links
+#'
 #' Links peaks to genes based on Cicero co-accessibility with promoters or TSSs.
 #' @param peaks A \code{GRanges} or \code{data.frame} of peaks with at least the following columns:
 #' \describe{
@@ -89,9 +91,9 @@ annotate_with_nearest <- function(peaks,
 #' @param add_tss_annotation Logical; annotate regulatory elements overlapping TSS (default FALSE).
 #' If TRUE, use +/- 1bp TSS.
 #' @param upstream Single integer value indicating the number of bases upstream
-#' from the TSS (transcription start sites) (default 2000kb).
+#' from the TSS (transcription start sites) (default \code{"2000kb"}).
 #' @param downstream Single integer values indicating the number of bases downstream
-#' from the TSS (transcription start sites) (default 2000kb).
+#' from the TSS (transcription start sites) (default \code{"2000kb"}).
 #' @param verbose Logical; print messages (default TRUE).
 #' @return A \code{data.frame} with the original metadata columns from \code{peaks},
 #' along with an added \code{gene_id} column containing the symbol of the co-accessible gene.
@@ -100,10 +102,10 @@ annotate_with_nearest <- function(peaks,
 #' @examples
 #' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 #' library(org.Hs.eg.db)
-#' 
+#'
 #' data(atac)
 #' data(cicero_links)
-#' 
+#'
 #' peaks <- unique(unlist(atac)[,c("region_id")])
 #' annotation_coacc <- annotate_with_coaccessibility(
 #'   peaks = peaks,
@@ -138,7 +140,7 @@ annotate_with_coaccessibility <- function(peaks,
                                        pruning.mode = "coarse"
   )
   names(peaks) <- peaks$region_id
-  
+
   ref_anno <- extract_gene_peak_annotations(
     peaks, txdb, annot_dbi,
     protein_coding_only,
@@ -147,14 +149,14 @@ annotate_with_coaccessibility <- function(peaks,
 
   # Convert ref_anno to data.frame
   ref_anno <- GenomicRanges::mcols(ref_anno) |> data.frame()
-  
-  # Annotate with coaccessibility  
+
+  # Annotate with coaccessibility
   joined_links <- links_df |>
     dplyr::left_join(ref_anno, by = c("Peak1" = "region_id")) |>
     dplyr::rename(gene_name1 = gene_id) |>
     dplyr::left_join(ref_anno, by = c("Peak2" = "region_id")) |>
     dplyr::rename(gene_name2 = gene_id)
-  
+
   # Combine results for Peak1 and Peak2 from cicero
   links_anno <- dplyr::bind_rows(
     dplyr::transmute(
@@ -173,21 +175,21 @@ annotate_with_coaccessibility <- function(peaks,
     )
   ) |>
     dplyr::distinct()
-  
-  annotation <- links_anno |> 
+
+  annotation <- links_anno |>
     dplyr::select(region_id, gene_id)
-  
+
   if (add_tss_annotation) {
     tss <- extract_gene_peak_annotations(
       peaks, txdb, annot_dbi,
       protein_coding_only,
       upstream=0, downstream=1, verbose)
-    
-    annotation <- annotation |> 
-      mutate(in_TSS = ifelse(region_id %in% tss$region_id, TRUE, FALSE)) |> 
+
+    annotation <- annotation |>
+      mutate(in_TSS = ifelse(region_id %in% tss$region_id, TRUE, FALSE)) |>
       left_join(tss |> data.frame() |> dplyr::select(region_id, TSS_gene = gene_id),
                 by = c("region_id"))
-    
+
   }
 
   return(annotation)
@@ -235,8 +237,8 @@ get_promoters <- function(txdb,
 #' @return A \code{GRanges with} with:
 #' \describe{
 #'   \item{seqnames, start, end}{Coordinates of the peak that overlaps with a gene promoter.}
-#'   \item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800}}
-#'   \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
+#'   \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
+#'   \item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})
 extract_gene_peak_annotations <- function(peaks,
                                           txdb,
                                           annot_dbi,
@@ -253,9 +255,9 @@ extract_gene_peak_annotations <- function(peaks,
   )
 
   ols <- GenomicRanges::findOverlaps(peaks, proms)
-  
+
   promoter_peaks <- peaks[S4Vectors::queryHits(ols)]
   promoter_peaks$gene_id <- proms$gene_id[S4Vectors::subjectHits(ols)]
-  
+
   return(promoter_peaks)
 }

@@ -7,10 +7,10 @@
 \format{
 A data frame or \code{GRanges}-like object with the following required columns:
 \describe{
-\item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
+\item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH}).
 \item{avg_log2FC}{Average log2 fold-change of expression for the gene in the specific cell type}
-\item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
-\item{cell_type}{Cell type or cluster label associated with each measurement}
+\item{p_val_adj}{Adjusted p-value (e.g., \code{FDR-corrected})}
+\item{cell_type}{Cell type or cluster label associated with each measurement (e.g., \code{Acinar})}
 }
 }
 \source{

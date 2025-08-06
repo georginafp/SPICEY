@@ -12,7 +12,7 @@ SPICEY(atac = NULL, rna = NULL, annotation = NULL, verbose = TRUE)
 to a cell type.  It should contain differential chromatin accessibility
 results with required columns:
 \describe{
-\item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800).}
+\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
 \item{avg_log2FC}{Average log2 fold-change for accessibility in that cell type.}
 \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 \item{cell_type}{Cell type or cluster label. Only necessary when input is
@@ -25,21 +25,23 @@ Note that the same region may appear multiple times across cell types.}}
 to a cell type. It should contain differential expression results,
 with required columns:
 \describe{
-\item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH).}
+\item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH}).
+The name of this column should match the \code{gene_id} argument.}}
 \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
 \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 \item{cell_type}{Cell type or cluster label. Only necessary when input is
-a single \code{data.frame}. If input is a list, it will be generated from list names}}
+a single \code{data.frame}. If input is a list, it will be generated from list names}
 Note that the same gene may appear multiple times across cell types.}
 
-\item{annotation}{A data.frame linking \code{gene_id} to \code{region_id}.
+\item{annotation}{(Optional). A data.frame linking \code{gene_id} to \code{region_id}.
 They should have the same names provided in the respective parameters.
-This can be provided by the user or generated using the function \code{\link{link_spicey}}.
+This can be provided by the user or generated using the functions:
+\code{\link{annotate_with_nearest}} or \code{\link{annotate_with_coaccessibility}}.
 It should contain at least the following columns:
 \describe{
 \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).
 The name of this column should match the \code{region_id} argument.}
-\item{cell_type}{Cell type or cluster label.}
+\item{cell_type}{Cell type or cluster label. (e.g., \code{Acinar})}
 \item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH}).
 The name of this column should match the \code{gene_id} argument.}}}
 

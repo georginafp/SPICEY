@@ -18,10 +18,10 @@ get_promoters(
 \item{annot_dbi}{\code{AnnotationDbi} object for gene ID mapping (required if annotation requested).}
 
 \item{upstream}{Single integer value indicating the number of bases upstream
-from the TSS (transcription start sites) (default 2000kb).}
+from the TSS (transcription start sites) (default \code{"2000kb"}).}
 
 \item{downstream}{Single integer values indicating the number of bases downstream
-from the TSS (transcription start sites) (default 2000kb).}
+from the TSS (transcription start sites) (default \code{"2000kb"}).}
 
 \item{protein_coding_only}{Logical; restrict to protein-coding genes (default TRUE).}
 }

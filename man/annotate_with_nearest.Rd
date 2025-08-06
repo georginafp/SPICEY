@@ -2,9 +2,7 @@
 % Please edit documentation in R/annotate_re_genes.R
 \name{annotate_with_nearest}
 \alias{annotate_with_nearest}
-\title{Annotates regulatory elements (e.g., ATAC-seq peaks) to the nearest gene
-based on distance to the transcription start site (TSS), using a \code{TxDb}
-reference and optional gene annotations from \code{org.*.db} packages.}
+\title{Annotates regulatory elements (e.g., ATAC-seq peaks) to the nearest gene}
 \usage{
 annotate_with_nearest(
   peaks,
@@ -37,22 +35,21 @@ annotate_with_nearest(
 If TRUE, use +/- 1bp TSS.}
 
 \item{upstream}{Single integer value indicating the number of bases upstream
-from the TSS (transcription start sites) (default 2000kb).}
+from the TSS (transcription start sites) (default \code{"2000kb"}).}
 
 \item{downstream}{Single integer values indicating the number of bases downstream
-from the TSS (transcription start sites) (default 2000kb).}
+from the TSS (transcription start sites) (default \code{"2000kb"}).}
 }
 \value{
 A \code{data.frame} of peaks annotated to its nearest gene, with columns:
 \itemize{
 \item \code{distanceToTSS}: distance to the nearest TSS
-\item \code{gene_id}: Official gene symbol of the nearest gene (e.g., GAPDH)
+\item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})
 \item \code{annotation}: \code{"Promoter"} or \code{"Distal"} based on distance}
 }
 \description{
-Annotates regulatory elements (e.g., ATAC-seq peaks) to the nearest gene
 based on distance to the transcription start site (TSS), using a \code{TxDb}
-reference and optional gene annotations from \code{org.*.db} packages.
+reference and gene annotations from \code{org.*.db} packages.
 }
 \examples{
 library(dplyr)

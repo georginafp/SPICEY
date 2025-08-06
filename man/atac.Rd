@@ -7,10 +7,10 @@
 \format{
 A data frame or \code{GRanges}-like object with the following required columns:
 \describe{
-\item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800)}
+\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
 \item{avg_log2FC}{Average log2 fold-change of accessibility for the peak in the specific cell type}
-\item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
-\item{cell_type}{Cell type or cluster label associated with each measurement}
+\item{p_val_adj}{Adjusted p-value (e.g., \code{FDR-corrected})}
+\item{cell_type}{Cell type or cluster label associated with each measurement (e.g., \code{Acinar})}
 }
 }
 \source{
@@ -22,8 +22,7 @@ from three non-diabetic human donors.
 data(atac)
 }
 \description{
-A toy example dataset representing single-cell ATAC-seq
-differential accessibility results.
+A toy example dataset representing single-cell ATAC-seq differential accessibility results.
 Each row corresponds to a chromatin accessibility peak tested for
 differential accessibility across one or more cell types.
 The dataset is formatted as a list of \code{GRanges} objects or

@@ -5,8 +5,8 @@
 #'   as returned by \code{compute_spicey_index()} using single-cell ATAC-seq differential accessibility data.
 #'   Must include at least the following columns:
 #'   \describe{
-#'     \item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800)}
-#'     \item{cell_type}{Cell type or cluster label.}
+#'     \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
+#'     \item{cell_type}{Cell type or cluster label (e.g., \code{Acinar})}
 #'     \item{RETSI}{RETSI value: cell-type specificity score}
 #'     \item{norm_entropy}{Normalized Shannon entropy of RETSI}
 #'   }
@@ -14,8 +14,8 @@
 #'   as returned by \code{compute_spicey_index()} using single-cell RNA-seq differential expression data.
 #'   Must include at least the following columns:
 #'   \describe{
-#'     \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
-#'     \item{cell_type}{Cell type or cluster label.}
+#'     \item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})}.
+#'     \item{cell_type}{Cell type or cluster label (e.g., \code{Acinar})}
 #'     \item{GETSI}{GETSI value: cell-type specificity score}
 #'     \item{norm_entropy}{Normalized Shannon entropy of GETSI}
 #'   }
@@ -23,9 +23,9 @@
 #' @return A \code{data.frame} where each row represents a regulatory element–gene pair
 #'   linked within a given cell type. The output includes:
 #'   \describe{
-#'     \item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800)}
-#'     \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
-#'     \item{cell_type}{Cell type or cluster in which the association is observed.}
+#'     \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
+#'     \item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH}).
+#'     \item{cell_type}{Cell type or cluster in which the association is observed (e.g., \code{Acinar})}
 #'     \item{RETSI}{RETSI score: regulatory element specificity in this cell type.}
 #'     \item{RETSI_entropy}{Normalized shannon-entropy of RETSI (lower = more specific).}
 #'     \item{GETSI}{GETSI score: gene expression specificity in this cell type.}

@@ -12,7 +12,7 @@ and one score column (e.g., \code{RETSI} or \code{GETSI}).}
 
 \item{score_col}{Character. Name of the score column to z-score and rank (e.g., \code{"RETSI"}).}
 
-\item{top_n}{Integer. Number of top-ranked genes to retain per cell type.}
+\item{top_n}{Integer. Number of top-ranked genes to retain per cell type. (e.g., \code{"5"})}
 }
 \value{
 A data frame with columns: \code{gene_id}, \code{cell_type}, and \code{z_score}.

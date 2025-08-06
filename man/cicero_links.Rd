@@ -7,8 +7,8 @@
 \format{
 A data frame with the following columns:
 \describe{
-\item{Peak1}{Genomic coordinate or peak identifier for the first peak in the pair (e.g., chr1-110209621-110211746)}
-\item{Peak2}{Genomic coordinate or peak identifier for the second peak in the pair (e.g., chr1-110209621-110211746)}
+\item{Peak1}{Genomic coordinate or peak identifier for the first peak in the pair (e.g., \code{chr1-110209621-110211746})}
+\item{Peak2}{Genomic coordinate or peak identifier for the second peak in the pair (e.g., \code{chr1-110209621-110211746})}
 \item{coaccess}{Co-accessibility score or correlation value quantifying the linkage}
 }
 }

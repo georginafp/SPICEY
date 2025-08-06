@@ -14,8 +14,8 @@ official gene symbols, while region IDs should follow the usual genomic
 coordinate format such as \code{chr-start-end} or \code{chr:start-end}.
 The name of this column must match the \code{id} argument.}
 \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
-\item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
-\item{cell_type}{Cell type or cluster label.}
+\item{p_val_adj}{Adjusted p-value (e.g., \code{FDR-corrected})}
+\item{cell_type}{Cell type or cluster label (e.g., \code{Acinar})}
 }}
 
 \item{id}{A character string specifying the name of the column in \code{diff}

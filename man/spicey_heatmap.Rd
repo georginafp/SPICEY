@@ -14,14 +14,14 @@ spicey_heatmap(
 \arguments{
 \item{df}{A data frame with at least the following columns:
 \describe{
-\item{\code{gene_id}}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH).
+\item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH}).
 If you only have ATAC data, link to nearest gene (\code{\link{annotate_with_nearest}})
 or using coaccessibility (\code{\link{annotate_with_coaccessibility}}).}
-\item{\code{cell_type}}{Cell type or cluster label (e.g., Acinar)}
+\item{\code{cell_type}}{Cell type or cluster label (e.g., \code{Acinar})}
 \item{\code{RETSI}}{Numeric. RETSI specificity scores (optional unless used).}
 \item{\code{GETSI}}{Numeric. GETSI specificity scores (optional unless used).}}}
 
-\item{top_n}{Integer. Number of top-ranked genes to include per cell type (default: 5).}
+\item{top_n}{Integer. Number of top-ranked genes to include per cell type (default \code{"5"})}
 
 \item{spicey_measure}{Character. Score type to visualize. Must be one of the following:
 \describe{
