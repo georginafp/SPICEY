@@ -20,7 +20,8 @@ extract_gene_peak_annotations(
 \item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}). Only for data.frames.}
 \item{start}{Start coordinate of the peak. Only for data.frames.}
 \item{end}{End coordinate of the peak. Only for data.frames.}
-\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}}}
+\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}
+}}
 
 \item{txdb}{\code{TxDb} object for genome annotation (required if annotation requested).}
 
@@ -41,7 +42,8 @@ A \code{GRanges with} with:
 \describe{
 \item{seqnames, start, end}{Coordinates of the peak that overlaps with a gene promoter.}
 \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
-\item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})
+\item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})}
+}
 }
 \description{
 Identifies overlaps between a set of peaks and promoter regions,

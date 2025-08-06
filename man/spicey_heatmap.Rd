@@ -50,11 +50,11 @@ library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
 
 data(rna)
-data(atac)<
-data(cicero_links)
+data(atac) <
+  data(cicero_links)
 
 # Obtain annotatin with coaccessibility
-peaks <- unique(unlist(atac)[,c("region_id")])
+peaks <- unique(unlist(atac)[, c("region_id")])
 annotation_coacc <- annotate_with_coaccessibility(
   peaks = peaks,
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
@@ -75,7 +75,7 @@ spicey_coacc <- SPICEY(
 )
 
 # Make plots
-retsi <- spicey_coacc$RETSI |>  dplyr::left_join(annotation_coacc, by=c("region_id"))
+retsi <- spicey_coacc$RETSI |> dplyr::left_join(annotation_coacc, by = c("region_id"))
 spicey_heatmap(retsi, spicey_measure = "RETSI")
 
 spicey_heatmap(spicey_coacc$GETSI, spicey_measure = "GETSI")

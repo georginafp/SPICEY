@@ -6,19 +6,21 @@
 #'   \item RETSI calculation from differential accessibility data in different cell types/clusters (scATAC-seq).
 #'   \item GETSI calculation from differential expression data in different cell types/clusters (scRNA-seq).
 #'   \item Optional integration of RETSI and GETSI scores by linking gene associations
-#'   (see \code{\link{annotate_with_nearest}} or \code{\link{annotate_with_coaccessibility}})}
+#'   (see \code{\link{annotate_with_nearest}} or \code{\link{annotate_with_coaccessibility}})
+#'   }
 #' @param rna Either a single \code{data.frame} or a named list of
 #'   \code{data.frame}s or \code{GRanges} where each element corresponds
 #'   to a cell type. It should contain differential expression results,
 #'   with required columns:
 #'   \describe{
 #'     \item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH}).
-#'     The name of this column should match the \code{gene_id} argument.}}
+#'     The name of this column should match the \code{gene_id} argument.}
 #'     \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
 #'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 #'     \item{cell_type}{Cell type or cluster label. Only necessary when input is
-#'           a single \code{data.frame}. If input is a list, it will be generated from list names}
-#'   Note that the same gene may appear multiple times across cell types.
+#'           a single \code{data.frame}. If input is a list, it will be generated from list names
+#'   Note that the same gene may appear multiple times across cell types.}
+#'   }
 #' @param atac Either a single \code{data.frame} or a named list of
 #'   \code{data.frame}s or \code{GRanges} where each element corresponds
 #'   to a cell type.  It should contain differential chromatin accessibility
@@ -29,8 +31,9 @@
 #'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 #'     \item{cell_type}{Cell type or cluster label. Only necessary when input is
 #'           a single \code{data.frame}. If input is a list, it will be generated
-#'           from list names}.
+#'           from list names.
 #'   Note that the same region may appear multiple times across cell types.}
+#'   }
 #' @param annotation (Optional). A data.frame linking \code{gene_id} to \code{region_id}.
 #' They should have the same names provided in the respective parameters.
 #' This can be provided by the user or generated using the functions:
@@ -63,7 +66,7 @@
 #' # Integrate RETSI and GETSI with nearest gene
 #' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 #' library(org.Hs.eg.db)
-#' peaks <- unique(unlist(atac)[,c("region_id")])
+#' peaks <- unique(unlist(atac)[, c("region_id")])
 #'
 #' annotation_near <- annotate_with_nearest(
 #'   peaks = peaks,
@@ -100,7 +103,6 @@
 #'   atac = atac,
 #'   annotation = annotation_coacc
 #' )
-
 #' @export
 SPICEY <- function(atac = NULL,
                    rna = NULL,
@@ -145,7 +147,8 @@ SPICEY <- function(atac = NULL,
   } else {
     if (verbose) message("Linking RETSI and GETSI using provided annotation...")
     combined <- link_spicey(
-      retsi = retsi, getsi = getsi, annotation = annotation)
+      retsi = retsi, getsi = getsi, annotation = annotation
+    )
     results$linked <- combined
     if (verbose) message("SPICEY pipeline successfully completed")
     return(results)

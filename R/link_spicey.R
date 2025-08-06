@@ -23,8 +23,8 @@
 #' @return A \code{data.frame} where each row represents a regulatory element–gene pair
 #'   linked within a given cell type. The output includes:
 #'   \describe{
-#'     \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
-#'     \item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH}).
+#'     \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}
+#'     \item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})}.
 #'     \item{cell_type}{Cell type or cluster in which the association is observed (e.g., \code{Acinar})}
 #'     \item{RETSI}{RETSI score: regulatory element specificity in this cell type.}
 #'     \item{RETSI_entropy}{Normalized shannon-entropy of RETSI (lower = more specific).}
@@ -36,8 +36,10 @@
 link_spicey <- function(retsi = NULL,
                         getsi = NULL,
                         annotation = NULL) {
-  keep_cols <- c("region_id", "cell_type", "gene_id", "distanceToTSS",
-                 "annotation", "TSS_gene", "in_TSS")
+  keep_cols <- c(
+    "region_id", "cell_type", "gene_id", "distanceToTSS",
+    "annotation", "TSS_gene", "in_TSS"
+  )
 
   links <- retsi |>
     dplyr::inner_join(
@@ -53,4 +55,3 @@ link_spicey <- function(retsi = NULL,
 
   return(links)
 }
-

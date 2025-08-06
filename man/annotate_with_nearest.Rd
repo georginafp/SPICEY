@@ -21,7 +21,8 @@ annotate_with_nearest(
 \item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}). Only for data.frames.}
 \item{start}{Start coordinate of the peak. Only for data.frames.}
 \item{end}{End coordinate of the peak. Only for data.frames.}
-\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}}}
+\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}
+}}
 
 \item{txdb}{\code{TxDb} object for genome annotation (required if annotation requested).}
 
@@ -42,10 +43,9 @@ from the TSS (transcription start sites) (default \code{"2000kb"}).}
 }
 \value{
 A \code{data.frame} of peaks annotated to its nearest gene, with columns:
-\itemize{
-\item \code{distanceToTSS}: distance to the nearest TSS
-\item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})
-\item \code{annotation}: \code{"Promoter"} or \code{"Distal"} based on distance}
+\item{distanceToTSS}{Distance to the nearest TSS}
+\item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})}
+\item{annotation}{\code{"Promoter"} or \code{"Distal"} based on distance}
 }
 \description{
 based on distance to the transcription start site (TSS), using a \code{TxDb}
@@ -57,7 +57,7 @@ library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
 
 data(atac)
-peaks <- unique(unlist(atac)[,c("region_id")])
+peaks <- unique(unlist(atac)[, c("region_id")])
 
 annotation_near <- annotate_with_nearest(
   peaks = peaks,

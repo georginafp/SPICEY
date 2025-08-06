@@ -51,9 +51,7 @@ annotation_coacc <- annotate_with_coaccessibility(
 # Calculate SPICEY measures and link them with coaccessibility
 spicey_coacc <- SPICEY(
   rna = rna,
-  gene_id = "gene_id",
   atac = atac,
-  region_id = "region_id",
   annotation = annotation_coacc
 )
 

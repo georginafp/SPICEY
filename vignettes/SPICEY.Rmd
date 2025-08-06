@@ -13,13 +13,13 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(
-    collapse = TRUE,
-    comment = "#>",
-    eval = TRUE,
-    warning = FALSE,
-    message = FALSE,
-    fig.align = "center",
-    out.width = "80%"
+  collapse = TRUE,
+  comment = "#>",
+  eval = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  fig.align = "center",
+  out.width = "80%"
 )
 ```
 
@@ -51,11 +51,11 @@ SPICEY defines two complementary metrics to quantify cell-type specificity:
 Both RETSI and GETSI are calculated using a weighted specificity score for each feature (regulatory region or gene), reflecting the level of enrichment in each cell type. These specificity indices are computed as follows:
 
 $$
-TSI_{i,x} = \frac{FC_{i,x}}{\max(FC)_x} \cdot w_{i,x}
+TSI_{i,x} = \frac{FC_{i,x}}{\max(FC)_x} \cdot w_{i}
 $$
 
 $$
-w_{i,x} = \text{rescale}\left( -\log_{10}(padj_{i,x}),\ [0, 1] \right)
+w_{i} = \text{rescale}\left( -\log_{10}(padj_{i}),\ [0, 1] \right)
 $$
 
 where:
@@ -63,7 +63,7 @@ where:
 -   $i$ is a specific cell type
 -   $x \in \{r, g\}$, with $r$ for regulatory region (RETSI) and $g$ for gene (GETSI)
 -   $\text{FC}_{i,x}$ is the log fold-change of feature $x$ in cell type $i$
--   $w_{i,x}$ is the weight term, defined as the rescaled value of $-\log_{10}(\text{adjusted } p\text{-value})$ between 0 and 1
+-   $w_{i}$ is the weight term, defined as the rescaled value of $-\log_{10}(\text{adjusted } p\text{-value})$ between 0 and 1
 
 SPICEY offers two strategies for linking regulatory elements to their putative target genes:
 
@@ -76,23 +76,37 @@ These linking methods enable the integration of regulatory specificity (RETSI) a
 
 ## Entropy-based Specificity Indices
 
-Beyond fold change–based metrics, SPICEY employs an entropy-based approach to measure the distributional skewness of feature activity across cell types using **Shannon entropy**.
+In addition to fold change–based metrics, SPICEY incorporates an entropy-based approach to quantify the distributional concentration or distributional skewness of feature activity across cell types using **Shannon entropy**.
 
-For each feature, activity or expression values are normalized into a probability distribution representing signal concentration across all $N$ cell types. Lower entropy values indicate stronger cell-type specificity, whereas higher entropy suggests more uniform distribution. These entropy-based specificity indices are calculated as follows:
+For each feature $x$ (e.g., gene or regulatory region), the activity or expression scores across $N$ cell types are normalized into a probability distribution. This allows measuring how specific or broadly distributed a feature's activity is across cell types. 
+Lower entropy values indicate higher cell-type specificity, while higher entropy reflects more ubiquitous expression or accessibility. These entropy-based indices are computed as follows:
 
-$$
-H = - \sum_{i=1}^{N} p_i \log_2(p_i)
-$$
 
 $$
-H_{norm} = 1 - e^{H}
+H(x) = - \sum_{i=1}^{N} p_{i,x} \log_2(p_{i,x})
 $$
 
-where:
+$$
+H_{\text{norm}}(x) = 1 - e^{-H(x)}
+$$
+where: 
 
--   $p_{i,x} = \frac{a_{i,x}}{\sum_{j=1}^{N} a_{j,x}}$ is the normalized activity or expression of feature $x$ across $N$ cell types
--   $a_{i,x}$ is the activity (for RETSI) or expression (for GETSI) value in cell type \$\$
--   $H_x$ is the Shannon entropy, and Normalized Entropy ranges between 0 (cell type specific) and 1 (cell type shared).
+$$
+p_{i,x} = \frac{s_{i,x}}{\sum_{j=1}^{N} s_{j,x}}
+$$
+
+being:
+
+- $s_{i,x}$ is the specificity score (e.g., RETSI or GETSI) of feature $x$ in cell type $i$
+- $p_{i,x}$ is the normalized score, interpreted as the probability of feature $x$'s activity in cell type $i$
+- $H(x)$ is the Shannon entropy, quantifying signal dispersion across cell types
+- $H_{\text{norm}}(x)$ is the normalized entropy, bounded between 0 and 1:
+  - Values close to 0 indicate strong specificity
+  - Values close to 1 indicate broad distribution
+
+<br>
+
+This entropy framework provides a robust and interpretable measure of cell-type specificity that is complementary to fold change–based approaches.
 
 # Installation
 
@@ -193,7 +207,7 @@ When supplied with differential chromatin accessibility (ATAC) and/or gene expre
 
 The output is a structured list containing all intermediate and final results, facilitating downstream analysis and reuse.
 
-```{r quick-example, fig.width=5, fig.width=4}
+```{r quick-example, fig.width=2, fig.height=3}
 # Load necessary packages
 library(dplyr)
 library(GenomicRanges)
@@ -206,17 +220,17 @@ data(rna)
 data(cicero_links)
 
 # Annotate peaks to genes with coaccessibility
-peaks <- unique(unlist(atac)[,c("region_id")])
+peaks <- unique(unlist(atac)[, c("region_id")])
 annotation_coacc <- annotate_with_coaccessibility(
-   peaks = peaks,
-   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-   links_df = cicero_links,
-   annot_dbi = org.Hs.eg.db,
-   protein_coding_only = TRUE,
-   verbose = TRUE,
-   add_tss_annotation = FALSE,
-   upstream = 2000,
-   downstream = 2000
+  peaks = peaks,
+  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+  links_df = cicero_links,
+  annot_dbi = org.Hs.eg.db,
+  protein_coding_only = TRUE,
+  verbose = TRUE,
+  add_tss_annotation = FALSE,
+  upstream = 2000,
+  downstream = 2000
 )
 
 # Calculate SPICEY measures and link them with coaccessibility
@@ -227,9 +241,10 @@ spicey_coacc <- SPICEY(
 )
 
 # Plot results
-spicey_heatmap(spicey_coacc$linked, 
-               spicey_measure = "SPICEY",
-               combined_zscore = TRUE)
+spicey_heatmap(spicey_coacc$linked,
+  spicey_measure = "SPICEY",
+  combined_zscore = TRUE
+)
 ```
 
 
@@ -248,7 +263,7 @@ SPICEY returns a `data.frame` combining the input differential accessibility dat
 **Note:** Confirm that your inputs comply with the format outlined in the *Input Requirements* section prior to execution.
 
 ```{r retsi, message=FALSE, warning=FALSE}
-retsi <- SPICEY(atac=atac)
+retsi <- SPICEY(atac = atac)
 head(retsi)
 ```
 
@@ -263,7 +278,7 @@ SPICEY outputs a `data.frame` that integrates the input differential expression 
 **Note:** Verify that your inputs adhere to the format described in the *Input Requirements* section before execution.
 
 ```{r getsi, message=FALSE, warning=FALSE}
-getsi <- SPICEY(rna=rna)
+getsi <- SPICEY(rna = rna)
 head(getsi)
 ```
 
@@ -274,8 +289,10 @@ SPICEY offers an integrated approach to quantify tissue specificity at both the 
 By supplying both `atac` and `rna` inputs together to the `SPICEY()` function, the tool calculates RETSI and GETSI scores and returns a list with each specificity measure provided separately.
 
 ```{r spicey, message=FALSE, warning=FALSE}
-spicey <- SPICEY(atac=atac, 
-                rna=rna)
+spicey <- SPICEY(
+  atac = atac,
+  rna = rna
+)
 lapply(spicey, head)
 ```
 
@@ -313,7 +330,7 @@ This method links each regulatory region to its closest gene TSS.
 -   `verbose`: Display progress messages (default: `TRUE`).
 
 ```{r re-gene-nearest, message=FALSE, warning=FALSE}
-peaks <- unique(unlist(atac)[,c("region_id")])
+peaks <- unique(unlist(atac)[, c("region_id")])
 
 annotation_near <- annotate_with_nearest(
   peaks = peaks,
@@ -323,7 +340,8 @@ annotation_near <- annotate_with_nearest(
   verbose = TRUE,
   add_tss_annotation = FALSE,
   upstream = 2000,
-  downstream = 2000)
+  downstream = 2000
+)
 
 head(annotation_near)
 ```
@@ -357,18 +375,19 @@ This method connects regulatory regions to genes through co-accessibility intera
 -   `verbose`: Display progress messages (default: `TRUE`).
 
 ```{r re-gene-coaccessibility, message=FALSE, warning=FALSE}
-peaks <- unique(unlist(atac)[,c("region_id")])
+peaks <- unique(unlist(atac)[, c("region_id")])
 
 annotation_coacc <- annotate_with_coaccessibility(
   peaks = peaks,
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-  links_df=cicero_links,
+  links_df = cicero_links,
   annot_dbi = org.Hs.eg.db,
   protein_coding_only = TRUE,
   verbose = TRUE,
   add_tss_annotation = FALSE,
   upstream = 2000,
-  downstream = 2000)
+  downstream = 2000
+)
 
 head(annotation_coacc)
 ```
@@ -389,16 +408,20 @@ With the annotation linking regulatory elements to their target genes (via TSS p
 This approach supports comprehensive analysis of regulatory mechanisms at both epigenetic and transcriptional levels.
 
 ```{r spicey_link_annot, message=FALSE, warning=FALSE}
-# Using nearest gene annotation data 
-spicey_near <- SPICEY(rna = rna,
-                      atac=atac,
-                      annotation = annotation_near)
+# Using nearest gene annotation data
+spicey_near <- SPICEY(
+  rna = rna,
+  atac = atac,
+  annotation = annotation_near
+)
 
 
-# Using co-accessibility gene annotation data 
-spicey_coacc <- SPICEY(rna = rna,
-                       atac=atac,
-                       annotation = annotation_coacc)
+# Using co-accessibility gene annotation data
+spicey_coacc <- SPICEY(
+  rna = rna,
+  atac = atac,
+  annotation = annotation_coacc
+)
 ```
 
 This function returns a list containing separately computed RETSI and GETSI scores, along with an additional element that links these measures based on the selected region-to-gene annotation method.
@@ -483,29 +506,33 @@ To run `spicey_heatmap()`, the input must be a `data.frame` with the following c
 -   `spicey_measure`: Score type to visualize. Must be one of `"RETSI"`, `"GETSI"`, or `"SPICEY"`.
 -   `combined_zscore`: Logical. If `TRUE` and `spicey_measure = "SPICEY"`, computes a combined z-score across RETSI and GETSI (default: `FALSE`).
 
-```{r spicey-heatmap-sep, message=FALSE, warning=FALSE, fig.width=4, fig.width=3}
+```{r spicey-heatmap-sep, message=FALSE, warning=FALSE, fig.width=2, fig.height=3}
 # RETSI and/or GETSI separately
-spicey_heatmap(spicey_coacc$GETSI, 
-               spicey_measure = "GETSI")
+spicey_heatmap(spicey_coacc$GETSI,
+  spicey_measure = "GETSI"
+)
 
 # If only RETSI is calculated (only ATAC data available), join with coaccessibility or nearest gene annotation to show gene_id in the plots
 retsi <- spicey_coacc$RETSI
-retsi <- retsi |>  left_join(annotation_near, by=c("region_id"))
-spicey_heatmap(retsi, 
-               spicey_measure = "RETSI")
+retsi <- retsi |> left_join(annotation_near, by = c("region_id"))
+spicey_heatmap(retsi,
+  spicey_measure = "RETSI"
+)
 ```
 
-```{r spicey-heatmap-pair, message=FALSE, warning=FALSE, fig.width=8, fig.width=6}
-spicey_heatmap(spicey_coacc$linked, 
-               spicey_measure = "SPICEY", 
-               combined_zscore = FALSE)
+```{r spicey-heatmap-pair, message=FALSE, warning=FALSE, fig.width=3.5, fig.height=4.5}
+spicey_heatmap(spicey_coacc$linked,
+  spicey_measure = "SPICEY",
+  combined_zscore = FALSE
+)
 ```
 
-```{r spicey-heatmap-comb, message=FALSE, warning=FALSE, fig.width=4, fig.width=3}
-# SPICEY: combined average RETSI and GETSI scores 
-spicey_heatmap(spicey_coacc$linked, 
-               spicey_measure = "SPICEY", 
-               combined_zscore = TRUE)
+```{r spicey-heatmap-comb, message=FALSE, warning=FALSE, fig.width=2, fig.height=3}
+# SPICEY: combined average RETSI and GETSI scores
+spicey_heatmap(spicey_coacc$linked,
+  spicey_measure = "SPICEY",
+  combined_zscore = TRUE
+)
 ```
 
 # References
@@ -513,7 +540,5 @@ spicey_heatmap(spicey_coacc$linked,
 # SessionInfo
 
 ```{r sessionInfo}
-
 sessionInfo()
-
 ```

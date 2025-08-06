@@ -22,7 +22,8 @@ annotate_with_coaccessibility(
 \item{seqnames}{Chromosome name of the regulatory region (e.g., \code{"chr1"}). Only for data.frames.}
 \item{start}{Start coordinate of the peak. Only for data.frames.}
 \item{end}{End coordinate of the peak. Only for data.frames.}
-\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}}}
+\item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800})}
+}}
 
 \item{txdb}{\code{TxDb} object for genome annotation (required if annotation requested).}
 
@@ -59,7 +60,7 @@ library(org.Hs.eg.db)
 data(atac)
 data(cicero_links)
 
-peaks <- unique(unlist(atac)[,c("region_id")])
+peaks <- unique(unlist(atac)[, c("region_id")])
 annotation_coacc <- annotate_with_coaccessibility(
   peaks = peaks,
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,

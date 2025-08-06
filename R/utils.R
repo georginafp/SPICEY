@@ -6,7 +6,7 @@ utils::globalVariables(c(
   "Peak1", "Peak2", "coaccess", "gene_name1", "gene_name2",
   "peak", "queryHits", "subjectHits", "seqlevels", "is", "makeGRangesFromDataFrame",
   "cell_type", "GETSI_entropy", "avg_log2FC", "p_val", "p_val_adj", "GETSI_z",
-  "RETSI", "RETSI_z", "combined_score", "max_cell_type", "max_score", "z_score","everything"
+  "RETSI", "RETSI_z", "combined_score", "max_cell_type", "max_score", "z_score", "everything"
 ))
 
 #' Parses input data of various types (e.g., named lists of \code{GRanges}
@@ -32,11 +32,9 @@ utils::globalVariables(c(
         df
       })
       input <- dplyr::bind_rows(input_df, .id = "cell_type")
-
     } else if (is(input[[1]], "data.frame")) {
       input <- dplyr::bind_rows(input, .id = "cell_type")
     }
-
   } else if (is(input, "GRangesList")) {
     input <- dplyr::bind_rows(lapply(input, function(x) {
       df <- data.frame(mcols(x))
