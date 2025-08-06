@@ -28,53 +28,39 @@ Now you can load the package using `library(SPICEY)`.
 For detailed instructions on how to use SPICEY, please see the vignette once the package is installed using: `vignette("SPICEY")`.
 
 ``` r
-# Load needed libraries
-library(SPICEY)
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-library(org.Hs.eg.db)
 library(dplyr)
 library(GenomicRanges)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Hs.eg.db)
+library(SPICEY)
 
-# Compute GETSI 
-results <- SPICEY(rna = rna, gene_id = "gene_id")
+# Annotate peaks to genes with coaccessibility
+peaks <- unique(unlist(atac)[,c("region_id")])
+annotation_coacc <- annotate_with_coaccessibility(
+   peaks = peaks,
+   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+   links_df = cicero_links,
+   annot_dbi = org.Hs.eg.db,
+   protein_coding_only = TRUE,
+   verbose = TRUE,
+   add_tss_annotation = FALSE,
+   upstream = 2000,
+   downstream = 2000
+)
 
-# Compute RETSI
-results <- SPICEY(atac=atac, region_id = "region_id")
-
-# Compute GETSI + RETSI
-results <- SPICEY(atac=atac, rna=rna, gene_id = "gene_id", region_id = "region_id")
-
-# Compute GETSI + RETSI and link RE to target genes through an annotation data frame
-result <- SPICEY(
-  atac = atac, 
-  rna = rna, 
+# Calculate SPICEY measures and link them with coaccessibility
+spicey_coacc <- SPICEY(
+  rna = rna,
   gene_id = "gene_id",
+  atac = atac,
   region_id = "region_id",
-  annotation = annotation_df)
+  annotation = annotation_coacc
+)
 
-# NOTE: If desired, SPICEY accounts for RE to target gene annotation methods 
-## Annotation to nearest gene 
-annotation_df <- annotate_with_nearest(
-  peaks = peaks,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-  annot_dbi = org.Hs.eg.db,
-  protein_coding_only = TRUE,
-  verbose = TRUE,
-  add_tss_annotation = FALSE,
-  upstream = 2000,
-  downstream = 2000)
-
-## Annotation to co-accessible gene
-annotation_df <- annotate_with_coaccessibility(
-  peaks = peaks,
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-  links_df = cicero_links,
-  annot_dbi = org.Hs.eg.db,
-  protein_coding_only = TRUE,
-  verbose = TRUE,
-  add_tss_annotation = FALSE,
-  upstream = 2000,
-  downstream = 2000)
+# Plot results
+spicey_heatmap(spicey_coacc$linked, 
+               spicey_measure = "SPICEY",
+               combined_zscore = TRUE)
 ```
 
 ## Code of Conduct

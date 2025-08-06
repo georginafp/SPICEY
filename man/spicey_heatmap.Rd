@@ -14,7 +14,9 @@ spicey_heatmap(
 \arguments{
 \item{df}{A data frame with at least the following columns:
 \describe{
-\item{\code{gene_id}}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)}
+\item{\code{gene_id}}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH).
+If you only have ATAC data, link to nearest gene (\code{\link{annotate_with_nearest}})
+or using coaccessibility (\code{\link{annotate_with_coaccessibility}}).}
 \item{\code{cell_type}}{Cell type or cluster label (e.g., Acinar)}
 \item{\code{RETSI}}{Numeric. RETSI specificity scores (optional unless used).}
 \item{\code{GETSI}}{Numeric. GETSI specificity scores (optional unless used).}}}
@@ -44,28 +46,15 @@ scores are scaled, averaged, and shown in a unified heatmap. Otherwise, separate
 heatmaps are produced for RETSI and GETSI, respectively.
 }
 \examples{
-library(dplyr)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
-library(SPICEY)
+
 data(rna)
-data(atac)
+data(atac)<
 data(cicero_links)
-retsi <- SPICEY(atac = atac, region_id = "region_id")
-getsi <- SPICEY(rna = rna, gene_id = "gene_id")
-both <- SPICEY(
-  rna = rna,
-  gene_id = "gene_id",
-  atac = atac,
-  region_id = "region_id"
-)
-peaks <- SPICEY:::.parse_input_diff(atac)
-peaks <- peaks \%>\%
-  tidyr::separate(region_id,
-    into = c("chr", "start", "end"), sep = "-",
-    convert = TRUE, remove = FALSE
-  ) \%>\%
-  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+
+# Obtain annotatin with coaccessibility
+peaks <- unique(unlist(atac)[,c("region_id")])
 annotation_coacc <- annotate_with_coaccessibility(
   peaks = peaks,
   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
@@ -77,16 +66,22 @@ annotation_coacc <- annotate_with_coaccessibility(
   upstream = 2000,
   downstream = 2000
 )
+
+# Obtain linked SPICEY measures
 spicey_coacc <- SPICEY(
   rna = rna,
-  gene_id = "gene_id",
   atac = atac,
-  region_id = "region_id",
   annotation = annotation_coacc
 )
-spicey_heatmap(spicey_coacc$linked, spicey_measure = "RETSI")
-spicey_heatmap(spicey_coacc$linked, spicey_measure = "GETSI")
+
+# Make plots
+retsi <- spicey_coacc$RETSI |>  dplyr::left_join(annotation_coacc, by=c("region_id"))
+spicey_heatmap(retsi, spicey_measure = "RETSI")
+
+spicey_heatmap(spicey_coacc$GETSI, spicey_measure = "GETSI")
+
 spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = FALSE)
+
 spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = TRUE)
 }
 \seealso{

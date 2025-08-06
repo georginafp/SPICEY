@@ -34,14 +34,9 @@ Imports:
     tibble,
     GenomeInfoDb,
     scales,
-    textshape,
     cowplot
 Suggests:
     BiocStyle,
-    cicero,
-    devtools,
-    pkgdown,
-    roxygen2,
     knitr,
     rmarkdown,
     TxDb.Hsapiens.UCSC.hg38.knownGene,
@@ -56,9 +51,8 @@ biocViews:
     DifferentialPeakCalling,
     GeneRegulation,
     GeneTarget,
-    GeneExpression, 
-    Network, 
-    Clustering
+    GeneExpression,
+    Transcription
 RoxygenNote: 7.3.2
 Roxygen: list(markdown = TRUE)
 URL: https://georginafp.github.io/SPICEY

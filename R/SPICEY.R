@@ -12,8 +12,7 @@
 #'   to a cell type. It should contain differential expression results,
 #'   with required columns:
 #'   \describe{
-#'     \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH)
-#'          The name of this column should be provided in argument \code{gene_id}}
+#'     \item{gene_id}{Identifier of the gene. This must be official gene symbols (e.g., GAPDH).}
 #'     \item{avg_log2FC}{Average log2 fold-change for the gene in that cell type.}
 #'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 #'     \item{cell_type}{Cell type or cluster label. Only necessary when input is
@@ -24,18 +23,13 @@
 #'   to a cell type.  It should contain differential chromatin accessibility
 #'   results with required columns:
 #'   \describe{
-#'     \item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800)
-#'     The name of this column should be provided in argument \code{region_id}.}
+#'     \item{region_id}{Unique identifier of the region (e.g., chr1-5000-5800).}
 #'     \item{avg_log2FC}{Average log2 fold-change for accessibility in that cell type.}
 #'     \item{p_val_adj}{Adjusted p-value (e.g., FDR-corrected).}
 #'     \item{cell_type}{Cell type or cluster label. Only necessary when input is
 #'           a single \code{data.frame}. If input is a list, it will be generated
 #'           from list names}.
 #'   Note that the same region may appear multiple times across cell types.}
-#' @param gene_id A character string specifying the column name in each list element
-#'   that contains the official gene symbol identifiers.
-#' @param region_id A character string specifying the column name in each list element
-#'   that contains the accessible region identifiers.
 #' @param annotation A data.frame linking \code{gene_id} to \code{region_id}.
 #' They should have the same names provided in the respective parameters.
 #' This can be provided by the user or generated using the function \code{\link{link_spicey}}.
@@ -49,28 +43,45 @@
 #' @param verbose Logical; print messages (default TRUE).
 #' @return Depending on inputs, returns RETSI and/or GETSI data frames, optionally linked and annotated.
 #' @examples
-#' library(dplyr)
-#' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-#' library(org.Hs.eg.db)
-#' library(SPICEY)
 #' data(rna)
 #' data(atac)
-#' data(cicero_links)
-#' retsi <- SPICEY(atac = atac, region_id = "region_id")
-#' getsi <- SPICEY(rna = rna, gene_id = "gene_id")
+#' 
+#' # Calculate RETSI only
+#' retsi <- SPICEY(atac = atac)
+#' 
+#' # Calculate GETSI only
+#' getsi <- SPICEY(rna = rna)
+#' 
+#' # Calculate both
 #' both <- SPICEY(
 #'   rna = rna,
-#'   gene_id = "gene_id",
-#'   atac = atac,
-#'   region_id = "region_id"
+#'   atac = atac
 #' )
-#' peaks <- SPICEY:::.parse_input_diff(atac)
-#' peaks <- peaks %>%
-#'   tidyr::separate(region_id,
-#'     into = c("chr", "start", "end"), sep = "-",
-#'     convert = TRUE, remove = FALSE
-#'   ) %>%
-#'   GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+#' 
+#' # Integrate RETSI and GETSI with nearest gene
+#' library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+#' library(org.Hs.eg.db)
+#' peaks <- unique(unlist(atac)[,c("region_id")])
+#'
+#' annotation_near <- annotate_with_nearest(
+#'   peaks = peaks,
+#'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+#'   annot_dbi = org.Hs.eg.db,
+#'   protein_coding_only = TRUE,
+#'   verbose = TRUE,
+#'   add_tss_annotation = FALSE,
+#'   upstream = 2000,
+#'   downstream = 2000
+#' )
+#' spicey_near <- SPICEY(
+#'   rna = rna,
+#'   atac = atac,
+#'   annotation = annotation_near
+#' )
+#' 
+#' # Integrate RETSI and GETSI with coaccessibility
+#' data(cicero_links)
+#' 
 #' annotation_coacc <- annotate_with_coaccessibility(
 #'   peaks = peaks,
 #'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
@@ -84,48 +95,26 @@
 #' )
 #' spicey_coacc <- SPICEY(
 #'   rna = rna,
-#'   gene_id = "gene_id",
 #'   atac = atac,
-#'   region_id = "region_id",
 #'   annotation = annotation_coacc
 #' )
-#' annotation_near <- annotate_with_nearest(
-#'   peaks = peaks,
-#'   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-#'   annot_dbi = org.Hs.eg.db,
-#'   protein_coding_only = TRUE,
-#'   verbose = TRUE,
-#'   add_tss_annotation = FALSE,
-#'   upstream = 2000,
-#'   downstream = 2000
-#' )
-#' spicey_near <- SPICEY(
-#'   rna = rna,
-#'   gene_id = "gene_id",
-#'   atac = atac,
-#'   region_id = "region_id",
-#'   annotation = annotation_near
-#' )
+
 #' @export
 SPICEY <- function(atac = NULL,
                    rna = NULL,
-                   gene_id = NULL,
-                   region_id = NULL,
                    annotation = NULL,
                    verbose = TRUE) {
   if (is.null(atac) && is.null(rna)) {
     stop("Provide at least one of 'atac' or 'rna'.")
   }
-  if (!is.null(rna) && is.null(gene_id)) {
-    stop("'gene_id' is required when RNA data is supplied.")
-  }
-  if (!is.null(atac) && is.null(region_id)) {
-    stop("'region_id' is required when ATAC data is supplied.")
-  }
+  
   if (!is.null(rna)) {
     if (verbose) message("Computing GETSI & entropy...")
     rna <- .parse_input_diff(rna)
-    getsi <- compute_spicey_index(diff = rna, id = gene_id) |>
+    
+    if (!("gene_id" %in% colnames(rna))) stop("'gene_id' column should be present in rna.")
+    
+    getsi <- compute_spicey_index(diff = rna, id = "gene_id") |>
       dplyr::rename(GETSI = score, GETSI_entropy = norm_entropy)
   } else {
     getsi <- NULL
@@ -133,7 +122,11 @@ SPICEY <- function(atac = NULL,
   if (!is.null(atac)) {
     if (verbose) message("Computing RETSI & entropy...")
     atac <- .parse_input_diff(atac)
-    retsi <- compute_spicey_index(atac, id = region_id) |>
+    
+    if (!("region_id" %in% colnames(atac))) stop("'region_id' column should be present in atac.")
+    
+    
+    retsi <- compute_spicey_index(atac, id = "region_id") |>
       dplyr::rename(RETSI = score, RETSI_entropy = norm_entropy)
   } else {
     retsi <- NULL
@@ -150,8 +143,7 @@ SPICEY <- function(atac = NULL,
   } else {
     if (verbose) message("Linking RETSI and GETSI using provided annotation...")
     combined <- link_spicey(
-      retsi = retsi, region_id = region_id, getsi = getsi,
-      gene_id = gene_id, annotation = annotation)
+      retsi = retsi, getsi = getsi, annotation = annotation)
     results$linked <- combined
     if (verbose) message("SPICEY pipeline successfully completed")
     return(results)

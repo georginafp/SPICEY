@@ -12,13 +12,6 @@ vignette: >
 ---
 
 ```{r setup, include = FALSE}
-
-library(dplyr)
-library(GenomicRanges)
-library(TxDb.Hsapiens.UCSC.hg38.knownGene)
-library(org.Hs.eg.db)
-library(SPICEY)
-
 knitr::opts_chunk$set(
     collapse = TRUE,
     comment = "#>",
@@ -28,7 +21,6 @@ knitr::opts_chunk$set(
     fig.align = "center",
     out.width = "80%"
 )
-
 ```
 
 ```{r logo, echo=FALSE, eval=TRUE, out.width='10%'}
@@ -113,6 +105,11 @@ devtools::install_github("georginafp/SPICEY")
 
 # Input Requirements
 
+```{r load-spicey}
+library(SPICEY)
+```
+
+
 SPICEY requires preprocessed input files generated from differential analyses of single-cell omics data, specifically chromatin accessibility (ATAC-seq) and/or gene expression (RNA-seq). These inputs are **not included** in the package and must be prepared externally. Below is a detailed overview of the required input formats and metadata.
 
 ## Single-cell ATAC-seq Data
@@ -180,6 +177,62 @@ data("cicero_links")
 head(cicero_links)
 ```
 
+# Quick example
+
+SPICEY offers a comprehensive main function, `SPICEY()`, which streamlines the entire workflow into a single, reproducible process. It also includes optional helper functions for region-to-gene annotation using different strategies: `annotate_with_coaccessibility()` and `annotate_with_nearest()`.
+
+When supplied with differential chromatin accessibility (ATAC) and/or gene expression (RNA) data from single-cell experiments, along with a chosen region-to-gene mapping method ("nearest" or "coaccessibility"), the `SPICEY()` function performs the following:
+
+1.  Computes tissue specificity scores from single-cell data:
+    -   RETSI (Regulatory Element Tissue Specificity Index) for ATAC data
+    -   GETSI (Gene Expression Tissue Specificity Index) for RNA data
+2.  (**Optional**) Annotates regulatory elements to target genes using either:
+    -   Nearest gene transcription start site (TSS) (e.g., +/- 2000bp around the TSS)
+    -   Co-accessibility links (e.g., derived from Cicero)
+3.  Builds tissue-specific regulatory networks by integrating RETSI and GETSI scores via the provided region-to-gene annotation.
+
+The output is a structured list containing all intermediate and final results, facilitating downstream analysis and reuse.
+
+```{r quick-example, fig.width=5, fig.width=4}
+# Load necessary packages
+library(dplyr)
+library(GenomicRanges)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Hs.eg.db)
+library(SPICEY)
+
+data(atac)
+data(rna)
+data(cicero_links)
+
+# Annotate peaks to genes with coaccessibility
+peaks <- unique(unlist(atac)[,c("region_id")])
+annotation_coacc <- annotate_with_coaccessibility(
+   peaks = peaks,
+   txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
+   links_df = cicero_links,
+   annot_dbi = org.Hs.eg.db,
+   protein_coding_only = TRUE,
+   verbose = TRUE,
+   add_tss_annotation = FALSE,
+   upstream = 2000,
+   downstream = 2000
+)
+
+# Calculate SPICEY measures and link them with coaccessibility
+spicey_coacc <- SPICEY(
+  rna = rna,
+  atac = atac,
+  annotation = annotation_coacc
+)
+
+# Plot results
+spicey_heatmap(spicey_coacc$linked, 
+               spicey_measure = "SPICEY",
+               combined_zscore = TRUE)
+```
+
+
 # Example: Step-by-Step SPICEY Workflow
 
 This section outlines how to execute SPICEY using preprocessed input files, as detailed previously.
@@ -189,14 +242,13 @@ This section outlines how to execute SPICEY using preprocessed input files, as d
 To calculate the **Regulatory Element Tissue Specificity Index (RETSI)**, the following inputs are required:
 
 -   **`atac`**: A named list of `GRanges` objects or `data.frame`s (convertible to `GRanges`), each representing differential accessibility results for a distinct cell type.
--   **`region_id`**: A character string specifying the column name containing region identifiers (e.g., `chr1-5000-5800`).
 
 SPICEY returns a `data.frame` combining the input differential accessibility data with RETSI scores for each regulatory region.
 
 **Note:** Confirm that your inputs comply with the format outlined in the *Input Requirements* section prior to execution.
 
 ```{r retsi, message=FALSE, warning=FALSE}
-retsi <- SPICEY(atac=atac, region_id = "region_id")
+retsi <- SPICEY(atac=atac)
 head(retsi)
 ```
 
@@ -205,14 +257,13 @@ head(retsi)
 To calculate the **Gene Expression Tissue Specificity Index (GETSI)**, the following inputs are required:
 
 -   **`rna`**: A named list of `GRanges` objects or `data.frame`s (convertible to `GRanges`), each containing differential gene expression results for a specific cell type.
--   **`gene_id`**: A character string specifying the column name with gene identifiers (e.g., official gene symbols).
 
 SPICEY outputs a `data.frame` that integrates the input differential expression data with computed GETSI scores for each gene.
 
 **Note:** Verify that your inputs adhere to the format described in the *Input Requirements* section before execution.
 
 ```{r getsi, message=FALSE, warning=FALSE}
-getsi <- SPICEY(rna=rna, gene_id = "gene_id")
+getsi <- SPICEY(rna=rna)
 head(getsi)
 ```
 
@@ -224,9 +275,7 @@ By supplying both `atac` and `rna` inputs together to the `SPICEY()` function, t
 
 ```{r spicey, message=FALSE, warning=FALSE}
 spicey <- SPICEY(atac=atac, 
-                region_id = "region_id", 
-                rna=rna,
-                gene_id = "gene_id")
+                rna=rna)
 lapply(spicey, head)
 ```
 
@@ -239,7 +288,7 @@ To establish these links, regulatory regions must be annotated to target genes. 
 1.  **Proximity-based annotation** — assigning regions to the nearest transcription start site (TSS).\
 2.  **Co-accessibility-based annotation** — leveraging promoter–enhancer co-accessibility relationships derived from snATAC-seq data (e.g., via `Cicero`).
 
-### Annotating Regions to Putative Target Genes (Optional)
+## Annotating Regions to Putative Target Genes (Optional)
 
 #### Nearest Gene Annotation
 
@@ -264,13 +313,7 @@ This method links each regulatory region to its closest gene TSS.
 -   `verbose`: Display progress messages (default: `TRUE`).
 
 ```{r re-gene-nearest, message=FALSE, warning=FALSE}
-
-peaks <- SPICEY:::.parse_input_diff(atac)
-peaks <- peaks %>% tidyr::separate(
-  region_id,
-  into = c("chr", "start", "end"), sep = "-",
-  convert = TRUE,remove = FALSE) %>%
-  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+peaks <- unique(unlist(atac)[,c("region_id")])
 
 annotation_near <- annotate_with_nearest(
   peaks = peaks,
@@ -314,14 +357,7 @@ This method connects regulatory regions to genes through co-accessibility intera
 -   `verbose`: Display progress messages (default: `TRUE`).
 
 ```{r re-gene-coaccessibility, message=FALSE, warning=FALSE}
-
-peaks <- SPICEY:::.parse_input_diff(atac)
-peaks <- peaks %>% 
-  tidyr::separate(
-    region_id,
-    into = c("chr", "start", "end"), sep = "-",
-    convert = TRUE,remove = FALSE) %>%
-  GenomicRanges::makeGRangesFromDataFrame(keep.extra.columns = TRUE)
+peaks <- unique(unlist(atac)[,c("region_id")])
 
 annotation_coacc <- annotate_with_coaccessibility(
   peaks = peaks,
@@ -339,47 +375,12 @@ head(annotation_coacc)
 
 This function returns a data frame linking each regulatory region to its associated gene based on co-accessibility relationships.
 
-#### Annotate to both
-
-Alternatively, users may wish to annotate regulatory regions using both proximity to transcription start sites (TSS) and co-accessibility information simultaneously. To accommodate this, one can use SPICEY functionalists to generate a merged annotation object, combining both distance-based and co-accessibility-based annotations for each region in a unified framework:
-
-```{r re-gene-near-coacc-merged, message=FALSE, warning=FALSE}
-
-annotation_merged <- annotate_with_coaccessibility(
-  peaks = annotation_near |> 
-    dplyr::rename(nearestGeneSymbol = gene_id) |>
-    makeGRangesFromDataFrame(keep.extra.columns = T),
-  txdb = TxDb.Hsapiens.UCSC.hg38.knownGene,
-  links_df=cicero_links,
-  annot_dbi = org.Hs.eg.db,
-  protein_coding_only = TRUE,
-  verbose = TRUE,
-  add_tss_annotation = FALSE,
-  upstream = 2000,
-  downstream = 2000)
-
-head(annotation_merged)
-```
-
-In this way, each regulatory region is annotated with two complementary layers of information:
-
--   **Nearest-gene annotation**, which includes:
-
-1.  `distanceToTSS`: the distance from the region to the nearest transcription start site (TSS),
-2.  `nearestGeneSymbol`: the gene symbol of the closest gene,
-3.  `annotation`: the genomic context of the region (e.g., Promoter or Distal based on proximity to the TSS).
-
--   **Co-accessibility-based annotation**, where the region is linked to its co-accessible gene (`gene_id`), as determined by Cicero-derived chromatin interaction networks (see relevant section for details).
-
-This merged approach provides a more comprehensive regulatory landscape by integrating both spatial proximity and functional chromatin interaction data.
-
 #### Using custom region-to-gene annotation
 
 The annotation step(s) are **optional**. Users can either generate these annotations using SPICEY’s built-in functions or supply a pre-computed `data.frame` of gene–region associations. When using pre-computed data to construct tissue-specific regulatory networks, the `data.frame` must include at minimum the following columns:
 
--   `region_id`: Unique identifier for each region, following standard genomic coordinate formats such as *chr-start-end* (e.g., `chr1-5000-5800`) or *chr:start-end* (e.g., `chr1:5000-5800`).
--   `gene_id`: Unique gene identifier using *official gene symbols* (e.g., `GAPDH`).
--   `cell_type`: Cell type or cluster label.
+-   `region_id`: Unique identifier for each region, ideally following standard genomic coordinate formats such as *chr-start-end* (e.g., `chr1-5000-5800`) or *chr:start-end* (e.g., `chr1:5000-5800`). It should be the same being provided to `SPICEY` as `region_id`.
+-   `gene_id`: Unique gene identifier. It should be the same being provided to `SPICEY` as `gene_id`.
 
 ### Integrating SPICEY measures to build tissue-specific networks
 
@@ -388,48 +389,19 @@ With the annotation linking regulatory elements to their target genes (via TSS p
 This approach supports comprehensive analysis of regulatory mechanisms at both epigenetic and transcriptional levels.
 
 ```{r spicey_link_annot, message=FALSE, warning=FALSE}
-
 # Using nearest gene annotation data 
 spicey_near <- SPICEY(rna = rna,
-                      gene_id = "gene_id",
                       atac=atac,
-                      region_id="region_id",
                       annotation = annotation_near)
 
 
 # Using co-accessibility gene annotation data 
 spicey_coacc <- SPICEY(rna = rna,
-                       gene_id = "gene_id",
                        atac=atac,
-                       region_id="region_id",
                        annotation = annotation_coacc)
-
-# Using both annotation data 
-spicey_both <- SPICEY(rna = rna,
-                      gene_id = "gene_id",
-                      atac=atac,
-                      region_id="region_id",
-                      annotation = annotation_merged)
-
 ```
 
 This function returns a list containing separately computed RETSI and GETSI scores, along with an additional element that links these measures based on the selected region-to-gene annotation method.
-
-# Summary
-
-SPICEY offers a comprehensive main function, `SPICEY()`, which streamlines the entire workflow into a single, reproducible process. It also includes optional helper functions for region-to-gene annotation using different strategies: `annotate_with_coaccessibility()` and `annotate_with_nearest()`.
-
-When supplied with differential chromatin accessibility (ATAC) and/or gene expression (RNA) data from single-cell experiments, along with a chosen region-to-gene mapping method ("nearest" or "coaccessibility"), the `SPICEY()` function performs the following:
-
-1.  Computes tissue specificity scores from single-cell data:
-    -   RETSI (Regulatory Element Tissue Specificity Index) for ATAC data
-    -   GETSI (Gene Expression Tissue Specificity Index) for RNA data
-2.  (**Optional**) Annotates regulatory elements to target genes using either:
-    -   Nearest gene transcription start site (TSS) (e.g., +/- 2000bp around the TSS)
-    -   Co-accessibility links (e.g., derived from Cicero)
-3.  Builds tissue-specific regulatory networks by integrating RETSI and GETSI scores via the provided region-to-gene annotation.
-
-The output is a structured list containing all intermediate and final results, facilitating downstream analysis and reuse.
 
 # Output Description
 
@@ -513,10 +485,14 @@ To run `spicey_heatmap()`, the input must be a `data.frame` with the following c
 
 ```{r spicey-heatmap-sep, message=FALSE, warning=FALSE, fig.width=4, fig.width=3}
 # RETSI and/or GETSI separately
-spicey_heatmap(spicey_coacc$linked, 
-               spicey_measure = "RETSI")
-spicey_heatmap(spicey_coacc$linked, 
+spicey_heatmap(spicey_coacc$GETSI, 
                spicey_measure = "GETSI")
+
+# If only RETSI is calculated (only ATAC data available), join with coaccessibility or nearest gene annotation to show gene_id in the plots
+retsi <- spicey_coacc$RETSI
+retsi <- retsi |>  left_join(annotation_near, by=c("region_id"))
+spicey_heatmap(retsi, 
+               spicey_measure = "RETSI")
 ```
 
 ```{r spicey-heatmap-pair, message=FALSE, warning=FALSE, fig.width=8, fig.width=6}
