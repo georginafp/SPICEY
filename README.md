@@ -64,7 +64,7 @@ spicey_heatmap(spicey_coacc$linked,
                combined_zscore = TRUE)
 ```
 
-<img src="man/figures/README-SPICEY_combined_plot.png" width="100%" />
+<img src="man/figures/README-SPICEY_combined_plot.png" width="50%" />
 
 ## Code of Conduct
 
