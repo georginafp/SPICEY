@@ -1,6 +1,6 @@
 Package: SPICEY
 Title: Calculates cell type specificity from single cell data
-Version: 0.99.0
+Version: 0.99.1
 Authors@R: c(
     person(given = "Georgina",
            family = "Fuentes-Páez",
@@ -19,7 +19,7 @@ Description: SPICEY (SPecificity Index for Coding and Epigenetic activitY) is an
 License: Artistic-2.0
 Encoding: UTF-8
 Depends: 
-    R (>= 4.4.0),
+    R (>= 4.5.0),
     utils,
     stats,
     grDevices

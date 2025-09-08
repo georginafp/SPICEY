@@ -8,5 +8,9 @@
 
 library(testthat)
 library(SPICEY)
+library(GenomicRanges)
+library(dplyr)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Hs.eg.db)
 
 test_check("SPICEY")

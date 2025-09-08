@@ -35,44 +35,33 @@ annotate_with_nearest <- function(peaks,
                                   upstream,
                                   downstream) {
   if (verbose) message("Annotating regulatory elements to nearest gene...")
-  if (inherits(peaks, "data.frame") && !inherits(peaks, "GRanges")) {
-    peaks <- GenomicRanges::makeGRangesFromDataFrame(peaks, keep.extra.columns = TRUE)
-  }
-  alt_chroms <- grep("_alt|random|fix|Un", seqlevels(peaks), value = TRUE)
-  peaks <- GenomeInfoDb::keepSeqlevels(peaks, setdiff(seqlevels(peaks), alt_chroms), pruning.mode = "coarse")
-  names(peaks) <- peaks$region_id
+  peaks <- .standardize_peaks(peaks)
 
-  # Select peaks that overlap with gene promoters
   ref_anno <- extract_gene_peak_annotations(
-    peaks, txdb, annot_dbi,
-    protein_coding_only,
-    upstream, downstream, verbose
-  )
+    peaks, txdb, annot_dbi, protein_coding_only, upstream, downstream, verbose)
 
-  # Annotate peaks to nearest promoters
   nearest_hits <- GenomicRanges::distanceToNearest(peaks, ref_anno)
   annotation <- peaks
-  annotation$distanceToTSS <- NA
-  annotation$distanceToTSS[S4Vectors::queryHits(nearest_hits)] <- GenomicRanges::mcols(nearest_hits)$distance
-  annotation$gene_id <- NA
-  annotation$gene_id[S4Vectors::queryHits(nearest_hits)] <- ref_anno$gene_id[S4Vectors::subjectHits(nearest_hits)]
-  annotation$annotation <- ifelse(annotation$region_id %in% unique(ref_anno$region_id), "Promoter", "Distal")
+  annotation$distanceToTSS <- NA_real_
+  annotation$distanceToTSS[S4Vectors::queryHits(nearest_hits)] <-
+    GenomicRanges::mcols(nearest_hits)$distance
 
-  if (add_tss_annotation) {
-    tss <- extract_gene_peak_annotations(
-      peaks, txdb, annot_dbi,
-      protein_coding_only,
-      upstream = 0, downstream = 1, verbose
-    )
+  annotation$gene_id <- NA_character_
+  annotation$gene_id[S4Vectors::queryHits(nearest_hits)] <-
+    ref_anno$gene_id[S4Vectors::subjectHits(nearest_hits)]
 
-    annotation <- annotation |>
-      dplyr::mutate(in_TSS = ifelse(region_id %in% tss$region_id, TRUE, FALSE)) |>
-      dplyr::left_join(tss |> data.frame() |> dplyr::select(region_id, TSS_gene = gene_id),
-        by = c("region_id")
-      )
-  }
+  annotation$annotation <- ifelse(annotation$region_id %in% unique(ref_anno$region_id),
+                                  "Promoter", "Distal")
 
-  annotation <- GenomicRanges::mcols(annotation) |> data.frame()
+  annotation <- GenomicRanges::mcols(
+    if (add_tss_annotation) {
+      .add_tss_annotation(annotation = annotation, peaks = peaks,
+                          txdb = txdb, annot_dbi = annot_dbi,
+                          protein_coding_only = protein_coding_only,
+                          verbose = verbose)
+    } else annotation
+  ) |> data.frame()
+
   return(annotation)
 }
 
@@ -130,72 +119,34 @@ annotate_with_coaccessibility <- function(peaks,
                                           add_tss_annotation = FALSE,
                                           upstream,
                                           downstream) {
-  if (verbose) {
-    message("Annotating with co-accessibility")
-  }
-  if (inherits(peaks, "data.frame") && !inherits(peaks, "GRanges")) {
-    peaks <- GenomicRanges::makeGRangesFromDataFrame(peaks,
-      keep.extra.columns = TRUE
-    )
-  }
-  alt <- grep("_alt|random|fix|Un", seqlevels(peaks), value = TRUE)
-  peaks <- GenomeInfoDb::keepSeqlevels(peaks, setdiff(seqlevels(peaks), alt),
-    pruning.mode = "coarse"
-  )
-  names(peaks) <- peaks$region_id
+  if (verbose) message("Annotating with co-accessibility")
+  peaks <- .standardize_peaks(peaks)
 
   ref_anno <- extract_gene_peak_annotations(
-    peaks, txdb, annot_dbi,
-    protein_coding_only,
-    upstream, downstream, verbose
-  )
+    peaks, txdb, annot_dbi, protein_coding_only, upstream, downstream, verbose) |>
+    GenomicRanges::mcols() |>
+    data.frame()
 
-  # Convert ref_anno to data.frame
-  ref_anno <- GenomicRanges::mcols(ref_anno) |> data.frame()
-
-  # Annotate with coaccessibility
   joined_links <- links_df |>
     dplyr::left_join(ref_anno, by = c("Peak1" = "region_id")) |>
     dplyr::rename(gene_name1 = gene_id) |>
     dplyr::left_join(ref_anno, by = c("Peak2" = "region_id")) |>
     dplyr::rename(gene_name2 = gene_id)
 
-  # Combine results for Peak1 and Peak2 from cicero
   links_anno <- dplyr::bind_rows(
-    dplyr::transmute(
-      dplyr::filter(joined_links, !is.na(gene_name1)),
-      region_id = Peak2,
-      promoter_peak = Peak1,
-      coaccess,
-      gene_id = gene_name1
-    ),
-    dplyr::transmute(
-      dplyr::filter(joined_links, !is.na(gene_name2)),
-      region_id = Peak1,
-      promoter_peak = Peak2,
-      coaccess,
-      gene_id = gene_name2
-    )
-  ) |>
+    dplyr::transmute(dplyr::filter(joined_links, !is.na(gene_name1)),
+                     region_id = Peak2, promoter_peak = Peak1, coaccess, gene_id = gene_name1),
+    dplyr::transmute(dplyr::filter(joined_links, !is.na(gene_name2)),
+                     region_id = Peak1, promoter_peak = Peak2, coaccess, gene_id = gene_name2)) |>
     dplyr::distinct()
 
   annotation <- links_anno |>
     dplyr::select(region_id, gene_id)
 
   if (add_tss_annotation) {
-    tss <- extract_gene_peak_annotations(
-      peaks, txdb, annot_dbi,
-      protein_coding_only,
-      upstream = 0, downstream = 1, verbose
-    )
-
-    annotation <- annotation |>
-      dplyr::mutate(in_TSS = ifelse(region_id %in% tss$region_id, TRUE, FALSE)) |>
-      dplyr::left_join(tss |> data.frame() |> dplyr::select(region_id, TSS_gene = gene_id),
-        by = c("region_id")
-      )
+    annotation <- .add_tss_annotation(annotation, peaks, txdb, annot_dbi,
+                                      protein_coding_only, verbose)
   }
-
   return(annotation)
 }
 
@@ -210,27 +161,40 @@ get_promoters <- function(txdb,
                           downstream,
                           protein_coding_only = TRUE) {
   proms <- GenomicFeatures::promoters(GenomicFeatures::genes(txdb),
-    upstream = upstream,
-    downstream = downstream
-  )
+                                      upstream = upstream,
+                                      downstream = downstream)
   entrez_ids <- names(proms)
   gene_info <- AnnotationDbi::select(
-    annot_dbi,
-    keys = entrez_ids,
-    columns = c("SYMBOL", "GENETYPE"),
-    keytype = "ENTREZID"
-  ) |>
-    dplyr::filter(!duplicated(ENTREZID))
+    annot_dbi, keys = entrez_ids, columns = c("SYMBOL", "GENETYPE"), keytype = "ENTREZID") |>
+    dplyr::distinct(ENTREZID, .keep_all = TRUE)
 
-  if (protein_coding_only) {
-    gene_info <- gene_info[gene_info$GENETYPE == "protein-coding", ]
-  }
+  if (protein_coding_only) gene_info <- dplyr::filter(gene_info, GENETYPE == "protein-coding")
 
   keep_ids <- gene_info$ENTREZID
   proms <- proms[entrez_ids %in% keep_ids]
   GenomicRanges::mcols(proms)$gene_id <- gene_info$SYMBOL[match(names(proms), gene_info$ENTREZID)]
-
   return(proms)
+}
+
+#' Standardizes peak input, ensuring that input peaks is a \code{GRanges} object,
+#' removes alternate scaffolds (\code{_alt}, \code{random}, \code{fix}, \code{Un}),
+#' and assigns region IDs as names.
+#' @param peaks A \code{data.frame} with genomic coordinates and a \code{region_id}
+#'   column, or a \code{GRanges} object with a \code{region_id} column.
+#' @return A \code{GRanges} object with:
+#' \describe{
+#'   \item{seqnames, start, end}{Coordinates of the input regions.}
+#'   \item{region_id}{Unique identifier of the region (e.g., \code{chr1-5000-5800}).}
+#'   \item{metadata columns}{Any additional columns present in the input.}
+#' }
+.standardize_peaks <- function(peaks) {
+  if (inherits(peaks, "data.frame") && !inherits(peaks, "GRanges")) {
+    peaks <- GenomicRanges::makeGRangesFromDataFrame(peaks, keep.extra.columns = TRUE)
+  }
+  alt <- grep("_alt|random|fix|Un", GenomeInfoDb::seqlevels(peaks), value = TRUE)
+  peaks <- GenomeInfoDb::keepSeqlevels(peaks, setdiff(GenomeInfoDb::seqlevels(peaks), alt), pruning.mode = "coarse")
+  names(peaks) <- peaks$region_id
+  return(peaks)
 }
 
 #' Overlap peaks with gene promoters to obtain gene annotations
@@ -256,13 +220,43 @@ extract_gene_peak_annotations <- function(peaks,
     annot_dbi = annot_dbi,
     upstream = upstream,
     downstream = downstream,
-    protein_coding_only = protein_coding_only
-  )
+    protein_coding_only = protein_coding_only)
 
   ols <- GenomicRanges::findOverlaps(peaks, proms)
 
   promoter_peaks <- peaks[S4Vectors::queryHits(ols)]
   promoter_peaks$gene_id <- proms$gene_id[S4Vectors::subjectHits(ols)]
-
   return(promoter_peaks)
+}
+
+
+#' Add TSS annotation to peaks
+#'
+#' Identifies transcription start sites (TSS) overlapping with input peaks and
+#' adds logical and gene ID columns to an annotation table.
+#' @inheritParams annotate_with_coaccessibility
+#' @param annotation A \code{data.frame} or \code{GRanges} containing peak annotations,
+#'   including a \code{region_id} column.
+#' @param peaks A \code{GRanges} object containing the original peak set.
+#' @return A \code{data.frame} or \code{GRanges} (depending on input) with added columns:
+#' \describe{
+#'   \item{in_TSS}{Logical, \code{TRUE} if the peak overlaps a TSS.}
+#'   \item{TSS_gene}{Gene symbol of the overlapping TSS, if any.}
+#' }
+.add_tss_annotation <- function(annotation, peaks, txdb, annot_dbi, protein_coding_only, verbose) {
+  tss <- extract_gene_peak_annotations(
+    peaks        = peaks,
+    txdb         = txdb,
+    annot_dbi    = annot_dbi,
+    protein_coding_only = protein_coding_only,
+    upstream     = 0,
+    downstream   = 1,
+    verbose      = verbose)
+
+  annotation <- annotation |>
+    dplyr::mutate(in_TSS = region_id %in% tss$region_id) |>
+    dplyr::left_join(
+      tss |> data.frame() |> dplyr::select(region_id, TSS_gene = gene_id),
+      by = "region_id")
+  return(annotation)
 }

@@ -56,7 +56,7 @@ compute_spicey_index <- function(diff = NULL,
 #'     \item{max_FC}{Maximum fold-change observed within each feature group.}
 #'     \item{weight}{Normalized significance weight derived from adjusted p-values.}
 #'     \item{norm_FC}{Fold-change normalized by maximum fold-change in the group.}
-#'     \item{score}{Specificity score computed as the product of normalized fold-change signficantly weighted.}}
+#'     \item{score}{Specificity score computed as the product of normalized fold-change significantly weighted.}}
 #' @importFrom stats p.adjust
 specificity_index <- function(da, group_col) {
   stopifnot(group_col %in% colnames(da))

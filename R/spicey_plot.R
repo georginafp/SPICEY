@@ -30,8 +30,8 @@
 #' library(org.Hs.eg.db)
 #'
 #' data(rna)
-#' data(atac) <
-#'   data(cicero_links)
+#' data(atac)
+#' data(cicero_links)
 #'
 #' # Obtain annotatin with coaccessibility
 #' peaks <- unique(unlist(atac)[, c("region_id")])
@@ -71,9 +71,11 @@ spicey_heatmap <- function(df,
                            spicey_measure = c("RETSI", "GETSI", "SPICEY"),
                            combined_zscore = FALSE) {
   spicey_measure <- match.arg(spicey_measure)
+
   if (!all(c("gene_id", "cell_type") %in% colnames(df))) {
     stop("Input data must contain 'gene_id' and 'cell_type'.")
   }
+
   has_RETSI <- "RETSI" %in% colnames(df)
   has_GETSI <- "GETSI" %in% colnames(df)
   if (spicey_measure == "RETSI" && !has_RETSI) stop("Missing RETSI column.")
@@ -85,65 +87,46 @@ spicey_heatmap <- function(df,
     stop("combined_zscore = TRUE is only valid with spicey_measure = 'SPICEY'")
   }
 
-
   if (spicey_measure %in% c("RETSI", "GETSI")) {
     df_z <- prepare_heatmap_data(df, spicey_measure, top_n)
-
     final_plot <- plot_heatmap(df_z, spicey_measure, paste0(spicey_measure, "\nz-score"))
+
   } else if (spicey_measure == "SPICEY" & combined_zscore) {
     df_combined <- df |>
       dplyr::filter(!is.na(gene_id), !is.na(RETSI), !is.na(GETSI)) |>
       dplyr::mutate(
         GETSI_z = scale(GETSI)[, 1],
         RETSI_z = scale(RETSI)[, 1],
-        combined_score = (RETSI_z + GETSI_z) / 2
-      )
-    top_genes <- df_combined |>
-      dplyr::group_by(cell_type) |>
-      dplyr::arrange(dplyr::desc(combined_score)) |>
-      dplyr::distinct(cell_type, gene_id, .keep_all = TRUE) |>
-      dplyr::slice_head(n = top_n) |>
-      dplyr::ungroup() |>
-      dplyr::pull(gene_id)
-    heatmap_df <- df_combined |>
-      dplyr::filter(gene_id %in% top_genes) |>
-      dplyr::group_by(gene_id, cell_type) |>
-      dplyr::summarise(z_score = mean(combined_score), .groups = "drop")
+        combined_score = (RETSI_z + GETSI_z) / 2)
 
+    heatmap_df <- prepare_heatmap_data(df_combined, "combined_score", top_n)
     final_plot <- plot_heatmap(heatmap_df, "SPICEY", "SPICEY\nz-score")
+
   } else if (spicey_measure == "SPICEY" & !combined_zscore) {
     df_z1 <- prepare_heatmap_data(df, "RETSI", top_n)
     df_z2 <- prepare_heatmap_data(df, "GETSI", top_n)
 
-    final_plot <- cowplot::plot_grid(plot_heatmap(df_z1, "RETSI", "RETSI\nz-score"),
+    final_plot <- cowplot::plot_grid(
+      plot_heatmap(df_z1, "RETSI", "RETSI\nz-score"),
       plot_heatmap(df_z2, "GETSI", "GETSI\nz-score"),
-      nrow = 1, align = "h"
-    )
+      nrow = 1, align = "h")
   }
-
   return(final_plot)
 }
 
-
 #' Prepare data for SPICEY heatmap
 #'
-#' This function filters and processes a gene–cell-type matrix for heatmap visualization.
-#' It computes z-scores for a specified score column `score_col` (e.g., `RETSI`, `GETSI`),
-#' selects the top `n` genes per cell type based on their z-scores, and returns
-#' a summary matrix suitable for plotting with \code{\link{plot_heatmap}}.
-#' @param df A data frame containing at least the columns: \code{gene_id}, \code{cell_type},
-#'   and one score column (e.g., \code{RETSI} or \code{GETSI}).
-#' @param score_col Character. Name of the score column to z-score and rank (e.g., \code{"RETSI"}).
-#' @param top_n Integer. Number of top-ranked genes to retain per cell type. (e.g., \code{"5"})
-#' @return A data frame with columns: \code{gene_id}, \code{cell_type}, and \code{z_score}.
-#'   Each row corresponds to a gene-cell-type pair, with averaged z-score values across duplicates.
+#' Filters and processes a gene–cell-type matrix for heatmap visualization.
+#' Computes z-scores for a specified score column, selects the top `n` genes per cell type,
+#' and returns a summary matrix suitable for plotting.
+#' @param df A data frame with at least: \code{gene_id}, \code{cell_type}, and a score column.
+#' @param score_col Character. Name of the score column to z-score and rank.
+#' @param top_n Integer. Number of top-ranked genes per cell type.
+#' @return A data frame with: \code{gene_id}, \code{cell_type}, and \code{z_score}.
 #' @seealso \code{\link{plot_heatmap}}, \code{\link{spicey_heatmap}}
 prepare_heatmap_data <- function(df, score_col, top_n) {
   df_filtered <- df |>
-    dplyr::filter(
-      !is.na(gene_id),
-      !is.na(.data[[score_col]])
-    ) |>
+    dplyr::filter(!is.na(gene_id), !is.na(.data[[score_col]])) |>
     dplyr::mutate(z_score = scale(.data[[score_col]])[, 1])
 
   top_genes <- df_filtered |>
@@ -154,14 +137,12 @@ prepare_heatmap_data <- function(df, score_col, top_n) {
     dplyr::ungroup() |>
     dplyr::pull(gene_id)
 
-  final <- df_filtered |>
+  df_final <- df_filtered |>
     dplyr::filter(gene_id %in% top_genes) |>
     dplyr::group_by(gene_id, cell_type) |>
     dplyr::summarise(z_score = mean(z_score), .groups = "drop")
-
-  return(final)
+  return(df_final)
 }
-
 
 
 #' Plot a z-scored gene-by-cell-type heatmap

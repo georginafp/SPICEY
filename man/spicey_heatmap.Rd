@@ -50,8 +50,8 @@ library(TxDb.Hsapiens.UCSC.hg38.knownGene)
 library(org.Hs.eg.db)
 
 data(rna)
-data(atac) <
-  data(cicero_links)
+data(atac)
+data(cicero_links)
 
 # Obtain annotatin with coaccessibility
 peaks <- unique(unlist(atac)[, c("region_id")])

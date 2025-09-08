@@ -7,22 +7,19 @@
 prepare_heatmap_data(df, score_col, top_n)
 }
 \arguments{
-\item{df}{A data frame containing at least the columns: \code{gene_id}, \code{cell_type},
-and one score column (e.g., \code{RETSI} or \code{GETSI}).}
+\item{df}{A data frame with at least: \code{gene_id}, \code{cell_type}, and a score column.}
 
-\item{score_col}{Character. Name of the score column to z-score and rank (e.g., \code{"RETSI"}).}
+\item{score_col}{Character. Name of the score column to z-score and rank.}
 
-\item{top_n}{Integer. Number of top-ranked genes to retain per cell type. (e.g., \code{"5"})}
+\item{top_n}{Integer. Number of top-ranked genes per cell type.}
 }
 \value{
-A data frame with columns: \code{gene_id}, \code{cell_type}, and \code{z_score}.
-Each row corresponds to a gene-cell-type pair, with averaged z-score values across duplicates.
+A data frame with: \code{gene_id}, \code{cell_type}, and \code{z_score}.
 }
 \description{
-This function filters and processes a gene–cell-type matrix for heatmap visualization.
-It computes z-scores for a specified score column \code{score_col} (e.g., \code{RETSI}, \code{GETSI}),
-selects the top \code{n} genes per cell type based on their z-scores, and returns
-a summary matrix suitable for plotting with \code{\link{plot_heatmap}}.
+Filters and processes a gene–cell-type matrix for heatmap visualization.
+Computes z-scores for a specified score column, selects the top \code{n} genes per cell type,
+and returns a summary matrix suitable for plotting.
 }
 \seealso{
 \code{\link{plot_heatmap}}, \code{\link{spicey_heatmap}}

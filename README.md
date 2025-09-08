@@ -15,10 +15,13 @@ The goal of SPICEY is to provide a user-friendly pipeline for quantifying and vi
 
 ## Installation
 
-You can install the latest release of `SPICEY` the github repository:
+Install the latest release of SPICEY from Bioconductor:
 
-```         
-devtools::install_github("georginafp/SPICEY")
+```{r install, eval=FALSE, echo=TRUE}
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("SPICEY")
 ```
 
 Now you can load the package using `library(SPICEY)`.
@@ -60,6 +63,8 @@ spicey_heatmap(spicey_coacc$linked,
                spicey_measure = "SPICEY",
                combined_zscore = TRUE)
 ```
+
+<img src="man/figures/README-SPICEY_combined_plot.png" width="100%" />
 
 ## Code of Conduct
 

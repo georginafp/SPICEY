@@ -110,11 +110,13 @@ This entropy framework provides a robust and interpretable measure of cell-type 
 
 # Installation
 
-Install the development version from GitHub:
+Install the latest release of SPICEY from Bioconductor:
 
 ```{r install, eval=FALSE, echo=TRUE}
-install.packages("devtools")
-devtools::install_github("georginafp/SPICEY")
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+
+BiocManager::install("SPICEY")
 ```
 
 # Input Requirements
