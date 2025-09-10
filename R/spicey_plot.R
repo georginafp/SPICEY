@@ -175,14 +175,14 @@ plot_heatmap <- function(df_z, title_text, fill_label) {
   df_z$gene_id <- factor(df_z$gene_id, levels = gene_order_df$gene_id)
 
   plot <- ggplot2::ggplot(df_z, ggplot2::aes(x = cell_type, y = gene_id, fill = z_score)) +
-    ggplot2::geom_tile(color = "grey80", width = 0.95) +
+    ggplot2::geom_tile(color = "grey75", width = 0.95) +
     ggplot2::scale_x_discrete(expand = c(0, 0)) +
     ggplot2::scale_y_discrete(expand = c(0, 0)) +
     ggplot2::coord_fixed(ratio = 0.5) +
     ggplot2::scale_fill_gradientn(
-      colours = c("white", "#da7b78", "#c9403c", "#b83733", "#902b28"),
+      colours = c("white", "#d3bfc1", "#b29092", "#926164", "#664346"),
       name = fill_label,
-      na.value = "grey90"
+      na.value = "grey85"
     ) +
     ggplot2::theme_gray(base_size = 7) +
     ggplot2::guides(fill = ggplot2::guide_colourbar(barwidth = 0.5, barheight = 4)) +
