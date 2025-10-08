@@ -1,3 +1,8 @@
+CHANGES IN VERSION 0.99.5
+--------------------------
+
+  o Updated README file with new example of heatmap plot.
+
 CHANGES IN VERSION 0.99.4
 --------------------------
 

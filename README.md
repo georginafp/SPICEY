@@ -61,7 +61,7 @@ spicey_coacc <- SPICEY(
 # Plot results
 spicey_heatmap(spicey_coacc$linked, 
                spicey_measure = "SPICEY",
-               combined_zscore = TRUE)
+               combined_score = TRUE)
 ```
 
 <img src="man/figures/README-SPICEY_combined_plot.png" width="50%" />
