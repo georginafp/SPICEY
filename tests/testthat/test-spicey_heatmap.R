@@ -28,9 +28,9 @@ test_that("spicey_heatmap runs for RETSI, GETSI, and SPICEY", {
   p2 <- spicey_heatmap(spicey_coacc$GETSI, spicey_measure = "GETSI")
   expect_s3_class(p2, "ggplot")
 
-  p3 <- spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = FALSE)
+  p3 <- spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_score = FALSE)
   expect_true(inherits(p3, "patchwork") || inherits(p3, "gg"))
 
-  p4 <- spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = TRUE)
+  p4 <- spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_score = TRUE)
   expect_s3_class(p4, "ggplot")
 })

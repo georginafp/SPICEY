@@ -245,7 +245,7 @@ spicey_coacc <- SPICEY(
 # Plot results
 spicey_heatmap(spicey_coacc$linked,
   spicey_measure = "SPICEY",
-  combined_zscore = TRUE
+  combined_score = TRUE
 )
 ```
 
@@ -478,18 +478,18 @@ These visualizations help uncover transcriptional and regulatory programs that a
 
 The `spicey_heatmap()` function performs the following steps:
 
-1.  **Filters and scales the input**: Computes z-scores for the selected specificity index (`RETSI`, `GETSI`, or a combined SPICEY score).
-2.  **Selects top genes**: For each cell type, identifies the top `n` genes based on their z-score ranks.
-3.  **Generates a heatmap**: Creates a gene-by-cell-type heatmap. Genes are ordered by their highest-scoring cell type and their z-score magnitude.
+1.  **Filters and scales the input**: Extracts the SPICEY scores for the selected specificity index (`RETSI`, `GETSI`, or a combined SPICEY score).
+2.  **Selects top genes**: For each cell type, identifies the top `n` genes based on their SPICEY score ranks.
+3.  **Generates a heatmap**: Creates a gene-by-cell-type heatmap. Genes are ordered by their highest-scoring cell type and their SPICEY score magnitude.
 
-Depending on the `spicey_measure` and `combined_zscore` arguments, the function adapts the output:
+Depending on the `spicey_measure` and `combined_score` arguments, the function adapts the output:
 
 -   **Single-modality visualization:**
-    -   `spicey_measure = "RETSI"`: Plots z-scored RETSI values, where RETSI reflects cell-type-specific accessibility of regulatory regions linked to genes.
-    -   `spicey_measure = "GETSI"`: Plots z-scored GETSI values based on gene expression.
+    -   `spicey_measure = "RETSI"`: Plots scored RETSI values, where RETSI reflects cell-type-specific accessibility of regulatory regions linked to genes.
+    -   `spicey_measure = "GETSI"`: Plots scored GETSI values based on gene expression.
 -   **Dual-modality (SPICEY) visualization:**
-    -   `spicey_measure = "SPICEY"` and `combined_zscore = FALSE`: Displays two separate heatmaps -one for RETSI, one for GETSI - enabling side-by-side comparison.
-    -   `spicey_measure = "SPICEY"` and `combined_zscore = TRUE`: RETSI and GETSI are independently z-scored and averaged per gene-cell-type pair. A single unified heatmap is generated to highlight shared specificity across both data types.
+    -   `spicey_measure = "SPICEY"` and `combined_score = FALSE`: Displays two separate heatmaps -one for RETSI, one for GETSI - enabling side-by-side comparison.
+    -   `spicey_measure = "SPICEY"` and `combined_score = TRUE`: RETSI and GETSI are independently scored and averaged per gene-cell-type pair. A single unified heatmap is generated to highlight shared specificity across both data types.
 
 ### Required inputs:
 
@@ -506,7 +506,7 @@ To run `spicey_heatmap()`, the input must be a `data.frame` with the following c
 -   `df`: A `data.frame` containing the columns described above.
 -   `top_n`: Number of top-ranked genes to retain per cell type (default: `5`).
 -   `spicey_measure`: Score type to visualize. Must be one of `"RETSI"`, `"GETSI"`, or `"SPICEY"`.
--   `combined_zscore`: Logical. If `TRUE` and `spicey_measure = "SPICEY"`, computes a combined z-score across RETSI and GETSI (default: `FALSE`).
+-   `combined_score`: Logical. If `TRUE` and `spicey_measure = "SPICEY"`, computes a combined mean score across RETSI and GETSI (default: `FALSE`).
 
 ```{r spicey-heatmap-sep, message=FALSE, warning=FALSE, fig.width=2, fig.height=3}
 # RETSI and/or GETSI separately
@@ -525,7 +525,7 @@ spicey_heatmap(retsi,
 ```{r spicey-heatmap-pair, message=FALSE, warning=FALSE, fig.width=3.5, fig.height=4.5}
 spicey_heatmap(spicey_coacc$linked,
   spicey_measure = "SPICEY",
-  combined_zscore = FALSE
+  combined_score = FALSE
 )
 ```
 
@@ -533,7 +533,7 @@ spicey_heatmap(spicey_coacc$linked,
 # SPICEY: combined average RETSI and GETSI scores
 spicey_heatmap(spicey_coacc$linked,
   spicey_measure = "SPICEY",
-  combined_zscore = TRUE
+  combined_score = TRUE
 )
 ```
 

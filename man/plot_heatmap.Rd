@@ -2,16 +2,16 @@
 % Please edit documentation in R/spicey_plot.R
 \name{plot_heatmap}
 \alias{plot_heatmap}
-\title{Plot a z-scored gene-by-cell-type heatmap}
+\title{Plot a SPICEY score gene-by-cell-type heatmap}
 \usage{
 plot_heatmap(df_z, title_text, fill_label)
 }
 \arguments{
-\item{df_z}{A data frame with z-scored values. Must contain:
+\item{df_z}{A data frame with SPICEY scored values. Must contain:
 \describe{
 \item{gene_id}{Identifier of the gene. Must be an official gene symbol (e.g., \code{GAPDH})}.
 \item{\code{cell_type}}{Cell type or cluster label (e.g., \code{Acinar})}
-\item{\code{z_score}}{Numeric. Z-scored values of the specificity score (e.g., \code{RETSI_z}, \code{GETSI_z})}}}
+\item{\code{score}}{Numeric. Values of the specificity score (e.g., \code{RETSI}, \code{GETSI})}}}
 
 \item{title_text}{Character. Title of the heatmap.}
 
@@ -22,8 +22,8 @@ A \code{ggplot2} object representing the heatmap.
 }
 \description{
 Generates a heatmap using ggplot2 to visualize expression or accessibility
-z-scores for genes across different cell types. Genes are ordered by their
-highest-scoring cell type, and then by maximum z-score within that group.
+SPICEY scores for genes across different cell types. Genes are ordered by their
+highest-scoring cell type, and then by maximum SPICEY score within that group.
 }
 \seealso{
 \code{\link{prepare_heatmap_data}}, \code{\link{spicey_heatmap}}

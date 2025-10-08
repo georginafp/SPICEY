@@ -1,6 +1,6 @@
 Package: SPICEY
 Title: Calculates cell type specificity from single cell data
-Version: 0.99.3
+Version: 0.99.4
 Authors@R: c(
     person(given = "Georgina",
            family = "Fuentes-Páez",

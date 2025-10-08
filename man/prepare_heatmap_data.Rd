@@ -9,16 +9,16 @@ prepare_heatmap_data(df, score_col, top_n)
 \arguments{
 \item{df}{A data frame with at least: \code{gene_id}, \code{cell_type}, and a score column.}
 
-\item{score_col}{Character. Name of the score column to z-score and rank.}
+\item{score_col}{Character. Name of the score column to rank.}
 
 \item{top_n}{Integer. Number of top-ranked genes per cell type.}
 }
 \value{
-A data frame with: \code{gene_id}, \code{cell_type}, and \code{z_score}.
+A data frame with: \code{gene_id}, \code{cell_type}, and \code{score}.
 }
 \description{
 Filters and processes a gene–cell-type matrix for heatmap visualization.
-Computes z-scores for a specified score column, selects the top \code{n} genes per cell type,
+Selects the top \code{n} genes per cell type,
 and returns a summary matrix suitable for plotting.
 }
 \seealso{

@@ -8,7 +8,7 @@ spicey_heatmap(
   df,
   top_n = 5,
   spicey_measure = c("RETSI", "GETSI", "SPICEY"),
-  combined_zscore = FALSE
+  combined_score = FALSE
 )
 }
 \arguments{
@@ -29,8 +29,8 @@ or using coaccessibility (\code{\link{annotate_with_coaccessibility}}).}
 \item{\code{"GETSI"}}{Only GETSI will be plotted.}
 \item{\code{"SPICEY"}}{Both RETSI and GETSI are used (requires both columns)}}}
 
-\item{combined_zscore}{Logical. Only relevant if \code{spicey_measure = "SPICEY"}.
-If \code{TRUE}, a single heatmap of mean RETSI/GETSI z-score is generated.
+\item{combined_score}{Logical. Only relevant if \code{spicey_measure = "SPICEY"}.
+If \code{TRUE}, a single heatmap of mean RETSI/GETSI score is generated.
 If \code{FALSE}, two heatmaps are produced side by side (RETSI and GETSI).}
 }
 \value{
@@ -38,10 +38,10 @@ A \code{ggplot2} object, or a \code{patchwork} layout if two heatmaps are return
 }
 \description{
 Visualizes gene-level specificity scores (RETSI and/or GETSI) across cell types
-using a z-scored heatmap representation. Depending on the chosen mode, the function
+using a SPICEY scored heatmap representation. Depending on the chosen mode, the function
 can display either RETSI or GETSI scores independently, or compute and visualize
-a combined SPICEY score (mean z-score of RETSI and GETSI).
-If \code{spicey_measure = "SPICEY"} and \code{combined_zscore = TRUE}, RETSI and GETSI
+a combined SPICEY score (mean score of RETSI and GETSI).
+If \code{spicey_measure = "SPICEY"} and \code{combined_score = TRUE}, RETSI and GETSI
 scores are scaled, averaged, and shown in a unified heatmap. Otherwise, separate
 heatmaps are produced for RETSI and GETSI, respectively.
 }
@@ -80,9 +80,9 @@ spicey_heatmap(retsi, spicey_measure = "RETSI")
 
 spicey_heatmap(spicey_coacc$GETSI, spicey_measure = "GETSI")
 
-spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = FALSE)
+spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_score = FALSE)
 
-spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_zscore = TRUE)
+spicey_heatmap(spicey_coacc$linked, spicey_measure = "SPICEY", combined_score = TRUE)
 }
 \seealso{
 \code{\link{SPICEY}}, \code{\link{prepare_heatmap_data}}, \code{\link{plot_heatmap}}
